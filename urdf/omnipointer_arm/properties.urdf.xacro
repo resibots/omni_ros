@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+    <!-- XACRO PROPERTIES -->
+    <xacro:property name="link_0_width" value="0.1143"/>
+    <xacro:property name="link_0_depth" value="0.1143"/>
+    <xacro:property name="link_0_length" value="0.0545"/>
+    <xacro:property name="link_0_mass" value="0.20"/>         <!--MX64trntbl + MX106:  ? + 0.153 -->
+
+    <xacro:property name="link_1_width" value="0.0402"/>
+    <xacro:property name="link_1_depth" value="0.05"/>
+    <xacro:property name="link_1_length" value="0.123"/>
+    <xacro:property name="link_1_mass" value="0.190421352"/> <!-- singleaxismount + 2.5girder + singleaxismount + base + MX106: 0.007370876 + 0.0226796 + 0.007370876 + ? + 0.153 -->
+
+    <xacro:property name="link_2_width" value="0.0356"/>
+    <xacro:property name="link_2_depth" value="0.05"/>
+    <xacro:property name="link_2_length" value="0.317"/>
+    <xacro:property name="link_2_mass" value="0.29302326"/> <!-- frame106 + singleaxismount + adjustgirder + singleaxismount + base + MX28: 0.0907185 + 0.00737088 + 0.110563 + 0.00737088 + ? + 0.077 -->
+
+    <xacro:property name="link_3_width" value="0.0356"/>
+    <xacro:property name="link_3_depth" value="0.05"/>    
+    <xacro:property name="link_3_length" value="0.202"/>
+    <xacro:property name="link_3_mass" value="0.21931466"/> <!-- frame28 + singleaxismount + 5girder + singleaxismount + base + MX28: 0.0907185 + 0.00737088 + 0.0368544 + 0.00737088 + ? + 0.077 -->
+
+    <xacro:property name="link_4_width" value="0.0356"/>
+    <xacro:property name="link_4_depth" value="0.05"/>
+    <xacro:property name="link_4_length" value="0.1605"/>
+    <xacro:property name="link_4_mass" value="0.15813986"/> <!-- frame28 + singleaxismount + 2.5girder + singleaxismount + tip: 0.0907185 + 0.00737088 + 0.0226796 + 0.00737088 + ? -->
+
+    <xacro:property name="joint_lim_base" value="6.283185307"/>
+    <xacro:property name="joint_lim" value="6.283185307"/>
+    <xacro:property name="joint_eff" value="30.0"/>
+    <xacro:property name="joint_vel" value="10.0"/>
+</robot>

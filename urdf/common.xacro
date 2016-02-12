@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">  
+    <xacro:property name="M_PI" value="3.1415926535897931" />
+    
+    <xacro:macro name="box_link" params="name width depth length mass color">
+        <link name="${name}">
+            <visual>
+                <origin xyz="0 0 ${length/2.0}" rpy="0 0 0"/>
+                <geometry>
+                  <box size="${width} ${depth} ${length}"/>
+                </geometry>
+                <material name="${color}"/>
+            </visual>
+            <collision>
+                <origin xyz="0 0 ${length/2.0}" rpy="0 0 0"/>
+                <geometry>
+                    <box size="${width} ${depth} ${length}"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <!-- CENTER OF MASS -->
+                <origin xyz="0 0 ${length/2.0}" rpy="0 0 0"/>
+                <mass value="${mass}"/>
+                <!-- box inertia: 1/12*m(y^2+z^2), ... -->
+                <inertia ixx="${1/12*mass*(depth*depth+length*length)}" ixy="0" ixz="0" iyy="${1/12*mass*(width*width+length*length)}" iyz="0" izz="${1/12*mass*(width*width+depth*depth)}"/>
+              </inertial>
+          </link>
+    </xacro:macro>
+</robot>

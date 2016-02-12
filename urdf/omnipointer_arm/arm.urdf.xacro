@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">  
+  <!-- INCLUDE LINKS/JOINTS PROPERTIES -->
+  <xacro:include filename="$(find omni_description)/urdf/omnipointer_arm/properties.urdf.xacro" />
+
+  <!-- XACRO MACRO FOR ARM LINKS/JOINTS -->
+  <xacro:macro name="omnipointer_arm" params="parent name *origin">
+
+    <!-- joint between base_link and arm_0_link -->
+    <joint name="${name}_joint_0" type="fixed" >
+      <xacro:insert_block name="origin" />
+      <parent link="${parent}" />
+      <child link="${name}_link_0" />
+    </joint>
+
+    <xacro:box_link name="${name}_link_0" width="${link_0_width}" depth="${link_0_depth}" length="${link_0_length}" mass="${link_0_mass}" color="omni/LightGrey"/>
+
+    <joint name="${name}_joint_1" type="revolute">
+      <parent link="${name}_link_0"/>
+      <child link="${name}_link_1"/>
+      <limit effort="${joint_eff}" lower="0" upper="${joint_lim_base}" velocity="${joint_vel}"/>
+      <origin xyz="0 0 ${link_0_length}" rpy="0 0 ${M_PI}"/>
+      <axis xyz="0 0 1"/>
+    </joint>
+
+    <xacro:box_link name="${name}_link_1" width="${link_1_width}" depth="${link_1_depth}" length="${link_1_length}" mass="${link_1_mass}" color="omni/Blue"/>
+
+    <joint name="${name}_joint_2" type="revolute">
+      <parent link="${name}_link_1"/>
+      <child link="${name}_link_2"/>
+      <limit effort="${joint_eff}" lower="0" upper="${joint_lim}" velocity="${joint_vel}"/>
+      <origin xyz="0 0 ${link_1_length}" rpy="${M_PI} 0 0"/>
+      <axis xyz="0 1 0"/>
+    </joint>
+
+    <xacro:box_link name="${name}_link_2" width="${link_2_width}" depth="${link_2_depth}" length="${link_2_length}" mass="${link_2_mass}" color="omni/Red"/>
+
+    <joint name="${name}_joint_3" type="revolute">
+      <parent link="${name}_link_2"/>
+      <child link="${name}_link_3"/>
+      <limit effort="${joint_eff}" lower="0" upper="${joint_lim}" velocity="${joint_vel}"/>
+      <origin xyz="0 0 ${link_2_length}" rpy="0 ${M_PI} 0"/>
+      <axis xyz="0 1 0"/>
+    </joint>
+
+    <xacro:box_link name="${name}_link_3" width="${link_3_width}" depth="${link_3_depth}" length="${link_3_length}" mass="${link_3_mass}" color="omni/Yellow"/>
+
+    <joint name="${name}_joint_4" type="revolute">
+      <parent link="${name}_link_3"/>
+      <child link="${name}_link_4"/>
+      <limit effort="${joint_eff}" lower="0" upper="${joint_lim}" velocity="${joint_vel}"/>
+      <origin xyz="0 0 ${link_3_length}" rpy="0 ${M_PI} 0"/>
+      <axis xyz="0 1 0"/>
+    </joint>
+
+    <xacro:box_link name="${name}_link_4" width="${link_4_width}" depth="${link_4_depth}" length="${link_4_length}" mass="${link_4_mass}" color="omni/Green"/>
+
+    <joint name="${name}_joint_5" type="fixed">
+      <parent link="${name}_link_4"/>
+      <child link="${name}_link_5"/>
+      <origin xyz="0 0 ${link_4_length}" rpy="0 0 0"/>
+    </joint>
+
+    <link name="${name}_link_5"/>
+    <!-- END OF ARM LINKS/JOINTS -->
+  </xacro:macro>
+</robot>

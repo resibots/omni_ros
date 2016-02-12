@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- XACRO MACRO FOR OUR PLATE -->
+  <xacro:macro name="omni_plate" params="parent name *origin">
+
+    <!-- joint between base_link and plate_link -->
+    <joint name="${name}_joint" type="fixed" >
+      <xacro:insert_block name="origin" />
+      <parent link="${parent}" />
+      <child link="${name}_link" />
+    </joint>
+
+    <xacro:box_link name="${name}_link" width="0.2" depth="0.2" length="0.004" mass="0.5" color="omni/DarkGrey"/>
+    <!-- END OF OUR PLATE -->
+  </xacro:macro>
+</robot>
