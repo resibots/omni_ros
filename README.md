@@ -8,8 +8,8 @@
 
 ## Available models
 
-- omnipointer: The full omnipointer, with base, plate and arm
-- omnipointer_arm_only: The omnipointer arm attached to the ground
+- **omnipointer**: The full omnipointer, with base, plate and arm
+- **omnipointer_arm_only**: The omnipointer arm attached to the ground
 
 ## LICENSE
 
