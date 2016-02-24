@@ -5,9 +5,6 @@
   <!-- URDF robot description -->
   <include file="$(find omni_description)/launch/omnipointer.launch" />
 
-    <!-- Publish robot's state in the tf tree -->
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
-  
   <!-- Parameters for the hardware interface and controllers -->
   <rosparam file="$(find omni_bringup)/config/omnipointer.yaml"/>
 
@@ -25,15 +22,13 @@
 
   <!-- Start the base driver. -->
   <node name="youbot_driver" pkg="youbot_driver_ros_interface" type="youbot_driver_ros_interface" output="screen">
-     <!-- <remap from="base/joint_states" to="/joint_states"/> -->
+     <remap from="base/joint_states" to="/joint_states"/>
   </node>
 
   <!-- launch our hardware interface -->
-  <node name="dynamixel_control_hw" pkg="dynamixel_control_hw" type="dynamixel_control_hw" output="screen">
-    <remap from="/joint_states" to="/arm/joint_states"/>
-  </node>
-
-   <node name="controller" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="/dynamixel_controllers/omni_arm_controller">
-    <remap from="/joint_states" to="/arm/joint_states"/>
-   </node>
+  <node name="dynamixel_control_hw" pkg="dynamixel_control_hw" type="dynamixel_control_hw" output="screen"/>
+  <node name="controller" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="/dynamixel_controllers/joint_state_controller /dynamixel_controllers/omni_arm_controller"/>
+  
+  <!-- Publish robot's state in the tf tree -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
 </launch>
