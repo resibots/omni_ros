@@ -24,15 +24,15 @@
   <param name="youBotBaseName" type="str" value="youbot-base"/>
 
   <!-- Start the base driver. -->
-  <node name="youbot_driver" pkg="youbot_driver_ros_interface" type="youbot_driver_ros_interface" output="screen" ns="base">
-     <remap from="base/joint_states" to="/joint_states"/>
+  <node name="youbot_driver" pkg="youbot_driver_ros_interface" type="youbot_driver_ros_interface" output="screen">
+     <!-- <remap from="base/joint_states" to="/joint_states"/> -->
   </node>
 
   <!-- launch our hardware interface -->
-  <node name="dynamixel_control_hw" pkg="dynamixel_control_hw" type="dynamixel_control_hw" output="screen" ns="arm">
-    <!-- <remap from="joint_states" to="arm/joint_states"/> -->
+  <node name="dynamixel_control_hw" pkg="dynamixel_control_hw" type="dynamixel_control_hw" output="screen">
+    <remap from="/joint_states" to="/arm/joint_states"/>
   </node>
 
-   <node name="controller" pkg="controller_manager" type="spawner" respawn="false"
-    output="screen" args="/dynamixel_controllers/omni_arm_controller" />
+   <node name="controller" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="/dynamixel_controllers/omni_arm_controller">
+   </node>
 </launch>
