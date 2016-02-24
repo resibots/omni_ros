@@ -14,7 +14,7 @@ dynamixel_controllers:
 dynamixel_control_hw:
   loop_frequency: 50
   cycle_time_error_threshold: 0.1
-  serial_interface: /dev/ttyACM0
+  serial_interface: /dev/ttyACM1
   baudrate: 1000000 # in bauds
   dynamixel_timeout: 0.01 # in seconds
   # correspondance between hardware IDs of the actuators and their names in ROS

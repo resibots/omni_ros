@@ -9,7 +9,7 @@
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
   
   <!-- Parameters for the hardware interface and controllers -->
-  <rosparam file="$(find omni_driver)/config/omnipointer.yaml"/>
+  <rosparam file="$(find omni_bringup)/config/omnipointer.yaml"/>
 
   <param name="youBotHasBase" type="bool" value="true"/>
   <param name="youBotHasArms" type="bool" value="false"/> 
