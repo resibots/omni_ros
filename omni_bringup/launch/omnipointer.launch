@@ -34,5 +34,6 @@
   </node>
 
    <node name="controller" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="/dynamixel_controllers/omni_arm_controller">
+    <remap from="/joint_states" to="/arm/joint_states"/>
    </node>
 </launch>
