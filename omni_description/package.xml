@@ -4,7 +4,7 @@ This software is governed by the CeCILL license under French law and abiding by 
 <package>
   <name>omni_description</name>
   <version>1.0.0</version>
-  <description>Omnidirectional robots descriptions in form of URDF files</description>
+  <description>Robot descriptions in form of URDF files for all of the ERC ResiBots omnidirectional robots</description>
 
   <maintainer email="fede.allocati@gmail.com">Federico Allocati</maintainer>
 
