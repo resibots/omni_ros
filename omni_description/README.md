@@ -12,11 +12,11 @@
 - **omnipointer_arm_only**: The omnipointer arm attached to the ground
 
 ## Dependencies
-- [Youbot Description]: The Youbot Description ROS package. We use it for the base
+- [Youbot Description]: Our own version of the Youbot Description ROS package. The indigo-devel branch is used.
 
 ## LICENSE
 
 [CeCILL]
 
 [CeCILL]: http://www.cecill.info/index.en.html
-[Youbot Description]: https://github.com/mas-group/youbot_description
+[Youbot Description]: https://github.com/resibots/youbot_description
