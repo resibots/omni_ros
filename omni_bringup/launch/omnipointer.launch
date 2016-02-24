@@ -29,9 +29,10 @@
   </node>
 
   <!-- launch our hardware interface -->
-  <node name="dynamixel_control_hw" pkg="dynamixel_control_hw" type="dynamixel_control_hw" output="screen"/>
+  <node name="dynamixel_control_hw" pkg="dynamixel_control_hw" type="dynamixel_control_hw" output="screen">
+    <remap from="/joint_states" to="arm/joint_states"/>
+  </node>
 
    <node name="controller" pkg="controller_manager" type="spawner" respawn="false"
-    output="screen" args="/dynamixel_controllers/joint_state_controller
-    /dynamixel_controllers/omni_arm_controller" />
+    output="screen" args="/dynamixel_controllers/omni_arm_controller" />
 </launch>
