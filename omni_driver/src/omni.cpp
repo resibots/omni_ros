@@ -1,7 +1,7 @@
+#include <youbot_driver_ros_interface/BaseDisplace.h>
+#include <youbot_driver_ros_interface/BaseRotate.h>
+
 #include <omni_driver/omni.hpp>
-#include <tf/transform_listener.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
-#include <std_srvs/Empty.h>
 
 using namespace omni_ros;
 
@@ -14,12 +14,18 @@ Omni::Omni(ros::NodeHandle nh, std::string ns, double arm_timeout) : _nh(nh), _n
 
 Omni::~Omni()
 {
-    ROS_INFO_STREAM("Relaxing...");
     relax();
 }
 
 void Omni::init()
 {
+    ROS_INFO_STREAM("Init...");
+    // Private node handle
+    ros::NodeHandle n_p("~");
+    // Load Server Parameters
+    n_p.param("BaseLink", _base_link_frame, std::string("optitrack_base/base_link"));
+    n_p.param("Arm", _arm_frame, std::string("optitrack_arm/base_link"));
+
     std::string traj_topic = _namespace + "/omni_arm_controller/follow_joint_trajectory";
     _traj_client = std::make_shared<trajectory_client>(traj_topic, true);
     // TO-DO: blocking duration in params?
@@ -38,12 +44,12 @@ void Omni::init()
     ROS_INFO_STREAM("Trajectory actionlib controller initialized!");
 
     // Reset
-    ROS_INFO_STREAM("Reset...");
     reset();
 }
 
 void Omni::relax()
 {
+    ROS_INFO_STREAM("Relaxing...");
      _traj_msg.points.clear();
 
     trajectory_msgs::JointTrajectoryPoint point;
@@ -58,11 +64,12 @@ void Omni::relax()
 
     _traj_msg.points.push_back(point);
 
-    _send_trajectory();
+    _send_arm_trajectory();
 }
 
 void Omni::reset()
 {
+    ROS_INFO_STREAM("Reset...");
     zero();
 }
 
@@ -83,7 +90,7 @@ void Omni::zero()
 
     _traj_msg.points.push_back(point);
 
-    _send_trajectory();
+    _send_arm_trajectory();
 }
 
 void Omni::set_joint_positions(const std::vector<double>& joints)
@@ -98,17 +105,60 @@ void Omni::set_joint_positions(const std::vector<double>& joints)
     point.time_from_start = ros::Duration(_arm_timeout);
 
     _traj_msg.points.push_back(point);
-    _send_trajectory();
+    _send_arm_trajectory();
 }
 
-std::vector<double> Omni::get_joint_positions()
+void Omni::base_displace(double x, double y)
 {
-    std::vector<double> result;
-    //auto state = ac.getState();
-    return result;
+    ros::ServiceClient client = _nh.serviceClient<youbot_driver_ros_interface::BaseDisplace>("/base/displace");
+    youbot_driver_ros_interface::BaseDisplace srv;
+    srv.request.longitudinal = x;
+    srv.request.transversal = y;
+
+    if (!client.call(srv))
+    {
+        ROS_ERROR_STREAM("Failed to call service /base/displace");
+    }
 }
 
-void Omni::_send_trajectory()
+void Omni::base_rotate(double theta)
+{
+    ros::ServiceClient client = _nh.serviceClient<youbot_driver_ros_interface::BaseRotate>("/base/rotate");
+    youbot_driver_ros_interface::BaseRotate srv;
+    srv.request.angle = theta;
+
+    if (!client.call(srv))
+    {
+        ROS_ERROR_STREAM("Failed to call service /base/rotate");
+    }
+}
+
+tf::Transform Omni::get_arm_frame()
+{
+    _pos_update();
+    return _arm_pos;
+}
+
+void Omni::_pos_update()
+{
+    ros::Time start_t = ros::Time::now();
+    while (_nh.ok()) {
+        try {
+            _listener.lookupTransform(_base_link_frame, _arm_frame, ros::Time(0), _arm_pos);
+            break;
+        }
+        catch (tf::TransformException ex) {
+            ROS_WARN_STREAM("Failed to get transfromation from '" << _base_link_frame << "' to '" << _arm_frame << "': " << ex.what());
+        }
+        ros::Duration(0.001).sleep();
+        if ((ros::Time::now() - start_t) > ros::Duration(1.0)) {
+            ROS_ERROR_STREAM("Timeout error: Failed to get transfromation from '" << _base_link_frame << "' to '" << _arm_frame);
+            break;
+        }
+    }
+}
+
+void Omni::_send_arm_trajectory()
 {
     _traj_msg.header.stamp = ros::Time::now();
 
