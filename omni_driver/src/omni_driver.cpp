@@ -26,7 +26,7 @@ int main(int argc, char** argv)
     transform = omni->get_arm_frame();
     std::cout << "Current arm position (w.r.t. the initial base frame): " << transform.getOrigin().x() << "  " << transform.getOrigin().y() << " " << transform.getOrigin().z() << std::endl;
     std::cin.get();
-    omni->base_init();
+    omni->base_return();
     std::cin.get();
     transform = omni->get_arm_frame();
     std::cout << "Current arm position (w.r.t. the initial base frame): " << transform.getOrigin().x() << "  " << transform.getOrigin().y() << " " << transform.getOrigin().z() << std::endl;

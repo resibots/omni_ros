@@ -139,7 +139,7 @@ bool Omni::base_rotate(double theta)
     return true;
 }
 
-bool Omni::base_init()
+bool Omni::base_return()
 {
     bool reached = false;
     double p = 1.0;
@@ -164,7 +164,6 @@ bool Omni::base_init()
         base_displace(-x_err * p, -y_err * p);
         reached = (x_err + y_err) < 1e-3;
     }
-    
 }
 
 tf::Transform Omni::get_arm_frame()
