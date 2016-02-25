@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib
   tf
   geometry_msgs
+  youbot_driver_ros_interface
 )
 
 ##Needed for ros packages
