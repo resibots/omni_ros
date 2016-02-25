@@ -25,6 +25,7 @@ namespace omni_ros {
         bool set_joint_positions(const std::vector<double>& joints);
         bool base_displace(double x, double y);
         bool base_rotate(double theta);
+        bool base_return();
 
         tf::Transform get_arm_frame();
 

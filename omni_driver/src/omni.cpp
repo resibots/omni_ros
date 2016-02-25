@@ -51,7 +51,7 @@ bool Omni::init()
 bool Omni::relax()
 {
     ROS_INFO_STREAM("Relaxing...");
-     _traj_msg.points.clear();
+    _traj_msg.points.clear();
 
     trajectory_msgs::JointTrajectoryPoint point;
     point.positions.clear();
@@ -78,7 +78,7 @@ bool Omni::reset()
 bool Omni::zero()
 {
     // Clear message points
-     _traj_msg.points.clear();
+    _traj_msg.points.clear();
 
     trajectory_msgs::JointTrajectoryPoint point;
     point.positions.clear();
@@ -117,8 +117,7 @@ bool Omni::base_displace(double x, double y)
     srv.request.longitudinal = x;
     srv.request.transversal = y;
 
-    if (!client.call(srv))
-    {
+    if (!client.call(srv)) {
         ROS_ERROR_STREAM("Failed to call service /base/displace");
         return false;
     }
@@ -132,13 +131,39 @@ bool Omni::base_rotate(double theta)
     youbot_driver_ros_interface::BaseRotate srv;
     srv.request.angle = theta;
 
-    if (!client.call(srv))
-    {
+    if (!client.call(srv)) {
         ROS_ERROR_STREAM("Failed to call service /base/rotate");
         return false;
     }
 
     return true;
+}
+
+bool Omni::base_return()
+{
+    bool reached = false;
+    double p = 1.0;
+
+    while (!reached && ros::ok()) {
+        _current_position_update();
+        tf::Transform tmp = _base_init_pos.inverse() * _base_pos;
+        double roll, pitch, yaw;
+        tf::Matrix3x3(tmp.getRotation()).getRPY(roll, pitch, yaw);
+        double y_err = yaw;
+        base_rotate(-y_err * p);
+        reached = (y_err) < 1e-3;
+    }
+
+    reached = false;
+
+    while (!reached && ros::ok()) {
+        _current_position_update();
+        tf::Transform tmp = _base_init_pos.inverse() * _base_pos;
+        double x_err = (tmp.getOrigin().x());
+        double y_err = (tmp.getOrigin().y());
+        base_displace(-x_err * p, -y_err * p);
+        reached = (x_err + y_err) < 1e-3;
+    }
 }
 
 tf::Transform Omni::get_arm_frame()
@@ -173,7 +198,7 @@ void Omni::_current_position_update()
     while (_nh.ok()) {
         try {
             // Retrieve base frame in the world frame
-            _listener.lookupTransform(_world_frame, _base_link_frame, ros::Time(0), _base_pos);            
+            _listener.lookupTransform(_world_frame, _base_link_frame, ros::Time(0), _base_pos);
         }
         catch (tf::TransformException ex) {
             ROS_WARN_STREAM("Failed to get transfromation from '" << _world_frame << "' to '" << _base_link_frame << "': " << ex.what());
