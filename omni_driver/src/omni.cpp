@@ -143,16 +143,6 @@ bool Omni::base_init()
 {
     bool reached = false;
     double p = 1.0;
-    while (!reached && ros::ok()) {
-        _current_position_update();
-        tf::Transform tmp = _base_init_pos.inverse() * _base_pos;
-        double x_err = (tmp.getOrigin().x());
-        double y_err = (tmp.getOrigin().y());
-        base_displace(-x_err * p, -y_err * p);
-        reached = (x_err + y_err) < 1e-3;
-    }
-
-    reached = false;
 
     while (!reached && ros::ok()) {
         _current_position_update();
@@ -163,6 +153,18 @@ bool Omni::base_init()
         base_rotate(-y_err * p);
         reached = (y_err) < 1e-3;
     }
+
+    reached = false;
+
+    while (!reached && ros::ok()) {
+        _current_position_update();
+        tf::Transform tmp = _base_init_pos.inverse() * _base_pos;
+        double x_err = (tmp.getOrigin().x());
+        double y_err = (tmp.getOrigin().y());
+        base_displace(-x_err * p, -y_err * p);
+        reached = (x_err + y_err) < 1e-3;
+    }
+    
 }
 
 tf::Transform Omni::get_arm_frame()
