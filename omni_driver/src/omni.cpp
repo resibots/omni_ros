@@ -142,14 +142,26 @@ bool Omni::base_rotate(double theta)
 bool Omni::base_init()
 {
     bool reached = false;
-    double p = 1;
-    while (!reached) {
+    double p = 1.0;
+    while (!reached && ros::ok()) {
         _current_position_update();
         tf::Transform tmp = _base_init_pos.inverse() * _base_pos;
         double x_err = (tmp.getOrigin().x());
         double y_err = (tmp.getOrigin().y());
         base_displace(-x_err * p, -y_err * p);
         reached = (x_err + y_err) < 1e-3;
+    }
+
+    reached = false;
+
+    while (!reached && ros::ok()) {
+        _current_position_update();
+        tf::Transform tmp = _base_init_pos.inverse() * _base_pos;
+        double roll, pitch, yaw;
+        tf::Matrix3x3(tmp.getRotation()).getRPY(roll, pitch, yaw);
+        double y_err = yaw;
+        base_rotate(-y_err * p);
+        reached = (y_err) < 1e-3;
     }
 }
 
