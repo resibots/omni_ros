@@ -4,7 +4,6 @@
 <!-- |    EDITING THIS FILE BY HAND IS NOT RECOMMENDED                                 | -->
 <!-- =================================================================================== -->
 <robot name="omnipointer" xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller" xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface" xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor" xmlns:xacro="http://ros.org/wiki/xacro">
-  <!-- <xacro:property name="" value="0.360" /> -->
   <!--MX64trntbl + MX106:  ? + 0.153 -->
   <!-- singleaxismount + 2.5girder + singleaxismount + base + MX106: 0.007370876 + 0.0226796 + 0.007370876 + ? + 0.153 -->
   <!-- frame106 + singleaxismount + adjustgirder + singleaxismount + base + MX28: 0.0907185 + 0.00737088 + 0.110563 + 0.00737088 + ? + 0.077 -->
@@ -407,7 +406,7 @@
   </transmission>
   <!-- joint between base_link and plate_link -->
   <joint name="plate_joint" type="fixed">
-    <origin rpy="0 0 0" xyz="0.148 0 0.061"/>
+    <origin rpy="0 0 0" xyz="-0.148 0 0.061"/>
     <parent link="base_link"/>
     <child link="plate_link"/>
   </joint>
@@ -436,7 +435,7 @@
   <!-- END OF OUR PLATE -->
   <!-- joint between base_link and arm_0_link -->
   <joint name="arm_joint_0" type="fixed">
-    <origin rpy="0 0 0" xyz="-0.021 0 0"/>
+    <origin rpy="0 0 0" xyz="0.021 0 0"/>
     <parent link="plate_link"/>
     <child link="arm_link_0"/>
   </joint>
