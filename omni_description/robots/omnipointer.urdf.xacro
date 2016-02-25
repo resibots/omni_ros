@@ -29,6 +29,6 @@
   </xacro:omni_plate>
 
   <xacro:omnipointer_arm name="arm" parent="plate_link">
-    <origin xyz="0.021 0 0" rpy="0 0 0" />
+    <origin xyz="0.021 0 0" rpy="0 0 ${M_PI}" />
   </xacro:omnipointer_arm>
 </robot>

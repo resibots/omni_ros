@@ -435,7 +435,7 @@
   <!-- END OF OUR PLATE -->
   <!-- joint between base_link and arm_0_link -->
   <joint name="arm_joint_0" type="fixed">
-    <origin rpy="0 0 0" xyz="0.021 0 0"/>
+    <origin rpy="0 0 3.14159265359" xyz="0.021 0 0"/>
     <parent link="plate_link"/>
     <child link="arm_link_0"/>
   </joint>
