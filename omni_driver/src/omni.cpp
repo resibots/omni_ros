@@ -141,14 +141,15 @@ bool Omni::base_rotate(double theta)
 
 bool Omni::base_init()
 {
-    double p = 1.0;
-    double step = 0.1;
-    while (ros::ok()) {
+    bool reached = false;
+    double p = 1;
+    while (!reached) {
         _current_position_update();
-        double px_err = (_base_pos.getOrigin()[0] - _base_init_pos.getOrigin()[0]);
-        double py_err = (_base_pos.getOrigin()[1] - _base_init_pos.getOrigin()[1]);
-        base_displace(px_err * step, py_err * step);
-        ros::Duration(step).sleep();
+        tf::Transform tmp = _base_init_pos.inverse() * _base_pos;
+        double x_err = (tmp.getOrigin().x());
+        double y_err = (tmp.getOrigin().y());
+        base_displace(-x_err * p, -y_err * p);
+        reached = (x_err + y_err) < 1e-3;
     }
 }
 
