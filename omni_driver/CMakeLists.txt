@@ -6,7 +6,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  rospy
   dynamixel_control_hw
   std_msgs
   std_srvs
@@ -19,7 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ##Needed for ros packages
-catkin_package(CATKIN_DEPENDS roscpp rospy dynamixel_control_hw std_msgs std_srvs trajectory_msgs control_msgs actionlib_msgs actionlib tf geometry_msgs)
+catkin_package(CATKIN_DEPENDS roscpp dynamixel_control_hw std_msgs std_srvs trajectory_msgs control_msgs actionlib_msgs actionlib tf geometry_msgs)
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
