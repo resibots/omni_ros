@@ -8,26 +8,22 @@ int main(int argc, char** argv)
 
     auto omni = std::make_shared<omni_ros::Omni>(n);
 
-    omni->base_displace(0.1, 0);
-    ros::Duration(2).sleep();
-    omni->base_rotate(M_PI / 4);
+    std::cin.get();
 
     tf::Transform transform = omni->get_arm_frame();
+    std::cout << "Current arm position (w.r.t. the initial base frame): " << transform.getOrigin().x() << "  " << transform.getOrigin().y() << " " << transform.getOrigin().z() << std::endl;
 
-    std::cout << "Current arm position (w.r.t. the base frame): " << transform.getOrigin().x() << "  " << transform.getOrigin().y() << " " << transform.getOrigin().z() << std::endl;
-
-    ros::Duration(0.5).sleep();
+    omni->base_displace(0.2, 0.3);
+    omni->base_rotate(1);
     std::vector<double> joints(4);
-    joints[0] = M_PI / 2;
-    joints[1] = M_PI / 2;
-    joints[2] = 3 * M_PI / 2;
-    joints[3] = M_PI;
+    joints[0] = 1.57;
+    joints[1] = 1.57;
+    joints[2] = 4.71;
+    joints[3] = 3.14;
+
     omni->set_joint_positions(joints);
-
+    std::cin.get();
     transform = omni->get_arm_frame();
-    std::cout << "Current arm position (w.r.t. the base frame): " << transform.getOrigin().x() << "  " << transform.getOrigin().y() << " " << transform.getOrigin().z() << std::endl;
-
-    ros::Duration(0.5).sleep();
-
-    // omni->relax();
+    std::cout << "Current arm position (w.r.t. the initial base frame): " << transform.getOrigin().x() << "  " << transform.getOrigin().y() << " " << transform.getOrigin().z() << std::endl;
+    std::cin.get();
 }

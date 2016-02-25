@@ -18,24 +18,25 @@ namespace omni_ros {
         Omni(ros::NodeHandle nh, std::string ns = "/dynamixel_controllers", double arm_timeout = 5);
         ~Omni();
 
-        void init();
-        void relax();
-        void reset();
-        void zero();
-        void set_joint_positions(const std::vector<double>& joints);
-        void base_displace(double x, double y);
-        void base_rotate(double theta);
+        bool init();
+        bool relax();
+        bool reset();
+        bool zero();
+        bool set_joint_positions(const std::vector<double>& joints);
+        bool base_displace(double x, double y);
+        bool base_rotate(double theta);
 
         tf::Transform get_arm_frame();
 
     protected:
-        void _pos_update();
-        void _send_arm_trajectory();
+        void _current_position_update();
+        void _initial_position_update();
+        bool _send_arm_trajectory();
 
         // ROS node handle
         ros::NodeHandle _nh;
         // Store the values of parameters for this ROS node
-        std::string _base_link_frame, _arm_frame, _namespace;
+        std::string _world_frame, _base_link_frame, _arm_frame, _namespace;
         // Seconds to wait for the completion of the arm trajectory
         double _arm_timeout;
         // Trajectory Action Lib Client
