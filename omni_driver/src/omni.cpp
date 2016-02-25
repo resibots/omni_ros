@@ -51,7 +51,7 @@ bool Omni::init()
 bool Omni::relax()
 {
     ROS_INFO_STREAM("Relaxing...");
-     _traj_msg.points.clear();
+    _traj_msg.points.clear();
 
     trajectory_msgs::JointTrajectoryPoint point;
     point.positions.clear();
@@ -78,7 +78,7 @@ bool Omni::reset()
 bool Omni::zero()
 {
     // Clear message points
-     _traj_msg.points.clear();
+    _traj_msg.points.clear();
 
     trajectory_msgs::JointTrajectoryPoint point;
     point.positions.clear();
@@ -117,8 +117,7 @@ bool Omni::base_displace(double x, double y)
     srv.request.longitudinal = x;
     srv.request.transversal = y;
 
-    if (!client.call(srv))
-    {
+    if (!client.call(srv)) {
         ROS_ERROR_STREAM("Failed to call service /base/displace");
         return false;
     }
@@ -132,13 +131,25 @@ bool Omni::base_rotate(double theta)
     youbot_driver_ros_interface::BaseRotate srv;
     srv.request.angle = theta;
 
-    if (!client.call(srv))
-    {
+    if (!client.call(srv)) {
         ROS_ERROR_STREAM("Failed to call service /base/rotate");
         return false;
     }
 
     return true;
+}
+
+bool Omni::base_init()
+{
+    double p = 1.0;
+    double step = 0.1;
+    while (ros::ok()) {
+        _current_position_update();
+        double px_err = (_base_pos.getOrigin()[0] - _base_init_pos.getOrigin()[0]);
+        double py_err = (_base_pos.getOrigin()[1] - _base_init_pos.getOrigin()[1]);
+        base_displace(px_err * step, py_err * step);
+        ros::Duration(step).sleep();
+    }
 }
 
 tf::Transform Omni::get_arm_frame()
@@ -173,7 +184,7 @@ void Omni::_current_position_update()
     while (_nh.ok()) {
         try {
             // Retrieve base frame in the world frame
-            _listener.lookupTransform(_world_frame, _base_link_frame, ros::Time(0), _base_pos);            
+            _listener.lookupTransform(_world_frame, _base_link_frame, ros::Time(0), _base_pos);
         }
         catch (tf::TransformException ex) {
             ROS_WARN_STREAM("Failed to get transfromation from '" << _world_frame << "' to '" << _base_link_frame << "': " << ex.what());
