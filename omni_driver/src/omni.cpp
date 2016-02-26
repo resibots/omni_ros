@@ -1,3 +1,5 @@
+#include <chrono>
+
 #include <youbot_driver_ros_interface/BaseDisplace.h>
 #include <youbot_driver_ros_interface/BaseRotate.h>
 
@@ -141,28 +143,108 @@ bool Omni::base_rotate(double theta)
 
 bool Omni::base_return()
 {
+    double Kp = 1;
+    double Kd = 0.0;
+    double Ki = 0.2;
+
+    double e2 = 0.0, e1 = 0.0, e0 = 0.0, u2 = 0.0, u1 = 0.0, u0 = 0.0;
+    double N = 100;        // filter coefficients
+
+    auto last_time = std::chrono::steady_clock::now();
     bool reached = false;
-    double p = 1.0;
 
     while (!reached && ros::ok()) {
+        auto now = std::chrono::steady_clock::now();
+        double delta = (double)std::abs(std::chrono::duration_cast<std::chrono::milliseconds>(last_time - now).count() / 1000.0);
+
+        double a0 = (1+N * delta);    
+        double a1 = -(2 + N * delta);
+        double a2 = 1;
+        double b0 = Kp * (1+N * delta) + Ki * delta *(1 + N * delta) + Kd * N;
+        double b1 = -(Kp * (2+N * delta) + Ki * delta + 2 * Kd * N);
+        double b2 = Kp + Kd * N;
+        double ku1 = a1 / a0;
+        double ku2 = a2 / a0; 
+        double ke0 = b0 / a0;
+        double ke1 = b1 / a0; 
+        double ke2 = b2 / a0;
+
+        e2 = e1; e1 = e0; u2 = u1; u1 = u0;
+
         _current_position_update();
         tf::Transform tmp = _base_init_pos.inverse() * _base_pos;
         double roll, pitch, yaw;
         tf::Matrix3x3(tmp.getRotation()).getRPY(roll, pitch, yaw);
-        double y_err = yaw;
-        base_rotate(-y_err * p);
-        reached = (y_err) < 1e-3;
+
+        e0 = -yaw;
+        u0 = -ku1 * u1 - ku2 * u2 + ke0 * e0 + ke1 * e1 + ke2 * e2;
+
+        std::cout << "signal before saturation: " << u0 << std::endl;
+        if (u0 > M_PI)
+            u0 = M_PI;
+        if (u0 < -M_PI)
+            u0 = -M_PI;
+
+        std::cout << "signal after saturation: " << u0 << std::endl;
+
+        base_rotate(u0);
+
+        last_time = now;
+        reached = std::abs(e0) < 1e-2;
     }
 
+    double e2_2 = 0.0, e1_2 = 0.0, e0_2 = 0.0, u2_2 = 0.0, u1_2 = 0.0, u0_2 = 0.0; 
+
+    last_time = std::chrono::steady_clock::now();
     reached = false;
 
     while (!reached && ros::ok()) {
+        auto now = std::chrono::steady_clock::now();
+        double delta = (double)std::abs(std::chrono::duration_cast<std::chrono::milliseconds>(last_time - now).count() / 1000.0);
+
+        double a0 = (1+N * delta);    
+        double a1 = -(2 + N * delta);
+        double a2 = 1;
+        double b0 = Kp * (1+N * delta) + Ki * delta *(1 + N * delta) + Kd * N;
+        double b1 = -(Kp * (2+N * delta) + Ki * delta + 2 * Kd * N);
+        double b2 = Kp + Kd * N;
+        double ku1 = a1 / a0;
+        double ku2 = a2 / a0; 
+        double ke0 = b0 / a0;
+        double ke1 = b1 / a0; 
+        double ke2 = b2 / a0;
+
+        e2 = e1; e1 = e0; u2 = u1; u1 = u0;
+        e2_2 = e1_2; e1_2 = e0_2; u2_2 = u1_2; u1_2 = u0_2;
+
         _current_position_update();
         tf::Transform tmp = _base_init_pos.inverse() * _base_pos;
-        double x_err = (tmp.getOrigin().x());
-        double y_err = (tmp.getOrigin().y());
-        base_displace(-x_err * p, -y_err * p);
-        reached = (x_err + y_err) < 1e-3;
+
+        e0 = -(tmp.getOrigin().x());
+        u0 = -ku1 * u1 - ku2 * u2 + ke0 * e0 + ke1 * e1 + ke2 * e2;
+
+        e0_2 = -(tmp.getOrigin().y());
+        u0_2 = -ku1 * u1_2 - ku2 * u2_2 + ke0 * e0_2 + ke1 * e1_2 + ke2 * e2_2;
+
+        std::cout << "signal before saturation: " << u0 << std::endl;
+        std::cout << "signal_2 before saturation: " << u0_2 << std::endl;
+        if (u0 > 0.5)
+            u0 = 0.5;
+        if (u0 < -0.5)
+            u0 = -0.5;
+
+        if (u0_2 > 0.5)
+            u0_2 = 0.5;
+        if (u0_2 < -0.5)
+            u0_2 = -0.5;
+
+        std::cout << "signal after saturation: " << u0 << std::endl;
+        std::cout << "signal after saturation: " << u0_2 << std::endl;
+
+        base_displace(u0, u0_2);
+
+        last_time = now;
+        reached = std::abs(e0) + std::abs(e0_2) < 1e-3;
     }
 }
 
