@@ -21,6 +21,7 @@ namespace omni_ros {
         bool init();
         bool relax();
         bool reset();
+        bool reset(const std::vector<double>& joints);
         bool zero();
         bool set_joint_positions(const std::vector<double>& joints);
         bool base_displace(double x, double y);

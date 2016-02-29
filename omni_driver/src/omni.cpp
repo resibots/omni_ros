@@ -77,6 +77,13 @@ bool Omni::reset()
     return zero();
 }
 
+bool Omni::reset(const std::vector<double>& joints)
+{
+    ROS_INFO_STREAM("Reset...");
+    _initial_position_update();
+    return set_joint_positions(joints);
+}
+
 bool Omni::zero()
 {
     // Clear message points
