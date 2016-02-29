@@ -21,7 +21,7 @@ Omni::~Omni()
 
 bool Omni::init()
 {
-    ROS_INFO_STREAM("Init...");
+    ROS_DEBUG_STREAM("Init...");
     // Private node handle
     ros::NodeHandle n_p("~");
     // Load Server Parameters
@@ -44,7 +44,7 @@ bool Omni::init()
     msg.joint_names.push_back("arm_joint_4");
 
     _traj_msg = msg;
-    ROS_INFO_STREAM("Trajectory actionlib controller initialized!");
+    ROS_DEBUG_STREAM("Trajectory actionlib controller initialized!");
 
     // Reset
     return reset();
@@ -52,7 +52,7 @@ bool Omni::init()
 
 bool Omni::relax()
 {
-    ROS_INFO_STREAM("Relaxing...");
+    ROS_DEBUG_STREAM("Relaxing...");
     _traj_msg.points.clear();
 
     trajectory_msgs::JointTrajectoryPoint point;
@@ -72,14 +72,14 @@ bool Omni::relax()
 
 bool Omni::reset()
 {
-    ROS_INFO_STREAM("Reset...");
+    ROS_DEBUG_STREAM("Reset...");
     _initial_position_update();
     return zero();
 }
 
 bool Omni::reset(const std::vector<double>& joints)
 {
-    ROS_INFO_STREAM("Reset...");
+    ROS_DEBUG_STREAM("Reset...");
     _initial_position_update();
     return set_joint_positions(joints);
 }
