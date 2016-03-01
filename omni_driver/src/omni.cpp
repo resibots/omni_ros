@@ -150,9 +150,9 @@ bool Omni::base_rotate(double theta)
 
 bool Omni::base_return()
 {
-    double Kp = 1;
+    double Kp = 0.9;
     double Kd = 0.0;
-    double Ki = 0.2;
+    double Ki = 0.3;
 
     double e2 = 0.0, e1 = 0.0, e0 = 0.0, u2 = 0.0, u1 = 0.0, u0 = 0.0;
     double N = 100;        // filter coefficients
@@ -164,16 +164,16 @@ bool Omni::base_return()
         auto now = std::chrono::steady_clock::now();
         double delta = (double)std::abs(std::chrono::duration_cast<std::chrono::milliseconds>(last_time - now).count() / 1000.0);
 
-        double a0 = (1+N * delta);    
+        double a0 = (1+N * delta);
         double a1 = -(2 + N * delta);
         double a2 = 1;
         double b0 = Kp * (1+N * delta) + Ki * delta *(1 + N * delta) + Kd * N;
         double b1 = -(Kp * (2+N * delta) + Ki * delta + 2 * Kd * N);
         double b2 = Kp + Kd * N;
         double ku1 = a1 / a0;
-        double ku2 = a2 / a0; 
+        double ku2 = a2 / a0;
         double ke0 = b0 / a0;
-        double ke1 = b1 / a0; 
+        double ke1 = b1 / a0;
         double ke2 = b2 / a0;
 
         e2 = e1; e1 = e0; u2 = u1; u1 = u0;
@@ -186,21 +186,19 @@ bool Omni::base_return()
         e0 = -yaw;
         u0 = -ku1 * u1 - ku2 * u2 + ke0 * e0 + ke1 * e1 + ke2 * e2;
 
-        std::cout << "signal before saturation: " << u0 << std::endl;
         if (u0 > M_PI)
             u0 = M_PI;
         if (u0 < -M_PI)
             u0 = -M_PI;
 
-        std::cout << "signal after saturation: " << u0 << std::endl;
-
         base_rotate(u0);
 
         last_time = now;
-        reached = std::abs(e0) < 1e-2;
+        reached = std::abs(e0) < 1e-2 || std::abs(u0) < 1e-3;
     }
 
-    double e2_2 = 0.0, e1_2 = 0.0, e0_2 = 0.0, u2_2 = 0.0, u1_2 = 0.0, u0_2 = 0.0; 
+    e2 = 0.0, e1 = 0.0, e0 = 0.0, u2 = 0.0, u1 = 0.0, u0 = 0.0;
+    double e2_2 = 0.0, e1_2 = 0.0, e0_2 = 0.0, u2_2 = 0.0, u1_2 = 0.0, u0_2 = 0.0;
 
     last_time = std::chrono::steady_clock::now();
     reached = false;
@@ -209,16 +207,16 @@ bool Omni::base_return()
         auto now = std::chrono::steady_clock::now();
         double delta = (double)std::abs(std::chrono::duration_cast<std::chrono::milliseconds>(last_time - now).count() / 1000.0);
 
-        double a0 = (1+N * delta);    
+        double a0 = (1+N * delta);
         double a1 = -(2 + N * delta);
         double a2 = 1;
         double b0 = Kp * (1+N * delta) + Ki * delta *(1 + N * delta) + Kd * N;
         double b1 = -(Kp * (2+N * delta) + Ki * delta + 2 * Kd * N);
         double b2 = Kp + Kd * N;
         double ku1 = a1 / a0;
-        double ku2 = a2 / a0; 
+        double ku2 = a2 / a0;
         double ke0 = b0 / a0;
-        double ke1 = b1 / a0; 
+        double ke1 = b1 / a0;
         double ke2 = b2 / a0;
 
         e2 = e1; e1 = e0; u2 = u1; u1 = u0;
@@ -233,8 +231,6 @@ bool Omni::base_return()
         e0_2 = -(tmp.getOrigin().y());
         u0_2 = -ku1 * u1_2 - ku2 * u2_2 + ke0 * e0_2 + ke1 * e1_2 + ke2 * e2_2;
 
-        std::cout << "signal before saturation: " << u0 << std::endl;
-        std::cout << "signal_2 before saturation: " << u0_2 << std::endl;
         if (u0 > 0.5)
             u0 = 0.5;
         if (u0 < -0.5)
@@ -245,13 +241,49 @@ bool Omni::base_return()
         if (u0_2 < -0.5)
             u0_2 = -0.5;
 
-        std::cout << "signal after saturation: " << u0 << std::endl;
-        std::cout << "signal after saturation: " << u0_2 << std::endl;
-
         base_displace(u0, u0_2);
 
         last_time = now;
-        reached = std::abs(e0) + std::abs(e0_2) < 1e-3;
+        reached = (std::abs(e0) + std::abs(e0_2) < 1e-3) || (std::abs(u0) + std::abs(u0_2) < 1e-4);
+    }
+
+    e2 = 0.0, e1 = 0.0, e0 = 0.0, u2 = 0.0, u1 = 0.0, u0 = 0.0;
+
+    while (!reached && ros::ok()) {
+        auto now = std::chrono::steady_clock::now();
+        double delta = (double)std::abs(std::chrono::duration_cast<std::chrono::milliseconds>(last_time - now).count() / 1000.0);
+
+        double a0 = (1+N * delta);
+        double a1 = -(2 + N * delta);
+        double a2 = 1;
+        double b0 = Kp * (1+N * delta) + Ki * delta *(1 + N * delta) + Kd * N;
+        double b1 = -(Kp * (2+N * delta) + Ki * delta + 2 * Kd * N);
+        double b2 = Kp + Kd * N;
+        double ku1 = a1 / a0;
+        double ku2 = a2 / a0;
+        double ke0 = b0 / a0;
+        double ke1 = b1 / a0;
+        double ke2 = b2 / a0;
+
+        e2 = e1; e1 = e0; u2 = u1; u1 = u0;
+
+        _current_position_update();
+        tf::Transform tmp = _base_init_pos.inverse() * _base_pos;
+        double roll, pitch, yaw;
+        tf::Matrix3x3(tmp.getRotation()).getRPY(roll, pitch, yaw);
+
+        e0 = -yaw;
+        u0 = -ku1 * u1 - ku2 * u2 + ke0 * e0 + ke1 * e1 + ke2 * e2;
+
+        if (u0 > M_PI)
+            u0 = M_PI;
+        if (u0 < -M_PI)
+            u0 = -M_PI;
+
+        base_rotate(u0);
+
+        last_time = now;
+        reached = std::abs(e0) < 1e-2 || std::abs(u0) < 1e-3;
     }
 }
 
