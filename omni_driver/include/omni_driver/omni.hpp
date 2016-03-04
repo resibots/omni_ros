@@ -26,7 +26,8 @@ namespace omni_ros {
         bool set_joint_positions(const std::vector<double>& joints);
         bool base_displace(double x, double y);
         bool base_rotate(double theta);
-        bool base_return();
+        void base_velocity(double x, double y, double theta);
+        bool base_return(double Kp=0.9, double Ki=0.3);
 
         tf::Transform get_arm_frame();
 
@@ -44,6 +45,9 @@ namespace omni_ros {
         // Trajectory Action Lib Client
         std::shared_ptr<trajectory_client> _traj_client;
         trajectory_msgs::JointTrajectory _traj_msg;
+
+        // to send velocity commands to YouBot base of Omnipointer
+        ros::Publisher _velocity_command;
 
         // TF listener to get the frames for the arm and the base
         tf::TransformListener _listener;
