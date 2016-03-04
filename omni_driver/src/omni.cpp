@@ -350,7 +350,7 @@ bool Omni::_send_arm_trajectory()
     goal.trajectory = _traj_msg;
     _traj_client->sendGoal(goal);
 
-    _traj_client->waitForResult(ros::Duration(_arm_timeout + 0.5));
+    _traj_client->waitForResult(ros::Duration(_arm_timeout  * 2));
     if (_traj_client->getState() != actionlib::SimpleClientGoalState::SUCCEEDED) {
         ROS_WARN_STREAM("Trajectory execution failed with status '" << _traj_client->getState().toString() << "'");
         return false;
