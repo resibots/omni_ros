@@ -27,7 +27,7 @@ namespace omni_ros {
         bool base_displace(double x, double y);
         bool base_rotate(double theta);
         void base_velocity(double x, double y, double theta);
-        bool base_return(double Kp=0.9, double Ki=0.3);
+        bool base_return(double Kp=0.9, double Ki=0.3, double Kd=0.0);
 
         tf::Transform get_arm_frame();
 

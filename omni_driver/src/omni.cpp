@@ -169,14 +169,53 @@ void Omni::base_velocity(double x, double y, double theta)
     _velocity_command.publish(command);
 }
 
-bool Omni::base_return(double Kp, double Ki)
+bool Omni::base_return(double Kp, double Ki, double Kd)
 {
+    double e2 = 0.0, e1 = 0.0, e0 = 0.0, u2 = 0.0, u1 = 0.0, u0 = 0.0;
+    double N = 100;        // filter coefficients
+
     auto last_time = std::chrono::steady_clock::now();
     bool reached = false;
 
-    double ex1 = 0.0, ex0 = 0.0, ux = 0.0;
-    double ey1 = 0.0, ey0 = 0.0, uy = 0.0;
-    double et1 = 0.0, et0 = 0.0, ut = 0.0;
+    while (!reached && ros::ok()) {
+        auto now = std::chrono::steady_clock::now();
+        double delta = (double)std::abs(std::chrono::duration_cast<std::chrono::milliseconds>(last_time - now).count() / 1000.0);
+
+        double a0 = (1+N * delta);
+        double a1 = -(2 + N * delta);
+        double a2 = 1;
+        double b0 = Kp * (1+N * delta) + Ki * delta *(1 + N * delta) + Kd * N;
+        double b1 = -(Kp * (2+N * delta) + Ki * delta + 2 * Kd * N);
+        double b2 = Kp + Kd * N;
+        double ku1 = a1 / a0;
+        double ku2 = a2 / a0;
+        double ke0 = b0 / a0;
+        double ke1 = b1 / a0;
+        double ke2 = b2 / a0;
+
+        e2 = e1; e1 = e0; u2 = u1; u1 = u0;
+
+        _current_position_update();
+        tf::Transform tmp = _base_init_pos.inverse() * _base_pos;
+        double roll, pitch, yaw;
+        tf::Matrix3x3(tmp.getRotation()).getRPY(roll, pitch, yaw);
+
+        e0 = -yaw;
+        u0 = -ku1 * u1 - ku2 * u2 + ke0 * e0 + ke1 * e1 + ke2 * e2;
+
+        if (u0 > M_PI)
+            u0 = M_PI;
+        if (u0 < -M_PI)
+            u0 = -M_PI;
+
+        base_rotate(u0);
+
+        last_time = now;
+        reached = std::abs(e0) < 1e-2 && std::abs(u0) < 1e-2;
+    }
+
+    e2 = 0.0, e1 = 0.0, e0 = 0.0, u2 = 0.0, u1 = 0.0, u0 = 0.0;
+    double e2_2 = 0.0, e1_2 = 0.0, e0_2 = 0.0, u2_2 = 0.0, u1_2 = 0.0, u0_2 = 0.0;
 
     last_time = std::chrono::steady_clock::now();
     reached = false;
@@ -185,51 +224,84 @@ bool Omni::base_return(double Kp, double Ki)
         auto now = std::chrono::steady_clock::now();
         double delta = (double)std::abs(std::chrono::duration_cast<std::chrono::milliseconds>(last_time - now).count() / 1000.0);
 
-        ex1 = ex0;
-        ey1 = ey0;
-        et1 = et0;
+        double a0 = (1+N * delta);
+        double a1 = -(2 + N * delta);
+        double a2 = 1;
+        double b0 = Kp * (1+N * delta) + Ki * delta *(1 + N * delta) + Kd * N;
+        double b1 = -(Kp * (2+N * delta) + Ki * delta + 2 * Kd * N);
+        double b2 = Kp + Kd * N;
+        double ku1 = a1 / a0;
+        double ku2 = a2 / a0;
+        double ke0 = b0 / a0;
+        double ke1 = b1 / a0;
+        double ke2 = b2 / a0;
+
+        e2 = e1; e1 = e0; u2 = u1; u1 = u0;
+        e2_2 = e1_2; e1_2 = e0_2; u2_2 = u1_2; u1_2 = u0_2;
 
         _current_position_update();
-        tf::Transform tmp = _base_pos.inverse() * _base_init_pos;
+        tf::Transform tmp = _base_init_pos.inverse() * _base_pos;
 
-        ex0 = tmp.getOrigin().x();
-        ux = Kp*ex0 + Ki*ex1;
+        e0 = -(tmp.getOrigin().x());
+        u0 = -ku1 * u1 - ku2 * u2 + ke0 * e0 + ke1 * e1 + ke2 * e2;
 
-        ey0 = tmp.getOrigin().y();
-        uy = Kp*ey0 + Ki*ey1;
+        e0_2 = -(tmp.getOrigin().y());
+        u0_2 = -ku1 * u1_2 - ku2 * u2_2 + ke0 * e0_2 + ke1 * e1_2 + ke2 * e2_2;
 
+        if (u0 > 0.5)
+            u0 = 0.5;
+        if (u0 < -0.5)
+            u0 = -0.5;
+
+        if (u0_2 > 0.5)
+            u0_2 = 0.5;
+        if (u0_2 < -0.5)
+            u0_2 = -0.5;
+
+        base_displace(u0, u0_2);
+
+        last_time = now;
+        reached = (std::abs(e0) + std::abs(e0_2) < 1e-3) && (std::abs(u0) + std::abs(u0_2) < 1e-3);
+    }
+
+    e2 = 0.0, e1 = 0.0, e0 = 0.0, u2 = 0.0, u1 = 0.0, u0 = 0.0;
+
+    while (!reached && ros::ok()) {
+        auto now = std::chrono::steady_clock::now();
+        double delta = (double)std::abs(std::chrono::duration_cast<std::chrono::milliseconds>(last_time - now).count() / 1000.0);
+
+        double a0 = (1+N * delta);
+        double a1 = -(2 + N * delta);
+        double a2 = 1;
+        double b0 = Kp * (1+N * delta) + Ki * delta *(1 + N * delta) + Kd * N;
+        double b1 = -(Kp * (2+N * delta) + Ki * delta + 2 * Kd * N);
+        double b2 = Kp + Kd * N;
+        double ku1 = a1 / a0;
+        double ku2 = a2 / a0;
+        double ke0 = b0 / a0;
+        double ke1 = b1 / a0;
+        double ke2 = b2 / a0;
+
+        e2 = e1; e1 = e0; u2 = u1; u1 = u0;
+
+        _current_position_update();
+        tf::Transform tmp = _base_init_pos.inverse() * _base_pos;
         double roll, pitch, yaw;
         tf::Matrix3x3(tmp.getRotation()).getRPY(roll, pitch, yaw);
-        et0 = yaw;
-        ut = Kp*et0 + Ki*et1;
 
-        reached = (std::abs(ex0) + std::abs(ey0) + std::abs(et0) < 4e-3)
-          && (std::abs(ux) + std::abs(uy) + std::abs(ut) < 1e-3);
+        e0 = -yaw;
+        u0 = -ku1 * u1 - ku2 * u2 + ke0 * e0 + ke1 * e1 + ke2 * e2;
 
-        if(!reached) {
-          if (ux > 0.5)
-              ux = 0.5;
-          if (ux < -0.5)
-              ux = -0.5;
+        if (u0 > M_PI)
+            u0 = M_PI;
+        if (u0 < -M_PI)
+            u0 = -M_PI;
 
-          if (uy > 0.5)
-              uy = 0.5;
-          if (uy < -0.5)
-              uy = -0.5;
+        base_rotate(u0);
 
-          if (ut > 0.5)
-              ut = 0.5;
-          if (ut < -0.5)
-              ut = -0.5;
-
-          base_velocity(ux, uy, ut);
-
-          last_time = now;
-        }
-        else
-          ROS_DEBUG_STREAM("The base is back to its original position");
+        last_time = now;
+        reached = std::abs(e0) < 1e-2 && std::abs(u0) < 1e-2;
     }
-    base_velocity(0, 0, 0);
 }
 
 tf::Transform Omni::get_arm_frame()
