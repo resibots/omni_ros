@@ -21,6 +21,18 @@ reading this means that you have had knowledge of the CeCILL license and that
 you accept its terms. -->
 
 <launch>
+  <!--
+    What is done here
+      - load URDF description the TF tree
+      - control node for the arm (dynamixel hardware interface)
+      - control node for the YouBot mobile base (youbot driver)
+
+    Topics published
+      TODO
+
+    Subscribed topics
+      TODO
+  -->
 
   <!-- URDF robot description -->
   <include file="$(find omni_description)/launch/omnipointer.launch" />
@@ -34,7 +46,7 @@ you accept its terms. -->
   <param name="youBotBaseJointVelocity" type="double" value="4.0"/>
   <param name="youBotBaseJointAcceleration" type="double" value="4.0"/>
 
-    <!-- Default name values --> 
+    <!-- Default name values -->
   <param name="youBotBaseName" type="str" value="youbot-base"/>
 
   <!-- Start the base driver. -->
@@ -45,7 +57,7 @@ you accept its terms. -->
   <!-- launch our hardware interface -->
   <node name="dynamixel_control_hw" pkg="dynamixel_control_hw" type="dynamixel_control_hw" output="screen"/>
   <node name="controller" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="/dynamixel_controllers/joint_state_controller /dynamixel_controllers/omni_arm_controller"/>
-  
+
   <!-- Publish robot's state in the tf tree -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
 </launch>
