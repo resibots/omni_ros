@@ -1,0 +1,118 @@
+<?xml version="1.0"?>
+<robot name="omnigrasper" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <xacro:include filename="$(find omni_description)/urdf/common.xacro" />
+    <xacro:leg/>
+
+    <!-- TODO use the box link macro in common.xacro -->
+
+    <!-- Xacro macro for the arm -->
+    <xacro:macro name="leg">
+        <link name="plate">
+            <!-- <xacro:visuals_collisions_arm_0/> -->
+            <visual>
+                <geometry>
+                    <box size="0.25 0.25 0.10"/>
+                </geometry>
+            </visual>
+        </link>
+        <joint name="plate_arm_0" type="fixed">
+            <parent link="plate"/>
+            <child link="arm_0"/>
+            <origin xyz="0 0 0.141"/>
+        </joint>
+        <link name="arm_0">
+            <!-- <xacro:visuals_collisions_arm_0/> -->
+            <visual>
+                <geometry>
+                    <box size="0.05 0.05 0.05"/>
+                </geometry>
+            </visual>
+        </link>
+
+        <joint name="arm_0_1" type="revolute">
+            <parent link="arm_0"/>
+            <child link="arm_1"/>
+            <limit effort="${5}" velocity="${5}" lower="${-M_PI}" upper="${M_PI}"/>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <axis xyz="0 0 1"/>
+            <!-- <dynamics damping="${joint_dmp}"/> -->
+        </joint>
+        <link name="arm_1">
+            <!-- <xacro:visuals_collisions_arm_1/> -->
+            <xacro:property name="arm_1_mass" value="0.855" />
+            <xacro:property name="arm_1_lx" value="0.054" />
+            <xacro:property name="arm_1_ly" value="0.132" />
+            <xacro:property name="arm_1_lz" value="0.054" />
+            <visual>
+                <geometry>
+                    <box size="${arm_1_lx} ${arm_1_ly} ${arm_1_lz}"/>
+                </geometry>
+            </visual>
+            <!-- TODO Parts to add : frame adaptor FRP54-A110K, idler FRP54-I110 -->
+            <inertial>
+                <!-- center of mass -->
+                <origin rpy="0 0 0" xyz="0 0 ${0.001*(6+54/2)}"/>
+                <mass value="${arm_1_mass}"/>
+                <!-- box inertia: 1/12*m(y^2+z^2), ... -->
+                <inertia ixx="${1/12*arm_1_mass*(arm_1_ly**2 + arm_1_lz**2)}" ixy="0" ixz="0"
+                    iyy="${1/12*arm_1_mass*(arm_1_lx**2 + arm_1_lz**2)}" iyz="0"
+                    izz="${1/12*arm_1_mass*(arm_1_lx**2 + arm_1_ly**2)}"/>
+            </inertial>
+        </link>
+
+        <joint name="arm_1_2" type="revolute">
+            <parent link="arm_1"/>
+            <child link="arm_2"/>
+            <limit effort="${5}" velocity="${5}" lower="-2" upper="2"/>
+            <origin rpy="${M_PI/2} ${-M_PI/2} 0" xyz="0 0 0"/>
+            <axis xyz="0 0 1"/>
+            <!-- <dynamics damping="${joint_dmp}"/> -->
+        </joint>
+        <link name="arm_2">
+            <!-- <xacro:visuals_collisions_arm_2/> -->
+            <xacro:property name="L54_50_S500_mass" value="0.662" />
+            <xacro:property name="L54_50_S500_lx" value="0.054" />
+            <xacro:property name="L54_50_S500_ly" value="0.054" />
+            <xacro:property name="L54_50_S500_lz" value="0.114" />
+            <visual> <!-- L54-50-S500 -->
+                <origin rpy="0 0 0" xyz="${0.001*(51+180+6+54/2)} 0 0"/>
+                <geometry name="L54_50_S500"> <!-- L54-50-S500 -->
+                    <box size="${L54_50_S500_lx} ${L54_50_S500_ly} ${L54_50_S500_lz}"/>
+                </geometry>
+            </visual>
+            <!-- TODO Parts to add : modified (by us) frame FRP54-H220, modified
+            (by us) frame adaptor FRP54-H120K (modified by us), idler FRP54-I110 -->
+            <inertial> <!-- L54-50-S500 -->
+                <!-- center of mass -->
+                <origin rpy="0 0 0" xyz="${0.001*(51+180+6+54/2)} 0 0"/>
+                <mass value="${L54_50_S500_mass}"/>
+                <!-- box inertia: 1/12*m(y^2+z^2), ... -->
+                <inertia ixx="${1/12*L54_50_S500_mass*(L54_50_S500_ly**2 + L54_50_S500_lz**2)}" ixy="0" ixz="0"
+                    iyy="${1/12*L54_50_S500_mass*(L54_50_S500_lx**2 + L54_50_S500_lz**2)}" iyz="0"
+                    izz="${1/12*L54_50_S500_mass*(L54_50_S500_lx**2 + L54_50_S500_ly**2)}"/>
+            </inertial>
+
+            <xacro:property name="profile_2_mass" value="${1.38*0.180}" />
+            <xacro:property name="profile_2_lx" value="0.180" />
+            <xacro:property name="profile_2_ly" value="0.040" />
+            <xacro:property name="profile_2_lz" value="0.040" />
+            <visual> <!-- aluminium profile -->
+                <origin rpy="0 0 0" xyz="${0.001*(51+180/2)} 0 0"/>
+                <geometry name="profile_2"> <!-- profile_2 -->
+                    <box size="${profile_2_lx} ${profile_2_ly} ${profile_2_lz}"/>
+                </geometry>
+            </visual>
+            <inertial> <!-- aluminium profile -->
+                <!-- TODO: take the moments of inertia provided by manufacturer -->
+                <!-- center of mass -->
+                <origin rpy="0 0 0" xyz="${0.001*(51+180/2)} 0 0"/>
+                <mass value="${profile_2_mass}"/>
+                <!-- box inertia: 1/12*m(y^2+z^2), ... -->
+                <inertia ixx="${1/12*profile_2_mass*(profile_2_ly**2 + profile_2_lz**2)}" ixy="0" ixz="0"
+                    iyy="${1/12*profile_2_mass*(profile_2_lx**2 + profile_2_lz**2)}" iyz="0"
+                    izz="${1/12*profile_2_mass*(profile_2_lx**2 + profile_2_ly**2)}"/>
+            </inertial>
+        </link>
+    </xacro:macro>
+</robot>
