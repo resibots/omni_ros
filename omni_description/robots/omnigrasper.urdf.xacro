@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <robot name="omnigrasper"  xmlns:xacro="http://ros.org/wiki/xacro">
   <!-- common includes -->
-  <!-- <xacro:include filename="$(find youbot_description)/urdf/common.xacro" /> -->
+  <xacro:include filename="$(find youbot_description)/urdf/common.xacro" />
   <xacro:include filename="$(find omni_description)/urdf/common.xacro" />
   <!-- youbot base -->
   <xacro:include filename="$(find youbot_description)/urdf/youbot_base/base.urdf.xacro" />
   <!-- omni plate -->
   <xacro:include filename="$(find omni_description)/urdf/omni_plate/plate.urdf.xacro" />
-  <!-- OmniGrasper arm -->
+  <!-- Omnigrasper arm -->
   <xacro:include filename="$(find omni_description)/urdf/omnigrasper_arm/arm.urdf.xacro" />
   <!-- materials for visualization -->
   <xacro:include filename="$(find youbot_description)/urdf/materials.urdf.xacro" />
