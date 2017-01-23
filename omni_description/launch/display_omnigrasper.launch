@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-  <include file="$(find omni_description)/launch/omnipointer.launch" />
+  <param name="robot_description" command="$(find xacro)/xacro.py $(find omni_description)/robots/omnigrasper.urdf.xacro" />
 
   <!-- Option to show or hide the GUI of the joint state publisher -->
   <arg name="gui" default="true"/>
@@ -9,7 +9,5 @@
   <!-- Start state publishers -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
   <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
-
-  <!-- Start Rviz -->
   <node name="rviz" pkg="rviz" type="rviz"/>
 </launch>

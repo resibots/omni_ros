@@ -1,12 +1,16 @@
 <?xml version="1.0"?>
 <launch>
 	<include file="$(find omni_description)/launch/omnipointer.launch" />
+
 	<arg name="model" />
-	<arg name="gui" default="true" />
+
+  <arg name="gui" default="true" />
 	<param name="use_gui" value="$(arg gui)" />
-	<!-- Start state publishers -->
+
+  <!-- Start state publishers -->
 	<!-- <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" /> -->
 	<!-- <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" /> -->
-	<!-- Start RVIZ -->
+
+  <!-- Start RVIZ -->
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find omni_description)/config/omni_description.rviz" />
 </launch>
