@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<robot name="omnigrasper"  xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- common includes -->
+  <!-- <xacro:include filename="$(find youbot_description)/urdf/common.xacro" /> -->
+  <xacro:include filename="$(find omni_description)/urdf/common.xacro" />
+  <!-- youbot base -->
+  <xacro:include filename="$(find youbot_description)/urdf/youbot_base/base.urdf.xacro" />
+  <!-- omni plate -->
+  <xacro:include filename="$(find omni_description)/urdf/omni_plate/plate.urdf.xacro" />
+  <!-- OmniGrasper arm -->
+  <xacro:include filename="$(find omni_description)/urdf/omnigrasper_arm/arm.urdf.xacro" />
+  <!-- materials for visualization -->
+  <xacro:include filename="$(find youbot_description)/urdf/materials.urdf.xacro" />
+  <xacro:include filename="$(find omni_description)/urdf/materials.urdf.xacro" />
+
+  <!-- Now we can start using the macros xacro:included above to define the actual omnipointer -->
+
+  <!-- The first use of a macro.  This one was defined in youbot_base/base.urdf.xacro above.
+       A macro like this will expand to a set of link and joint definitions, and to additional
+       Gazebo-related extensions (sensor plugins, etc).  The macro takes an argument, name,
+       that equals "base", and uses it to generate names for its component links and joints
+       (e.g., base_link).  The xacro:included origin block is also an argument to the macro.  By convention,
+       the origin block defines where the component is w.r.t its parent (in this case the parent
+       is the world frame). For more, see http://www.ros.org/wiki/xacro -->
+  <!-- <xacro:youbot_base name="base"/> -->
+
+  <!-- <xacro:omni_plate name="plate" parent="base_link">
+    <origin xyz="-0.148 0 0.061" rpy="0 0 0" />
+  </xacro:omni_plate> -->
+
+  <xacro:omnigrasper_arm/>
+</robot>

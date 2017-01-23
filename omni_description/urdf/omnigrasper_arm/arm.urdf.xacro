@@ -1,13 +1,8 @@
 <?xml version="1.0"?>
 <robot name="omnigrasper" xmlns:xacro="http://ros.org/wiki/xacro">
 
-    <xacro:include filename="$(find omni_description)/urdf/common.xacro" />
-    <xacro:leg/>
-
-    <!-- TODO use the box link macro in common.xacro -->
-
     <!-- Xacro macro for the arm -->
-    <xacro:macro name="leg">
+    <xacro:macro name="omnigrasper_arm">
         <link name="plate">
             <!-- <xacro:visuals_collisions_arm_0/> -->
             <visual>
