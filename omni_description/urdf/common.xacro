@@ -27,13 +27,14 @@
           </link>
     </xacro:macro>
 
-    <xacro:macro name="box_vci" params="name mass size_x size_y size_z xyz">
+    <xacro:macro name="box_vci" params="name mass size_x size_y size_z xyz color">
         <!-- For Box Visual Collision Intertial -->
         <visual>
             <origin xyz="${xyz}" rpy="0 0 0"/>
             <geometry name="${name}">
               <box size="${size_x} ${size_y} ${size_z}"/>
             </geometry>
+            <material name="${color}"/>
         </visual>
         <collision>
             <origin xyz="${xyz}" rpy="0 0 0"/>
