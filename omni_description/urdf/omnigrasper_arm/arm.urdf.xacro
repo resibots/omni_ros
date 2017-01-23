@@ -2,26 +2,25 @@
 <robot name="omnigrasper" xmlns:xacro="http://ros.org/wiki/xacro">
 
     <!-- Xacro macro for the arm -->
-    <xacro:macro name="omnigrasper_arm">
-        <link name="plate">
-            <!-- <xacro:visuals_collisions_arm_0/> -->
-            <visual>
-                <geometry>
-                    <box size="0.25 0.25 0.10"/>
-                </geometry>
-            </visual>
-        </link>
+    <xacro:macro name="omnigrasper_arm" params="parent name *origin">
+        <joint name="${parent}_${name}_base" type="fixed">
+            <parent link="${parent}"/>
+            <child link="${name}_base"/>
+            <xacro:insert_block name="origin"/>
+        </joint>
+        <link name="${name}_base"/>
 
-        <joint name="plate_arm_0" type="fixed">
-            <parent link="plate"/>
+        <joint name="${name}_base_arm_0" type="fixed">
+            <parent link="${name}_base"/>
             <child link="arm_0"/>
             <origin xyz="0 0 0.141"/>
         </joint>
         <link name="arm_0">
             <!-- <xacro:visuals_collisions_arm_0/> -->
             <visual>
+                <origin xyz="0 0 ${-0.001*(54/2+6+108/2)}" rpy="0 0 0"/>
                 <geometry>
-                    <box size="0.05 0.05 0.05"/>
+                    <box size="0.054 0.054 0.108"/>
                 </geometry>
             </visual>
         </link>
@@ -125,10 +124,10 @@
 
         <joint name="arm_5_end" type="fixed">
             <parent link="arm_5"/>
-            <child link="arm_end"/>
+            <child link="arm_link"/>
             <origin xyz="0 0.039 -0.006"/>
         </joint>
-        <link name="arm_end">
+        <link name="arm_link">
             <!-- <xacro:visuals_collisions_arm_0/> -->
             <!-- <visual>
                 <geometry>

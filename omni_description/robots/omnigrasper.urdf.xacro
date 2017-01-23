@@ -22,11 +22,13 @@
        (e.g., base_link).  The xacro:included origin block is also an argument to the macro.  By convention,
        the origin block defines where the component is w.r.t its parent (in this case the parent
        is the world frame). For more, see http://www.ros.org/wiki/xacro -->
-  <!-- <xacro:youbot_base name="base"/> -->
+  <xacro:youbot_base name="base"/>
 
-  <!-- <xacro:omni_plate name="plate" parent="base_link">
+  <xacro:omni_plate name="plate" parent="base_link">
     <origin xyz="-0.148 0 0.061" rpy="0 0 0" />
-  </xacro:omni_plate> -->
+  </xacro:omni_plate>
 
-  <xacro:omnigrasper_arm/>
+  <xacro:omnigrasper_arm name="arm" parent="plate_link">
+    <origin xyz="0 0 0.004" rpy="0 0 0" />
+  </xacro:omnigrasper_arm>
 </robot>
