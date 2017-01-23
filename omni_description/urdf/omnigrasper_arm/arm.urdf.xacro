@@ -16,7 +16,6 @@
             <origin xyz="0 0 0.141"/>
         </joint>
         <link name="arm_0">
-            <!-- <xacro:visuals_collisions_arm_0/> -->
             <visual>
                 <origin xyz="0 0 ${-0.001*(54/2+6+108/2)}" rpy="0 0 0"/>
                 <geometry>
@@ -33,7 +32,6 @@
                 lower="${-M_PI}" upper="${M_PI}"/>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <axis xyz="0 0 1"/>
-            <!-- <dynamics damping="${joint_dmp}"/> -->
         </joint>
         <link name="arm_1">
             <!-- TODO Parts to add : frame adaptor FRP54-A110K, idler FRP54-I110 -->
@@ -49,10 +47,8 @@
                 lower="${1.34-M_PI}" upper="${4.94-M_PI}"/>
             <origin rpy="${M_PI/2} ${-M_PI/2} 0" xyz="0 0 0"/>
             <axis xyz="0 0 1"/>
-            <!-- <dynamics damping="${joint_dmp}"/> -->
         </joint>
         <link name="arm_2">
-            <!-- <xacro:visuals_collisions_arm_2/> -->
             <!-- TODO Parts to add : modified (by us) frame FRP54-H220, (modified
             by us) frame adaptor FRP54-A110K (modified by us), idler FRP54-I110 -->
 
@@ -72,10 +68,8 @@
                 lower="${1.32-M_PI}" upper="${4.80-M_PI}"/>
             <origin rpy="0 0 ${-M_PI/2}" xyz="0.264 0 0"/>
             <axis xyz="0 0 1"/>
-            <!-- <dynamics damping="${joint_dmp}"/> -->
         </joint>
         <link name="arm_3">
-            <!-- <xacro:visuals_collisions_arm_3/> -->
             <!-- TODO Parts to add : modified (by us) frame FRP54-H120, modofied
             (by us) frame adaptor FRP54-A110K, idler FRP54-I110 -->
 
@@ -94,10 +88,8 @@
             <limit effort="2.5" velocity="${28.7*M_PI/30}" lower="${-M_PI}" upper="${M_PI}"/>
             <origin rpy="${-M_PI/2} 0 0" xyz="0 0.252 0"/>
             <axis xyz="0 0 1"/>
-            <!-- <dynamics damping="${joint_dmp}"/> -->
         </joint>
         <link name="arm_4">
-            <!-- <xacro:visuals_collisions_arm_4/> -->
             <!-- TODO Parts to add : modified (by us) frame adaptor FRP54-A110K,
             idler FRP42-I110 -->
             <xacro:box_vci name="L42_10_S300" mass="0.257"
@@ -111,10 +103,8 @@
             <limit effort="1.2" velocity="${29.7*M_PI/30}" lower="${-M_PI/2}" upper="${M_PI/2}"/>
             <origin rpy="${M_PI/2} 0 0" xyz="0 0 0"/>
             <axis xyz="0 0 1"/>
-            <!-- <dynamics damping="${joint_dmp}"/> -->
         </joint>
         <link name="arm_5">
-            <!-- <xacro:visuals_collisions_arm_5/> -->
             <!-- TODO Parts to add : frame FRP42-H220 -->
 
             <!-- FIXME: The weight is made up, as well as the center of mass -->
@@ -128,14 +118,7 @@
             <child link="arm_link"/>
             <origin xyz="0 0.039 -0.006"/>
         </joint>
-        <link name="arm_link">
-            <!-- <xacro:visuals_collisions_arm_0/> -->
-            <!-- <visual>
-                <geometry>
-                    <box size="0.0025 0.03 0.0025"/>
-                </geometry>
-            </visual> -->
-        </link>
+        <link name="arm_link"/>
     </xacro:macro>
     <!-- end of arm links/joints -->
 </robot>
