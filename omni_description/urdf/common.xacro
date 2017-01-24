@@ -52,4 +52,24 @@
                 izz="${1/12*mass*(size_x**2 + size_y**2)}"/>
           </inertial>
     </xacro:macro>
+
+    <xacro:macro name="box_ci" params="name mass size_x size_y size_z
+        xyz color">
+        <!-- For Box Collision Intertial -->
+        <collision>
+            <origin xyz="${xyz}" rpy="0 0 0"/>
+            <geometry>
+                <box size="${size_x} ${size_y} ${size_z}"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <!-- center of mass -->
+            <origin xyz="${xyz}" rpy="0 0 0"/>
+            <mass value="${mass}"/>
+            <!-- box inertia: 1/12*m(y^2+z^2), ... -->
+            <inertia ixx="${1/12*mass*(size_y**2 + size_z**2)}" ixy="0" ixz="0"
+                iyy="${1/12*mass*(size_x**2 + size_z**2)}" iyz="0"
+                izz="${1/12*mass*(size_x**2 + size_y**2)}"/>
+          </inertial>
+    </xacro:macro>
 </robot>

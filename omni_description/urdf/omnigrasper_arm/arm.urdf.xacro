@@ -17,9 +17,9 @@
         </joint>
         <link name="arm_0">
             <visual>
-                <origin xyz="0 0 ${-0.001*(54/2+6+108/2)}" rpy="0 0 0"/>
+                <origin xyz="0 0 ${-0.001*(54/2+6+108)}" rpy="${M_PI/2} 0 0"/>
                 <geometry>
-                    <box size="0.054 0.054 0.108"/>
+                    <mesh filename="package://omni_description/stl/L54-30-S500-R.STL" scale="0.001 0.001 0.001"/>
                 </geometry>
                 <material name="omni/Blue"/>
             </visual>
@@ -41,9 +41,16 @@
         </joint>
         <link name="arm_1">
             <!-- TODO Parts to add : frame adaptor FRP54-A110K, idler FRP54-I110 -->
-            <xacro:box_vci name="H54-200-S500" mass="0.855"
+            <xacro:box_ci name="H54-200-S500" mass="0.855"
                 size_x="0.054" size_y="0.132" size_z="0.054"
                 xyz="0 0 0" color="omni/Red"/>
+            <visual>
+                <origin xyz="0 ${-0.132/2} 0"/>
+                <geometry>
+                    <mesh filename="package://omni_description/stl/H54-200-S500-R.STL" scale="0.001 0.001 0.001"/>
+                </geometry>
+                <material name="omni/Red"/>
+            </visual>
         </link>
 
         <joint name="arm_1_2" type="revolute">
@@ -70,9 +77,17 @@
             <origin xyz="0 0 0"/>
         </joint>
         <link name="arm_2_sub">
-            <xacro:box_vci name="L54_50_S500" mass="0.662"
+            <xacro:box_ci name="L54_50_S500" mass="0.662"
                 size_x="0.054" size_y="0.054" size_z="0.114"
                 xyz="${0.001*(51+180+6+54/2)} 0 0" color="omni/Green"/>
+            <visual>
+                <origin xyz="${0.001*(51+180+6+54/2)} 0 ${0.114/2}"
+                    rpy="${-M_PI/2} 0 0"/>
+                <geometry>
+                    <mesh filename="package://omni_description/stl/L54-50-S500-R.STL" scale="0.001 0.001 0.001"/>
+                </geometry>
+                <material name="omni/Green"/>
+            </visual>
         </link>
 
         <joint name="arm_2_3" type="revolute">
@@ -99,9 +114,16 @@
             <origin xyz="0 0 0"/>
         </joint>
         <link name="arm_3_sub">
-            <xacro:box_vci name="L54_30_S500" mass="0.612"
+            <xacro:box_ci name="L54_30_S500" mass="0.612"
                 size_x="0.054" size_y="0.108" size_z="0.054"
                 xyz="0 ${0.001*(51+60+6+108/2)} 0" color="omni/Yellow"/>
+            <visual>
+                <origin xyz="0 ${0.001*(51+60+6)} 0" rpy="0 ${-M_PI} 0"/>
+                <geometry>
+                    <mesh filename="package://omni_description/stl/L54-30-S500-R.STL" scale="0.001 0.001 0.001"/>
+                </geometry>
+                <material name="omni/Yellow"/>
+            </visual>
         </link>
 
         <joint name="arm_3_4" type="revolute">
@@ -114,9 +136,16 @@
         <link name="arm_4">
             <!-- TODO Parts to add : modified (by us) frame adaptor FRP54-A110K,
             idler FRP42-I110 -->
-            <xacro:box_vci name="L42_10_S300" mass="0.257"
+            <xacro:box_ci name="L42_10_S300" mass="0.257"
                 size_x="0.042" size_y="0.072" size_z="0.042"
                 xyz="0 0 0" color="omni/DarkGrey"/>
+            <visual>
+                <origin xyz="0 ${-0.072/2} 0" rpy="0 0 0"/>
+                <geometry>
+                    <mesh filename="package://omni_description/stl/L42-10-S300-R.STL" scale="0.001 0.001 0.001"/>
+                </geometry>
+                <material name="omni/DarkGrey"/>
+            </visual>
         </link>
 
         <joint name="arm_4_5" type="revolute">
