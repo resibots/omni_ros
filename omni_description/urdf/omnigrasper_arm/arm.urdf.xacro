@@ -91,9 +91,6 @@
             <xacro:box_vci name="profile_3" mass="${1.38*0.060}"
                 size_x="0.040" size_y="0.060" size_z="0.040"
                 xyz="0 ${0.001*(51+60/2)} 0" color="omni/Yellow"/>
-            <xacro:box_vci name="L54_30_S500" mass="0.612"
-                size_x="0.054" size_y="0.108" size_z="0.054"
-                xyz="0 ${0.001*(51+60+6+108/2)} 0" color="omni/Yellow"/>
         </link>
 
         <joint name="arm_3_sub" type="fixed">
