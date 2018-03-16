@@ -55,8 +55,11 @@ you accept its terms. -->
   </node>
 
   <!-- launch our hardware interface -->
-  <node name="dynamixel_control_hw" pkg="dynamixel_control_hw" type="dynamixel_control_hw" output="screen"/>
-  <node name="controller" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="/dynamixel_controllers/joint_state_controller /dynamixel_controllers/omni_arm_controller"/>
+  <node name="dynamixel_control_hw" pkg="dynamixel_control_hw"
+    type="dynamixel_control_hw_v1" output="screen" required="true"/>
+  <node name="controller" pkg="controller_manager" type="spawner" respawn="false"
+    output="screen" args="/dynamixel_controllers/joint_state_controller
+                          /dynamixel_controllers/omni_arm_controller"/>
 
   <!-- Publish robot's state in the tf tree -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
