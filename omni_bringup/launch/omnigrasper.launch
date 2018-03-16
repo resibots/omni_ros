@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<!-- This file is a part of the ERC ResiBots project.
+
+This software is governed by the CeCILL license under French law and abiding by
+the rules of distribution of free software. You can use, modify and/ or redistribute
+the software under the terms of the CeCILL license as circulated by CEA, CNRS
+and INRIA at the following URL "http://www.cecill.info". As a counterpart to the
+access to the source code and rights to copy, modify and redistribute granted by
+the license, users are provided only with a limited warranty and the software's
+author, the holder of the economic rights, and the successive licensors have only
+limited liability. In this respect, the user's attention is drawn to the risks
+associated with loading, using, modifying and/or developing or reproducing the
+software by the user in light of its specific status of free software, that may
+mean that it is complicated to manipulate, and that also therefore means that it
+is reserved for developers and experienced professionals having in-depth computer
+knowledge. Users are therefore encouraged to load and test the software's
+suitability as regards their requirements in conditions enabling the security of
+their systems and/or data to be ensured and, more generally, to use and operate
+it in the same conditions as regards security. The fact that you are presently
+reading this means that you have had knowledge of the CeCILL license and that
+you accept its terms. -->
+
+<launch>
+  <!--
+    What is done here
+      - load URDF description the TF tree
+      - control node for the arm (dynamixel hardware interface)
+      - control node for the YouBot mobile base (youbot driver)
+
+    Topics published
+      TODO
+
+    Subscribed topics
+      TODO
+  -->
+
+  <!-- URDF robot description -->
+  <include file="$(find omni_description)/launch/omnigrasper.launch" />
+
+  <!-- Parameters for the hardware interface and controllers -->
+  <rosparam file="$(find omni_bringup)/config/omnigrasper.yaml"/>
+
+  <!-- <param name="youBotHasBase" type="bool" value="true"/>
+  <param name="youBotDriverCycleFrequencyInHz" type="double" value="50.0"/>
+  <param name="youBotConfigurationFilePath" type="string" value="$(find youbot_driver)/config"/>
+  <param name="youBotBaseJointVelocity" type="double" value="4.0"/>
+  <param name="youBotBaseJointAcceleration" type="double" value="4.0"/> -->
+
+  <!-- Default name values -->
+  <!-- <param name="youBotBaseName" type="str" value="youbot-base"/> -->
+
+  <!-- Start the base driver. -->
+  <!-- <node name="youbot_driver" pkg="youbot_driver_ros_interface" type="youbot_driver_ros_interface" output="screen">
+     <remap from="base/joint_states" to="/joint_states"/>
+  </node> -->
+
+  <env name="ROSCONSOLE_CONFIG_FILE"
+         value="$(find omni_bringup)/config/custom_rosconsole.conf"/>
+  <!-- launch the arm's hardware interface -->
+  <node name="dynamixel_control_hw" pkg="dynamixel_control_hw"
+    type="dynamixel_control_hw_v2" output="screen" required="true"/>
+  <node name="controller" pkg="controller_manager" type="spawner"
+    respawn="false" output="screen"
+    args="/dynamixel_controllers/joint_state_controller
+          /dynamixel_controllers/omni_arm_controller"/>
+
+  <!-- Publish robot's state in the tf tree -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+</launch>
