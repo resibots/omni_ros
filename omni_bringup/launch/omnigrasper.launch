@@ -54,8 +54,6 @@ you accept its terms. -->
      <remap from="base/joint_states" to="/joint_states"/>
   </node> -->
 
-  <env name="ROSCONSOLE_CONFIG_FILE"
-         value="$(find omni_bringup)/config/custom_rosconsole.conf"/>
   <!-- launch the arm's hardware interface -->
   <node name="dynamixel_control_hw" pkg="dynamixel_control_hw"
     type="dynamixel_control_hw_v2" output="screen" required="true"/>
