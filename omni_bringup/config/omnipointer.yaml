@@ -37,24 +37,17 @@ dynamixel_controllers:
 dynamixel_control_hw:
   loop_frequency: 50
   cycle_time_error_threshold: 0.1
-  serial_interface: /dev/ttyACM1
+  serial_interface: /dev/ttyACM0
   baudrate: 1000000 # in bauds
-  dynamixel_timeout: 0.01 # in seconds
+  read_timeout: 0.01 # in seconds
   # correspondance between hardware IDs of the actuators and their names in ROS
-  hardware_mapping:
-    arm_joint_1: 1
-    arm_joint_2: 2
-    arm_joint_3: 3
-    arm_joint_4: 4
-
-  hardware_corrections:
-    "1": 0
-    "2": 0
-    "3": 0
-    "4": 0
-
-  max_speed:
-    "1": 50
-    "2": 50
-    "3": 50
-    "4": 50
+  servos:
+    arm_joint_1:
+      id: 1
+    arm_joint_2:
+      id: 2
+    arm_joint_3:
+      id: 3
+    arm_joint_4:
+      id: 4
+  default_command_interface: position

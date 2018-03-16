@@ -46,7 +46,7 @@ you accept its terms. -->
   <param name="youBotBaseJointVelocity" type="double" value="4.0"/>
   <param name="youBotBaseJointAcceleration" type="double" value="4.0"/>
 
-    <!-- Default name values -->
+  <!-- Default name values -->
   <param name="youBotBaseName" type="str" value="youbot-base"/>
 
   <!-- Start the base driver. -->

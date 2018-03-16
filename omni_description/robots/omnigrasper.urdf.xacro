@@ -13,7 +13,7 @@
   <xacro:include filename="$(find youbot_description)/urdf/materials.urdf.xacro" />
   <xacro:include filename="$(find omni_description)/urdf/materials.urdf.xacro" />
 
-  <!-- Now we can start using the macros xacro:included above to define the actual omnipointer -->
+  <!-- Now we can start using the macros xacro:included above to define the actual robot -->
 
   <!-- The first use of a macro.  This one was defined in youbot_base/base.urdf.xacro above.
        A macro like this will expand to a set of link and joint definitions, and to additional
