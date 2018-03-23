@@ -37,6 +37,10 @@
             <child link="arm_1"/>
             <limit effort="2.5" velocity="${28.7*M_PI/30}"
                 lower="${-M_PI}" upper="${M_PI}"/>
+            <safety_controller k_position="3"
+                k_velocity="1000"
+                soft_lower_limit="${-M_PI}"
+                soft_upper_limit="${M_PI}" />
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <axis xyz="0 0 1"/>
         </joint>
@@ -70,6 +74,10 @@
             <child link="arm_2"/>
             <limit effort="44.7" velocity="${33.1*M_PI/30}"
                 lower="${1.34-M_PI}" upper="${4.94-M_PI}"/>
+            <safety_controller k_position="3"
+                k_velocity="1000"
+                soft_lower_limit="${(1.34-M_PI)}"
+                soft_upper_limit="${(4.94-M_PI)}" />
             <origin rpy="${M_PI/2} ${-M_PI/2} 0" xyz="0 0 0"/>
             <axis xyz="0 0 1"/>
         </joint>
@@ -122,6 +130,10 @@
             <child link="arm_3"/>
             <limit effort="14" velocity="${16*M_PI/30}"
                 lower="${1.32-M_PI}" upper="${4.80-M_PI}"/>
+            <safety_controller k_position="3"
+                k_velocity="1000"
+                soft_lower_limit="${(1.32-M_PI)}"
+                soft_upper_limit="${(4.80-M_PI)}" />
             <origin rpy="0 0 ${-M_PI/2}" xyz="0.264 0 0"/>
             <axis xyz="0 0 1"/>
         </joint>
@@ -171,7 +183,12 @@
         <joint name="arm_3_4" type="revolute">
             <parent link="arm_3"/>
             <child link="arm_4"/>
-            <limit effort="2.5" velocity="${28.7*M_PI/30}" lower="${-M_PI}" upper="${M_PI}"/>
+            <limit effort="2.5" velocity="${28.7*M_PI/30}"
+                lower="${-M_PI}" upper="${M_PI}"/>
+            <safety_controller k_position="3"
+                k_velocity="1000"
+                soft_lower_limit="${-M_PI}"
+                soft_upper_limit="${M_PI}" />
             <origin rpy="${-M_PI/2} 0 0" xyz="0 0.252 0"/>
             <axis xyz="0 0 1"/>
         </joint>
@@ -201,7 +218,12 @@
         <joint name="arm_4_5" type="revolute">
             <parent link="arm_4"/>
             <child link="arm_5"/>
-            <limit effort="1.2" velocity="${29.7*M_PI/30}" lower="${-M_PI/2}" upper="${M_PI/2}"/>
+            <limit effort="1.2" velocity="${29.7*M_PI/30}"
+                lower="${-M_PI/2}" upper="${M_PI/2}"/>
+            <safety_controller k_position="2"
+                k_velocity="1000"
+                soft_lower_limit="${-M_PI/2}"
+                soft_upper_limit="${M_PI/2}" />
             <origin rpy="${M_PI/2} 0 0" xyz="0 0 0"/>
             <axis xyz="0 0 1"/>
         </joint>
