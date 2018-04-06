@@ -27,7 +27,7 @@ dynamixel_controllers:
     publish_rate: 5
 
   omni_arm_controller:
-    type: position_controllers/JointTrajectoryController
+    type: velocity_controllers/JointTrajectoryController
     joints:
       - arm_0_1
       - arm_1_2
