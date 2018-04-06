@@ -35,7 +35,7 @@ dynamixel_controllers:
       - arm_3_4
       - arm_4_5
 
-dynamixel_control_hw:
+dynamixel_control:
   loop_frequency: 5
   cycle_time_error_threshold: 0.05
   serial_interface: /dev/ttyUSB0

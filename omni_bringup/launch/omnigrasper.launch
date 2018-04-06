@@ -34,34 +34,51 @@ you accept its terms. -->
       TODO
   -->
 
+  <arg name="use_base" default="true" />
+  <arg name="use_arm" default="true" />
+  <arg name="use_mocap" default="false" />
+
   <!-- URDF robot description -->
   <include file="$(find omni_description)/launch/omnigrasper.launch" />
 
-  <!-- Parameters for the hardware interface and controllers -->
-  <rosparam file="$(find omni_bringup)/config/omnigrasper.yaml"/>
+  <!-- launch the base -->
+  <group if="$(arg use_base)">
+    <param name="youBotHasBase" type="bool" value="true"/>
+    <param name="youBotDriverCycleFrequencyInHz" type="double" value="50.0"/>
+    <param name="youBotConfigurationFilePath" type="string"
+           value="$(find youbot_driver)/config"/>
+    <param name="youBotBaseJointVelocity" type="double" value="4.0"/>
+    <param name="youBotBaseJointAcceleration" type="double" value="4.0"/>
+    <param name="youBotBaseName" type="str" value="youbot-base"/>
 
-  <param name="youBotHasBase" type="bool" value="true"/>
-  <param name="youBotDriverCycleFrequencyInHz" type="double" value="50.0"/>
-  <param name="youBotConfigurationFilePath" type="string" value="$(find youbot_driver)/config"/>
-  <param name="youBotBaseJointVelocity" type="double" value="4.0"/>
-  <param name="youBotBaseJointAcceleration" type="double" value="4.0"/>
+    <!-- Start the base driver. -->
+    <node name="youbot_driver" pkg="youbot_driver_ros_interface"
+          type="youbot_driver_ros_interface" output="screen"/>
+  </group>
 
-  <!-- Default name values -->
-  <param name="youBotBaseName" type="str" value="youbot-base"/>
+  <!-- launch the arm -->
+  <group if="$(arg use_arm)">
+    <!-- Parameters for the hardware interface and controllers -->
+    <rosparam file="$(find omni_bringup)/config/omnigrasper.yaml"/>
 
-  <!-- Start the base driver. -->
-  <node name="youbot_driver" pkg="youbot_driver_ros_interface" type="youbot_driver_ros_interface" output="screen">
-     <remap from="base/joint_states" to="/joint_states"/>
-  </node>
+    <!-- starting the hardware interface and controllers -->
+    <node name="dynamixel_control" pkg="dynamixel_control_hw"
+          type="dynamixel_control_hw_v2" output="screen" clear_params="true"
+          required="true"/>
+    <node name="controller" pkg="controller_manager" type="spawner"
+          respawn="false" output="screen" clear_params="true"
+          args="/dynamixel_controllers/joint_state_controller
+                /dynamixel_controllers/omni_arm_controller"/>
 
-  <!-- launch the arm's hardware interface -->
-  <node name="dynamixel_control_hw" pkg="dynamixel_control_hw"
-    type="dynamixel_control_hw_v2" output="screen" required="true"/>
-  <node name="controller" pkg="controller_manager" type="spawner"
-    respawn="false" output="screen"
-    args="/dynamixel_controllers/joint_state_controller
-          /dynamixel_controllers/omni_arm_controller"/>
+    <!-- Publish robot's state in the tf tree -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher"
+          type="robot_state_publisher" >
+      <remap from="joint_states" to="/arm/joint_states"/>
+    </node>
+  </group>
 
-  <!-- Publish robot's state in the tf tree -->
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+  <!-- start motion capture -->
+  <group if="$(arg use_mocap)">
+    <include file="$(find omni_bringup)/launch/omni_mocap.launch" />
+  </group>
 </launch>

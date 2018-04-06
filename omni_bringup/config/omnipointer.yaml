@@ -34,7 +34,7 @@ dynamixel_controllers:
       - arm_joint_3
       - arm_joint_4
 
-dynamixel_control_hw:
+dynamixel_control:
   loop_frequency: 50
   cycle_time_error_threshold: 0.1
   serial_interface: /dev/ttyACM0
