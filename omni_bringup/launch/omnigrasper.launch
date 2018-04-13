@@ -64,6 +64,7 @@ you accept its terms. -->
     <rosparam file="$(find omni_bringup)/config/omnigrasper_common.yaml"/>
     <rosparam if="$(eval arg('arm_control_mode') == 'position')" file="$(find omni_bringup)/config/omnigrasper_pos.yaml"/>
     <rosparam if="$(eval arg('arm_control_mode') == 'velocity')" file="$(find omni_bringup)/config/omnigrasper_vel.yaml"/>
+    <rosparam if="$(eval arg('arm_control_mode') == 'safevel')" file="$(find omni_bringup)/config/omnigrasper_safevel.yaml"/>
 
     <!-- starting the hardware interface and controllers -->
     <node name="dynamixel_control" pkg="dynamixel_control_hw"
