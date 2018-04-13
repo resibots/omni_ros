@@ -61,6 +61,7 @@ you accept its terms. -->
   <!-- launch the arm -->
   <group if="$(arg use_arm)">
     <!-- Parameters for the hardware interface and controllers -->
+    <rosparam file="$(find omni_bringup)/config/omnigrasper_common.yaml"/>
     <rosparam if="$(eval arg('arm_control_mode') == 'position')" file="$(find omni_bringup)/config/omnigrasper_pos.yaml"/>
     <rosparam if="$(eval arg('arm_control_mode') == 'velocity')" file="$(find omni_bringup)/config/omnigrasper_vel.yaml"/>
 

@@ -36,32 +36,4 @@ dynamixel_controllers:
       - arm_4_5
 
 dynamixel_control:
-  loop_frequency: 5
-  cycle_time_error_threshold: 0.05
-  serial_interface: /dev/ttyUSB0
-  baudrate: 1000000 # in bauds
-  read_timeout: 0.02 # in seconds
-  scan_timeout: 0.02
-  # correspondance between hardware IDs of the actuators and their names in ROS
-  servos:
-    arm_0_1:
-      id: 1
-      max_speed: 0.2
-      offset: 3.14159265359
-    arm_1_2:
-      id: 2
-      max_speed: 0.2
-      offset: 3.14159265359
-    arm_2_3:
-      id: 3
-      max_speed: 0.2
-      offset: 3.14159265359
-    arm_3_4:
-      id: 4
-      max_speed: 0.2
-      offset: 3.14159265359
-    arm_4_5:
-      id: 5
-      max_speed: 0.2
-      offset: 3.14159265359
   default_command_interface: position

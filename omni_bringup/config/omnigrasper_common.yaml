@@ -20,26 +20,32 @@
 # you accept its terms.
 
 
-
-dynamixel_controllers:
-  joint_state_controller:
-    type: joint_state_controller/JointStateController
-    publish_rate: 5
-
-  omni_arm_controller:
-    type: velocity_controllers/JointTrajectoryController
-    joints:
-      - arm_0_1
-      - arm_1_2
-      - arm_2_3
-      - arm_3_4
-      - arm_4_5
-    gains: # Required because we're controlling a velocity interface
-      arm_0_1: {p: 100,  d: 1, i: 1, i_clamp: 1}
-      arm_1_2: {p: 100,  d: 1, i: 1, i_clamp: 1}
-      arm_2_3: {p: 100,  d: 1, i: 1, i_clamp: 1}
-      arm_3_4: {p: 100,  d: 1, i: 1, i_clamp: 1}
-      arm_4_5: {p: 100,  d: 1, i: 1, i_clamp: 1}
-
 dynamixel_control:
-  default_command_interface: velocity
+  loop_frequency: 5
+  cycle_time_error_threshold: 0.05
+  serial_interface: /dev/ttyUSB0
+  baudrate: 1000000 # in bauds
+  read_timeout: 0.02 # in seconds
+  scan_timeout: 0.02
+  # correspondance between hardware IDs of the actuators and their names in ROS
+  servos:
+    arm_0_1:
+      id: 1
+      max_speed: 0.2
+      offset: 3.14159265359
+    arm_1_2:
+      id: 2
+      max_speed: 0.2
+      offset: 3.14159265359
+    arm_2_3:
+      id: 3
+      max_speed: 0.2
+      offset: 3.14159265359
+    arm_3_4:
+      id: 4
+      max_speed: 0.2
+      offset: 3.14159265359
+    arm_4_5:
+      id: 5
+      max_speed: 0.2
+      offset: 3.14159265359
