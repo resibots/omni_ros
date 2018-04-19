@@ -37,8 +37,9 @@ you accept its terms. -->
   <arg name="use_base" default="true" />
   <arg name="use_arm" default="true" />
   <arg name="use_mocap" default="false" />
-  <arg name="arm_control_mode" default="position"
-       doc="how the joints of the arm are controlled : position or velocity"/>
+  <arg name="arm_control_mode" default="velocity"
+       doc="how the joints of the arm are controlled : position, velocity or
+            safevel (enforce safety constraints on the arm)"/>
 
   <!-- URDF robot description -->
   <include file="$(find omni_description)/launch/omnigrasper.launch" />

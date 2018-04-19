@@ -27,13 +27,24 @@ dynamixel_controllers:
     publish_rate: 5
 
   omni_arm_controller:
-    type: omni_controllers/ArmSpeedSafeController
+    type: omni_controllers/OmnigrasperSpeedSafeController
     joints:
       - arm_0_1
       - arm_1_2
       - arm_2_3
       - arm_3_4
       - arm_4_5
+    min_heights:
+      - # height limit to protect the arm and the mobile base from each other
+        x_min: -0.455
+        y_min: -0.20
+        x_max: 0.145
+        y_max: 0.20
+        hard_min_height: 0.1
+        soft_min_height: 0.15
+      - # the general height limit, applies everywhere
+        hard_min_height: -0.15
+        soft_min_height: -0.10
 
 dynamixel_control:
   default_command_interface: velocity
