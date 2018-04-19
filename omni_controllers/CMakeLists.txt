@@ -13,7 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   realtime_tools
   velocity_controllers
 )
-find_package(Eigen3 REQUIRED NO_MODULE)
+find_package(Eigen3 REQUIRED)
 
 # Declare catkin package
 catkin_package(

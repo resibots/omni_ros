@@ -17,5 +17,6 @@ This software is governed by the CeCILL license under French law and abiding by 
   <buildtool_depend>catkin</buildtool_depend>
 
   <run_depend>omni_driver</run_depend>
+  <run_depend>omni_description</run_depend>
   <run_depend>omni_controllers</run_depend>
 </package>
