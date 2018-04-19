@@ -39,7 +39,10 @@ you accept its terms. -->
       TODO: list subscribed topics for the base and the arm
   -->
 
-  <arg name="use_base" default="true" />
+  <!-- <env name="ROSCONSOLE_CONFIG_FILE"
+       value="$(find omni_bringup)/custom_rosconsole.conf"/> -->
+
+  <arg name="use_base" default="false" />
   <arg name="use_arm" default="true" />
   <arg name="use_mocap" default="false" />
   <arg name="arm_control_mode" default="velocity"
