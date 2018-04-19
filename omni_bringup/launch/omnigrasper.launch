@@ -27,11 +27,16 @@ you accept its terms. -->
       - control node for the arm (dynamixel hardware interface)
       - control node for the YouBot mobile base (youbot driver)
 
+    Arguments
+      The arguments of this launch file can be described with
+        `roslaunch omni_bringup omnigrasper.launch - -ros-args`
+
     Topics published
-      TODO
+      TODO: descibe published topics
 
     Subscribed topics
-      TODO
+      Depends on the arm_control_mode, as far as the arm goes
+      TODO: list subscribed topics for the base and the arm
   -->
 
   <arg name="use_base" default="true" />

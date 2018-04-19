@@ -1,30 +1,42 @@
 # omni_ros
-ROS Integration for our omnidirectional robots.
+ROS Integration for our Youbot + arm robots.
+
+<img src="http://www.resibots.eu/_images/omnigrasper.jpg"/>
 
 ## Packages
 
-
 ### omni_bringup
-There are two launch files and their associated configuration files:
 
-#### `omnipointer.launch`
-does the following
-- load URDF description the TF tree
-- control node for the arm (dynamixel hardware interface)
-- control node for the YouBot mobile base (youbot driver)
+Launch and configuration files to start the robot in its different versions. Currently, the three main ones are
 
-Topics published
-  TODO
+- `omnigrasper.launch`
+  - arguments
+    - use_base (bool): enable the Youbot
+    - use_arm (bool): enable the arm
+    - use_mocap (bool): launch the node for motion capture integration
+    - arm_control_mode (string) either velocity, position or safevel
+  - what it does
+    - load URDF description the TF tree
+    - start a control node for the arm (dynamixel hardware interface)
+    - start a control node for the YouBot mobile base (youbot driver)
+    <!-- - TODO: Topics published
+    - TODO: Subscribed topics -->
+- `omni_mocap.launch`
+  - starts the ROS node to receive motion capture data on Omnigrasper
+- `velocity_teleop.launch`
+  - use a joypad to command the arm, assuming it is in safevel mode
 
-Subscribed topics
-  TODO
+### omni_controllers
 
-#### `omni_mocap.launch`
-start the ROS node to receive motion capture data on Omnigrasper
+Controllers specifically built for this robot, for instance the `omni_controllers/OmnigrasperSpeedSafeController` that commande the arm in velocity, ensuring that it never hits the floor or the mobile base.
 
 ### omni_description
+
+Has the URDFs of the robot in its different configurations.
+
 ### omni_driver
-### omni_ros
+
+Some C++ glu code to command the arm.
 
 ## Documentation/Dependencies
 

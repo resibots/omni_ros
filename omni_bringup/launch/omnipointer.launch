@@ -28,10 +28,10 @@ you accept its terms. -->
       - control node for the YouBot mobile base (youbot driver)
 
     Topics published
-      TODO
+      TODO: describe published topics
 
     Subscribed topics
-      TODO
+      TODO: describe subscribed topics
   -->
 
   <arg name="use_base" default="true" />
