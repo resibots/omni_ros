@@ -1,18 +1,22 @@
+<?xml version="1.0"?>
 <package format="2">
   <name>omni_controllers</name>
   <version>0.1.0</version>
   <description>Controllers for our Omnigrasper's arm</description>
+
   <maintainer email="dorian.goepp@inria.fr">Dorian Goepp</maintainer>
 
   <license>BSD</license>
 
   <url type="repository">https://github.com/resiblts/omni_ros/omni_controllers</url>
+  <url type="bugtracker">https://github.com/resiblts/omni_ros/omni_controllers/issues</url>
 
   <author>Vijay Pradeep</author>
   <author>Adolfo Rodriguez Tsouroukdissian</author>
   <author>Dorian Goepp</author>
 
   <buildtool_depend>catkin</buildtool_depend>
+  
   <depend>control_msgs</depend>
   <depend>control_toolbox</depend>
   <depend>controller_interface</depend>

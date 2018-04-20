@@ -49,7 +49,7 @@ Some C++ glu code to command the arm.
 ## Authors
 
 - Maintainer: Dorian Goepp
-- Author: Federico Allocati
+- Authors: Federico Allocati, Dorian Goepp
 
 ## License
 
