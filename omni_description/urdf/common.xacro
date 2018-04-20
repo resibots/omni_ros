@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
-<robot xmlns:xacro="http://ros.org/wiki/xacro">  
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
     <xacro:property name="M_PI" value="3.1415926535897931" />
-    
+
     <xacro:macro name="box_link" params="name width depth length mass color">
         <link name="${name}">
             <visual>
@@ -25,5 +25,51 @@
                 <inertia ixx="${1/12*mass*(depth*depth+length*length)}" ixy="0" ixz="0" iyy="${1/12*mass*(width*width+length*length)}" iyz="0" izz="${1/12*mass*(width*width+depth*depth)}"/>
               </inertial>
           </link>
+    </xacro:macro>
+
+    <xacro:macro name="box_vci" params="name mass size_x size_y size_z xyz color">
+        <!-- For Box Visual Collision Intertial -->
+        <visual>
+            <origin xyz="${xyz}" rpy="0 0 0"/>
+            <geometry name="${name}">
+              <box size="${size_x} ${size_y} ${size_z}"/>
+            </geometry>
+            <material name="${color}"/>
+        </visual>
+        <collision>
+            <origin xyz="${xyz}" rpy="0 0 0"/>
+            <geometry>
+                <box size="${size_x} ${size_y} ${size_z}"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <!-- center of mass -->
+            <origin xyz="${xyz}" rpy="0 0 0"/>
+            <mass value="${mass}"/>
+            <!-- box inertia: 1/12*m(y^2+z^2), ... -->
+            <inertia ixx="${1/12*mass*(size_y**2 + size_z**2)}" ixy="0" ixz="0"
+                iyy="${1/12*mass*(size_x**2 + size_z**2)}" iyz="0"
+                izz="${1/12*mass*(size_x**2 + size_y**2)}"/>
+          </inertial>
+    </xacro:macro>
+
+    <xacro:macro name="box_ci" params="name mass size_x size_y size_z
+        xyz color">
+        <!-- For Box Collision Intertial -->
+        <collision>
+            <origin xyz="${xyz}" rpy="0 0 0"/>
+            <geometry>
+                <box size="${size_x} ${size_y} ${size_z}"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <!-- center of mass -->
+            <origin xyz="${xyz}" rpy="0 0 0"/>
+            <mass value="${mass}"/>
+            <!-- box inertia: 1/12*m(y^2+z^2), ... -->
+            <inertia ixx="${1/12*mass*(size_y**2 + size_z**2)}" ixy="0" ixz="0"
+                iyy="${1/12*mass*(size_x**2 + size_z**2)}" iyz="0"
+                izz="${1/12*mass*(size_x**2 + size_y**2)}"/>
+          </inertial>
     </xacro:macro>
 </robot>

@@ -24,4 +24,5 @@ This software is governed by the CeCILL license under French law and abiding by 
   <run_depend>rviz</run_depend>
   <run_depend>xacro</run_depend>
   <run_depend>urdf</run_depend>
+  <run_depend>youbot_description</run_depend>
 </package>

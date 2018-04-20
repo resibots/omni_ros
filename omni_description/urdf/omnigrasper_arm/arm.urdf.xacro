@@ -1,0 +1,253 @@
+<?xml version="1.0"?>
+<robot name="omnigrasper" xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <!-- Xacro macro for the arm -->
+    <xacro:macro name="omnigrasper_arm" params="parent name *origin">
+        <joint name="${parent}_${name}_base" type="fixed">
+            <parent link="${parent}"/>
+            <child link="${name}_base"/>
+            <xacro:insert_block name="origin"/>
+        </joint>
+        <link name="${name}_base"/>
+
+        <joint name="${name}_base_arm_0" type="fixed">
+            <parent link="${name}_base"/>
+            <child link="arm_0"/>
+            <origin xyz="0 0 0.141"/>
+        </joint>
+        <link name="arm_0">
+            <!-- L54-30-S500 -->
+            <visual>
+                <origin xyz="0 0 ${-0.001*(54/2+6+108)}" rpy="${M_PI/2} 0 0"/>
+                <geometry>
+                    <mesh filename="package://omni_description/stl/L54-30-S500-R.STL" scale="0.001 0.001 0.001"/>
+                </geometry>
+                <material name="omni/Blue"/>
+            </visual>
+            <collision>
+                <origin xyz="0 0 ${-0.001*(54/2+6+108/2)}" rpy="0 0 0"/>
+                <geometry>
+                    <box size="0.054 0.054 0.108"/>
+                </geometry>
+            </collision>
+        </link>
+
+        <joint name="arm_0_1" type="revolute">
+            <parent link="arm_0"/>
+            <child link="arm_1"/>
+            <limit effort="2.5" velocity="${28.7*M_PI/30}"
+                lower="${-M_PI}" upper="${M_PI}"/>
+            <safety_controller k_position="3"
+                k_velocity="1000"
+                soft_lower_limit="${-M_PI}"
+                soft_upper_limit="${M_PI}" />
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <axis xyz="0 0 1"/>
+        </joint>
+        <link name="arm_1">
+            <!-- TODO Parts to add : frame adaptor FRP54-A110K, idler FRP54-I110 -->
+            <xacro:box_ci name="H54-200-S500" mass="0.855"
+                size_x="0.054" size_y="0.132" size_z="0.054"
+                xyz="0 0 0" color="omni/Red"/>
+
+            <!-- H54-200-S500 -->
+            <visual>
+                <origin xyz="0 ${-0.132/2} 0"/>
+                <geometry>
+                    <mesh filename="package://omni_description/stl/H54-200-S500-R.STL" scale="0.001 0.001 0.001"/>
+                </geometry>
+                <material name="omni/Red"/>
+            </visual>
+
+            <!-- FRP54-A110 -->
+            <visual>
+                <origin xyz="0 0 ${-0.054/2-0.006}" rpy="${M_PI/2} 0 0"/>
+                <geometry>
+                    <mesh filename="package://omni_description/stl/FRP54-A110.STL" scale="0.001 0.001 0.001"/>
+                </geometry>
+                <material name="omni/Red"/>
+            </visual>
+        </link>
+
+        <joint name="arm_1_2" type="revolute">
+            <parent link="arm_1"/>
+            <child link="arm_2"/>
+            <limit effort="44.7" velocity="${33.1*M_PI/30}"
+                lower="${1.34-M_PI}" upper="${4.94-M_PI}"/>
+            <safety_controller k_position="3"
+                k_velocity="1000"
+                soft_lower_limit="${(1.34-M_PI)}"
+                soft_upper_limit="${(4.94-M_PI)}" />
+            <origin rpy="${M_PI/2} ${-M_PI/2} 0" xyz="0 0 0"/>
+            <axis xyz="0 0 1"/>
+        </joint>
+        <link name="arm_2">
+            <!-- TODO Parts to add : idler FRP54-I110 -->
+            <!-- TODO: take the moments of inertia provided by manufacturer -->
+            <xacro:box_vci name="profile_2" mass="${1.38*0.180}"
+                size_x="0.180" size_y="0.040" size_z="0.040"
+                xyz="${0.001*(51+180/2)} 0 0" color="omni/Green"/>
+            <!-- FRP54-H220 -->
+            <visual>
+                <origin xyz="0 0 0" rpy="0 ${M_PI} ${-M_PI/2}"/>
+                <geometry>
+                    <mesh filename="package://omni_description/stl/FRP54-H220.STL" scale="0.001 0.001 0.001"/>
+                </geometry>
+                <material name="omni/Green"/>
+            </visual>
+            <!-- FRP54-A110 -->
+            <visual>
+                <origin xyz="${0.001*(51 + 180)} 0 0" rpy="0 0 ${-M_PI/2}"/>
+                <geometry>
+                    <mesh filename="package://omni_description/stl/FRP54-A110.STL" scale="0.001 0.001 0.001"/>
+                </geometry>
+                <material name="omni/Green"/>
+            </visual>
+        </link>
+
+        <joint name="arm_2_sub" type="fixed">
+            <parent link="arm_2"/>
+            <child link="arm_2_sub"/>
+            <origin xyz="0 0 0"/>
+        </joint>
+        <link name="arm_2_sub">
+            <!-- L5450-S500 -->-
+            <xacro:box_ci name="L54_50_S500" mass="0.662"
+                size_x="0.054" size_y="0.054" size_z="0.114"
+                xyz="${0.001*(51+180+6+54/2)} 0 0" color="omni/Green"/>
+            <visual>
+                <origin xyz="${0.001*(51+180+6+54/2)} 0 ${0.114/2}"
+                    rpy="${-M_PI/2} 0 0"/>
+                <geometry>
+                    <mesh filename="package://omni_description/stl/L54-50-S500-R.STL" scale="0.001 0.001 0.001"/>
+                </geometry>
+                <material name="omni/Green"/>
+            </visual>
+        </link>
+
+        <joint name="arm_2_3" type="revolute">
+            <parent link="arm_2"/>
+            <child link="arm_3"/>
+            <limit effort="14" velocity="${16*M_PI/30}"
+                lower="${1.32-M_PI}" upper="${4.80-M_PI}"/>
+            <safety_controller k_position="3"
+                k_velocity="1000"
+                soft_lower_limit="${(1.32-M_PI)}"
+                soft_upper_limit="${(4.80-M_PI)}" />
+            <origin rpy="0 0 ${-M_PI/2}" xyz="0.264 0 0"/>
+            <axis xyz="0 0 1"/>
+        </joint>
+        <link name="arm_3">
+            <!-- TODO Parts to add : idler FRP54-I110 -->
+            <!-- TODO: take the moments of inertia provided by manufacturer -->
+            <xacro:box_vci name="profile_3" mass="${1.38*0.060}"
+                size_x="0.040" size_y="0.060" size_z="0.040"
+                xyz="0 ${0.001*(51+60/2)} 0" color="omni/Yellow"/>
+            <!-- FRP54-H120 -->
+            <visual>
+                <origin xyz="0 0 0" rpy="0 ${M_PI} 0"/>
+                <geometry>
+                    <mesh filename="package://omni_description/stl/FRP54-H120.STL" scale="0.001 0.001 0.001"/>
+                </geometry>
+                <material name="omni/Yellow"/>
+            </visual>
+            <!-- FRP54-A110 -->
+            <visual>
+                <origin xyz="0 ${0.001*(51+60)} 0" rpy="0 0 0"/>
+                <geometry>
+                    <mesh filename="package://omni_description/stl/FRP54-A110.STL" scale="0.001 0.001 0.001"/>
+                </geometry>
+                <material name="omni/Yellow"/>
+            </visual>
+        </link>
+
+        <joint name="arm_3_sub" type="fixed">
+            <parent link="arm_3"/>
+            <child link="arm_3_sub"/>
+            <origin xyz="0 0 0"/>
+        </joint>
+        <link name="arm_3_sub">
+            <!-- L54-30-S500 -->
+            <xacro:box_ci name="L54_30_S500" mass="0.612"
+                size_x="0.054" size_y="0.108" size_z="0.054"
+                xyz="0 ${0.001*(51+60+6+108/2)} 0" color="omni/Yellow"/>
+            <visual>
+                <origin xyz="0 ${0.001*(51+60+6)} 0" rpy="0 ${-M_PI} 0"/>
+                <geometry>
+                    <mesh filename="package://omni_description/stl/L54-30-S500-R.STL" scale="0.001 0.001 0.001"/>
+                </geometry>
+                <material name="omni/Yellow"/>
+            </visual>
+        </link>
+
+        <joint name="arm_3_4" type="revolute">
+            <parent link="arm_3"/>
+            <child link="arm_4"/>
+            <limit effort="2.5" velocity="${28.7*M_PI/30}"
+                lower="${-M_PI}" upper="${M_PI}"/>
+            <safety_controller k_position="3"
+                k_velocity="1000"
+                soft_lower_limit="${-M_PI}"
+                soft_upper_limit="${M_PI}" />
+            <origin rpy="${-M_PI/2} 0 0" xyz="0 0.252 0"/>
+            <axis xyz="0 0 1"/>
+        </joint>
+        <link name="arm_4">
+            <!-- TODO Parts to add : idler FRP42-I110 -->
+            <!-- L42-10-S300 -->
+            <xacro:box_ci name="L42_10_S300" mass="0.257"
+                size_x="0.042" size_y="0.072" size_z="0.042"
+                xyz="0 0.006 0" color="omni/DarkGrey"/>
+            <visual>
+                <origin xyz="0 ${-0.072/2 + 0.006} 0" rpy="0 0 0"/>
+                <geometry>
+                    <mesh filename="package://omni_description/stl/L42-10-S300-R.STL" scale="0.001 0.001 0.001"/>
+                </geometry>
+                <material name="omni/DarkGrey"/>
+            </visual>
+            <!-- FRP42-A110 -->
+            <visual>
+                <origin xyz="0 0 ${-0.001*(42/2+6)}" rpy="${M_PI/2} 0 0"/>
+                <geometry>
+                    <mesh filename="package://omni_description/stl/FRP42-A110.STL" scale="0.001 0.001 0.001"/>
+                </geometry>
+                <material name="omni/DarkGrey"/>
+            </visual>
+        </link>
+
+        <joint name="arm_4_5" type="revolute">
+            <parent link="arm_4"/>
+            <child link="arm_5"/>
+            <limit effort="1.2" velocity="${29.7*M_PI/30}"
+                lower="${-M_PI/2}" upper="${M_PI/2}"/>
+            <safety_controller k_position="2"
+                k_velocity="1000"
+                soft_lower_limit="${-M_PI/2}"
+                soft_upper_limit="${M_PI/2}" />
+            <origin rpy="${M_PI/2} 0 0" xyz="0 0 0"/>
+            <axis xyz="0 0 1"/>
+        </joint>
+        <link name="arm_5">
+            <!-- FIXME: The weight is made up, as well as the center of mass -->
+            <xacro:box_ci name="L42_10_S300" mass="0.0857"
+                size_x="0.042" size_y="0.006" size_z="0.082"
+                xyz="0 0.039 -0.006" color="omni/Blue"/>
+            <!-- FRP42-H120 -->
+            <visual>
+                <origin xyz="0 0 -0.006" rpy="0 0 0"/>
+                <geometry>
+                    <mesh filename="package://omni_description/stl/FRP42-H120.STL" scale="0.001 0.001 0.001"/>
+                </geometry>
+                <material name="omni/Blue"/>
+            </visual>
+        </link>
+
+        <joint name="arm_5_end" type="fixed">
+            <parent link="arm_5"/>
+            <child link="arm_link"/>
+            <origin xyz="0 0.039 -0.006"/>
+        </joint>
+        <link name="arm_link"/>
+    </xacro:macro>
+    <!-- end of arm links/joints -->
+</robot>

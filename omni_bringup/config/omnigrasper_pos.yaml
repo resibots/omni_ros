@@ -24,30 +24,16 @@
 dynamixel_controllers:
   joint_state_controller:
     type: joint_state_controller/JointStateController
-    publish_rate: 50
+    publish_rate: 5
 
   omni_arm_controller:
-    type: position_controllers/JointTrajectoryController
+    type: velocity_controllers/JointTrajectoryController
     joints:
-      - arm_joint_1
-      - arm_joint_2
-      - arm_joint_3
-      - arm_joint_4
+      - arm_0_1
+      - arm_1_2
+      - arm_2_3
+      - arm_3_4
+      - arm_4_5
 
 dynamixel_control:
-  loop_frequency: 50
-  cycle_time_error_threshold: 0.1
-  serial_interface: /dev/ttyACM0
-  baudrate: 1000000 # in bauds
-  read_timeout: 0.01 # in seconds
-  # correspondance between hardware IDs of the actuators and their names in ROS
-  servos:
-    arm_joint_1:
-      id: 1
-    arm_joint_2:
-      id: 2
-    arm_joint_3:
-      id: 3
-    arm_joint_4:
-      id: 4
   default_command_interface: position
