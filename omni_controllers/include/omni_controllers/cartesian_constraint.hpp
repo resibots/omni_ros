@@ -19,9 +19,14 @@ namespace arm_speed_safe_controller {
         double hard_min_height, soft_min_height;
     };
 
-    class OmnigrasperHeightConstraint {
+    /** Base class for cartesian height constraint for the Omnigrasper arm.
+     * 
+     * The methods here are used by the two specifications below in the file.
+     * You should start by reading them.
+     */
+    class OmnigrasperHeightConstraintBase {
     public:
-        OmnigrasperHeightConstraint()
+        OmnigrasperHeightConstraintBase()
             : _global_zone_set(false) {}
 
         /** Initialising method. It must be called before using the enforce method.
@@ -73,29 +78,6 @@ namespace arm_speed_safe_controller {
                 return false;
 
             return true;
-        }
-
-        /**
-            The main method of this class. Stops all actuators if any one is beyond
-            set joint limits.
-            @return true if and only if the joints are outside the limits
-        **/
-        bool enforce(std::vector<double>& commands, const ros::Duration& period)
-        {
-            std::vector<double> angles, future_angles;
-            for (size_t i = 0; i < _joints.size(); i++) {
-                auto joint = _joints[i];
-                angles.push_back(joint->getPosition());
-                future_angles.push_back(joint->getPosition() + commands[i] * period.toSec());
-            }
-
-            if (_zone_triggered(angles, future_angles)) {
-                commands.assign(N_joints, 0);
-                // tell client software that we entered the safety mode
-                return true;
-            }
-            else
-                return false;
         }
 
     protected:
@@ -179,29 +161,6 @@ namespace arm_speed_safe_controller {
             return true;
         }
 
-        /** Check among all zones whether any is triggered
-         * This means that we check whether any of the watched joints is below
-         * one of the limits we defined, a.k.a. zones.
-         * 
-         * @return true if at least one of the height constraints is not respected
-         */
-        bool _zone_triggered(std::vector<double>& angles, std::vector<double>& future_angles)
-        {
-            Eigen::Vector3d current_lowest = _lowest_joint(angles),
-                            future_lowest = _lowest_joint(future_angles);
-
-            bool triggered = false;
-            if (_global_zone_set) {
-                triggered = _check_zone(_global_zone, current_lowest, future_lowest, true);
-            }
-
-            for (auto zone : _zones) {
-                triggered = triggered || _check_zone(zone, current_lowest, future_lowest);
-            }
-
-            return triggered;
-        }
-
         /** This method is specific to our robotic arm based on Dynamixel Pros.
             @param angles current joint angles for each actuator
             @return coordinates of the lowest between the center of the last
@@ -256,6 +215,67 @@ namespace arm_speed_safe_controller {
             return (last_joint_pos(2) < end_pos(2)) ? last_joint_pos : end_pos;
         }
 
+        std::vector<Zone> _zones;
+        Zone _global_zone;
+        bool _global_zone_set;
+        std::vector<std::string> _joint_names;
+        std::vector<std::shared_ptr<hardware_interface::JointHandle>> _joints;
+        static constexpr int N_joints = 5;
+    };
+
+    /** When the relevant part of the Omnigrasper arm go below soft_min_height,
+     * only motions that will raise the arm are allowed. When we go below
+     * hard_min_height, the arm is stopped altogether.
+     */
+    class OmnigrasperHeightConstraint : public OmnigrasperHeightConstraintBase {
+    public:
+        /**
+            The main method of this class. Stops all actuators if any one is beyond
+            set joint limits.
+            @return true if and only if the joints are outside the limits
+        **/
+        bool enforce(std::vector<double>& commands, const ros::Duration& period)
+        {
+            std::vector<double> angles, future_angles;
+            for (size_t i = 0; i < _joints.size(); i++) {
+                auto joint = _joints[i];
+                angles.push_back(joint->getPosition());
+                future_angles.push_back(joint->getPosition() + commands[i] * period.toSec());
+            }
+
+            if (_zone_triggered(angles, future_angles)) {
+                commands.assign(N_joints, 0);
+                // tell client software that we entered the safety mode
+                return true;
+            }
+            else
+                return false;
+        }
+
+    protected:
+        /** Check among all zones whether any is triggered
+         * This means that we check whether any of the watched joints is below
+         * one of the limits we defined, a.k.a. zones.
+         * 
+         * @return true if at least one of the height constraints is not respected
+         */
+        bool _zone_triggered(std::vector<double>& angles, std::vector<double>& future_angles)
+        {
+            Eigen::Vector3d current_lowest = _lowest_joint(angles),
+                            future_lowest = _lowest_joint(future_angles);
+
+            bool triggered = false;
+            if (_global_zone_set) {
+                triggered = _check_zone(_global_zone, current_lowest, future_lowest, true);
+            }
+
+            for (auto zone : _zones) {
+                triggered = triggered || _check_zone(zone, current_lowest, future_lowest);
+            }
+
+            return triggered;
+        }
+
         /** Now we see for a given zone if it's triggered
          */
         bool _check_zone(const Zone& zone, Eigen::Vector3d current_lowest,
@@ -274,14 +294,85 @@ namespace arm_speed_safe_controller {
             }
             return false;
         }
+    };
 
-        std::vector<Zone> _zones;
-        Zone _global_zone;
-        bool _global_zone_set;
-        std::vector<std::string> _joint_names;
-        std::vector<std::shared_ptr<hardware_interface::JointHandle>> _joints;
-        static constexpr int N_joints = 5;
-    }; // namespace arm_speed_safe_controller
+    /** Variant of OmnigrasperHeightConstraint that linearly decreases the joint
+     * speeds between soft_min_height and hard_min_height where they become 0.
+     */
+    class OmnigrasperHeightSmooth : public OmnigrasperHeightConstraintBase {
+    public:
+
+        /**
+            The main method of this class. Stops all actuators if any one is beyond
+            set joint limits.
+            @return true if and only if the joints are outside the limits
+        **/
+        bool enforce(std::vector<double>& commands, const ros::Duration& period)
+        {
+            std::vector<double> angles, future_angles;
+            for (size_t i = 0; i < _joints.size(); i++) {
+                auto joint = _joints[i];
+                angles.push_back(joint->getPosition());
+                future_angles.push_back(joint->getPosition() + commands[i] * period.toSec());
+            }
+
+            double ratio;
+            if ((ratio = _zone_triggered(angles, future_angles)) < 1) {
+                std::transform(commands.begin(), commands.end(), commands.begin(),
+                    [=](double c) -> double { return c * ratio; });
+                // tell client software that we entered the safety mode
+                return true;
+            }
+            else
+                return false;
+        }
+
+    protected:
+        /** Check among all zones whether any is triggered
+         * This means that we check whether any of the watched joints is below
+         * one of the limits we defined, a.k.a. zones.
+         * 
+         * @return true if at least one of the height constraints is not respected
+         */
+        double _zone_triggered(std::vector<double>& angles, std::vector<double>& future_angles)
+        {
+            Eigen::Vector3d current_lowest = _lowest_joint(angles),
+                            future_lowest = _lowest_joint(future_angles);
+
+            double ratio = 1;
+            if (_global_zone_set) {
+                ratio = _check_zone(_global_zone, current_lowest, future_lowest, true);
+            }
+
+            for (auto zone : _zones) {
+                ratio *= _check_zone(zone, current_lowest, future_lowest);
+            }
+
+            return ratio;
+        }
+
+        /** Now we see for a given zone if it's triggered
+         * 
+         * @return 1 if we are outside of boundaries and between 0 and 1
+         *  otherwise, proportional to the distance between soft_min_height
+         *  and hard_min_height
+         */
+        double _check_zone(const Zone& zone, Eigen::Vector3d current_lowest,
+            Eigen::Vector3d future_lowest, bool global_zone = false)
+        {
+            // Zoning condition: are the relevant joints in this zone
+            if ((current_lowest(0) >= zone.x_min && current_lowest(0) <= zone.x_max
+                    && current_lowest(1) >= zone.y_min && current_lowest(1) <= zone.y_max)
+                || global_zone) {
+                // Stopping condition: being below the hard limit or
+                //                      being below  soft limit and still going down
+                if (current_lowest(2) <= zone.soft_min_height) {
+                    return (current_lowest(2) - zone.hard_min_height) / (zone.soft_min_height - zone.hard_min_height);
+                }
+            }
+            return 1;
+        }
+    };
 } // namespace arm_speed_safe_controller
 
 #endif

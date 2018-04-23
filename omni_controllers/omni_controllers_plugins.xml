@@ -14,5 +14,12 @@
       This controller sends velocity commands to joints of the Omnigrasper arm, respecting height constraints (joints not lower than given height). It expects a VelocityJointInterface type of hardware interface.
     </description>
   </class>
+  <class name="omni_controllers/OmnigrasperSpeedSmoothedSafeController"
+      type="arm_speed_safe_controller::OmnigrasperSpeedSmoothedSafeController"
+      base_class_type="controller_interface::ControllerBase">
+    <description>
+      This controller sends velocity commands to joints of the Omnigrasper arm, respecting height constraints (joints not lower than given height). Contrary to OmnigrasperSpeedSafeController, this controller will smoothly decrease the speed to zero while we reach the limit height It expects a VelocityJointInterface type of hardware interface.
+    </description>
+  </class>
 
 </library>

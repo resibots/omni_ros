@@ -42,7 +42,9 @@
 namespace arm_speed_safe_controller {
     typedef arm_speed_safe_controller::ArmSpeedSafeController<> ArmSpeedUnsafeController;
     typedef arm_speed_safe_controller::ArmSpeedSafeController<OmnigrasperHeightConstraint> OmnigrasperSpeedSafeController;
+    typedef arm_speed_safe_controller::ArmSpeedSafeController<OmnigrasperHeightSmooth> OmnigrasperSpeedSmoothedSafeController;
 } // namespace arm_speed_safe_controller
 
 PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::ArmSpeedUnsafeController, controller_interface::ControllerBase)
 PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperSpeedSafeController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperSpeedSmoothedSafeController, controller_interface::ControllerBase)
