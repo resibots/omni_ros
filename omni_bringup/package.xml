@@ -18,6 +18,7 @@ This software is governed by the CeCILL license under French law and abiding by 
 
   <run_depend>omni_driver</run_depend>
   <run_depend>omni_description</run_depend>
+  <run_depend>dynamixel_control</run_depend>
   <run_depend>omni_controllers</run_depend>
   <run_depend>joy</run_depend>
   <run_depend>joy_teleop</run_depend>

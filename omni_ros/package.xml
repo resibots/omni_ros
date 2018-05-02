@@ -17,7 +17,7 @@ This software is governed by the CeCILL license under French law and abiding by 
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <run_depend>dynamixel_control_hw</run_depend>
+  <run_depend>dynamixel_control</run_depend>
   <run_depend>omni_bringup</run_depend>
   <run_depend>omni_controllers</run_depend>
   <run_depend>omni_description</run_depend>
