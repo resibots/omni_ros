@@ -16,7 +16,10 @@
   <author>Dorian Goepp</author>
 
   <buildtool_depend>catkin</buildtool_depend>
-  
+
+  <build_depend>message_generation</build_depend>
+
+  <depend>message_runtime</depend>
   <depend>control_msgs</depend>
   <depend>control_toolbox</depend>
   <depend>controller_interface</depend>

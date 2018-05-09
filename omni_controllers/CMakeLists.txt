@@ -12,8 +12,24 @@ find_package(catkin REQUIRED COMPONENTS
   hardware_interface
   realtime_tools
   velocity_controllers
+  message_generation
 )
+
 find_package(Eigen3 REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system)
+
+## Generate messages in the 'msg' folder
+add_message_files(
+  FILES
+  PubMsg.msg
+  SubParamMsg.msg
+  SubPolMsg.msg
+)
+
+generate_messages(
+DEPENDENCIES
+
+)
 
 # Declare catkin package
 catkin_package(
@@ -25,6 +41,7 @@ catkin_package(
     hardware_interface
     realtime_tools
     velocity_controllers
+    message_runtime
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
 )
