@@ -79,8 +79,8 @@ namespace arm_speed_safe_controller {
     template <class SafetyConstraint = NoSafetyConstraints>
     class PolicyController : public controller_interface::Controller<hardware_interface::VelocityJointInterface> {
     public:
-        ArmSpeedSafeController() {}
-        ~ArmSpeedSafeController() { _sub_command.shutdown(); }
+        PolicyController() {}
+        ~PolicyController() { _sub_command.shutdown(); }
 
         bool init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle& nh)
         {
@@ -134,7 +134,7 @@ namespace arm_speed_safe_controller {
             Eigen::VectorXd max_u;
             max_u << 1.0, 1.0, 1.0, 1.0, 1.0;
 
-            pol = make_shared<blackdrops::policy::NNPolicy<Params>(boundary, state_dim, hidden_neurons, action_dim, limits, max_u);
+            pol = make_shared<blackdrops::policy::NNPolicy<Params>>(boundary, state_dim, hidden_neurons, action_dim, limits, max_u);
 
             _sub_command = nh.subscribe<std_msgs::Float64MultiArray>("command", 1, &PolicyController::commandCB, this);
             _sub_params = nh.subscribe<omni_controllers::SubParamMsg>("policy_params",1,&PolicyController::setParams, this);
@@ -186,11 +186,18 @@ namespace arm_speed_safe_controller {
 
        void setParams(const omni_controllers::SubParamMsg::ConstPtr& msg)
         {
-          Eigen::VectorXd params;
+          Eigen::VectorXd params; //copy the parameters in a local public array, save time information
 
           std::vector<double>::iterator index;
-          for (index = msg->params.begin(); index!=msg->params.end(); index++)
-          params.push_back(*index);
+
+          // for (index = msg->params.begin(); index!=msg->params.end(); index++)
+          // params.push_back(*index);
+          //
+          // pol.set_params(params);   //set the policy parameters
+          // flag = true;
+
+          for (int i=0; i<params.size(); i++)
+          params.push_back(i);
 
           pol.set_params(params);   //set the policy parameters
           flag = true;
@@ -212,7 +219,7 @@ namespace arm_speed_safe_controller {
                commands = pol.next(joints);
                commandList.push_back(commands);
 
-               _constraint.enforce(commands, period);
+               //_constraint.enforce(commands, period);
                for (unsigned int j = 0; j < n_joints; j++) {
                   jointList.push_back(joints[j]->getPosition());
                   joints[j]->setCommand(commands[j]);
@@ -228,7 +235,7 @@ namespace arm_speed_safe_controller {
 
                 //send zero velocities
                 commands.setZero(commands.size());
-                _constraint.enforce(commands, period);
+                //_constraint.enforce(commands, period);
                 for (unsigned int j = 0; j < n_joints; j++)
                    joints[j]->setCommand(commands[j]);
 
@@ -244,11 +251,11 @@ namespace arm_speed_safe_controller {
                 if (realtime_pub->trylock()){
                 for (unsigned i=0; i<jointList.size(); i++)
                 {
-                  realtime_pub->msg.jointList.push_back(jointList[i]);
-                  realtime_pub->msg.commandList.push_back(commandList[i]);
+                  realtime_pub->msg_.jointList.push_back(jointList[i]);
+                  realtime_pub->msg_.commandList.push_back(commandList[i]);
                 }
-                realtime_pub->msg.rows = max_iterations;
-                realtime_pub->msg.columns = n_joints;
+                realtime_pub->msg_.rows = max_iterations;
+                realtime_pub->msg_.columns = n_joints;
                 realtime_pub->unlockAndPublish();
                 }
 
@@ -264,7 +271,7 @@ namespace arm_speed_safe_controller {
                //still send zero velocities
                commands.setZero(n_joints);
 
-               _constraint.enforce(commands, period);
+               //_constraint.enforce(commands, period);
                for (unsigned int j = 0; j < n_joints; j++)
                 joints[j]->setCommand(commands[j]);
              }
