@@ -156,6 +156,8 @@ namespace arm_speed_safe_controller {
         realtime_tools::RealtimeBuffer<std::vector<double>> commands_buffer;
         unsigned int n_joints;
 
+
+        //Note that these are not vector of vectors, but vector of doubles, so that finally a long vector of all commands is send and extracted by knowing the number of joints
         std::vector<double> jointList;
         std::vector<double> commandList;
         Eigen::VectorXd commands;
@@ -188,7 +190,7 @@ namespace arm_speed_safe_controller {
         {
           Eigen::VectorXd params; //copy the parameters in a local public array, save time information
 
-          std::vector<double>::iterator index;
+          //std::vector<double>::iterator index;
 
           // for (index = msg->params.begin(); index!=msg->params.end(); index++)
           // params.push_back(*index);
@@ -196,8 +198,8 @@ namespace arm_speed_safe_controller {
           // pol.set_params(params);   //set the policy parameters
           // flag = true;
 
-          for (int i=0; i<params.size(); i++)
-          params.push_back(i);
+          for (int i=0; i<msg->params.size(); i++)
+          params=msg->params(i);
 
           pol.set_params(params);   //set the policy parameters
           flag = true;
@@ -217,7 +219,10 @@ namespace arm_speed_safe_controller {
              if (count<max_iterations) //during the episode
              {
                commands = pol.next(joints);
-               commandList.push_back(commands);
+
+               for(int i=0;i<commands.size();i++)
+                commandList.push_back(commands(i)); 
+               //commandList(count)=commands;
 
                //_constraint.enforce(commands, period);
                for (unsigned int j = 0; j < n_joints; j++) {
