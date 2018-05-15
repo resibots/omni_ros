@@ -134,7 +134,7 @@ namespace arm_speed_safe_controller {
             Eigen::VectorXd max_u;
             max_u << 1.0, 1.0, 1.0, 1.0, 1.0;
 
-            pol = make_shared<blackdrops::policy::NNPolicy<Params>>(boundary, state_dim, hidden_neurons, action_dim, limits, max_u);
+            pol = std::make_shared<blackdrops::policy::NNPolicy>(boundary, state_dim, hidden_neurons, action_dim, limits, max_u);
 
             _sub_command = nh.subscribe<std_msgs::Float64MultiArray>("command", 1, &PolicyController::commandCB, this);
             _sub_params = nh.subscribe<omni_controllers::SubParamMsg>("policy_params",1,&PolicyController::setParams, this);
@@ -173,7 +173,7 @@ namespace arm_speed_safe_controller {
 
         //realtime_tools::RealtimePublisher<omni_controllers::PubMsg> realtime_pub_;
 
-        std::shared_ptr<blackdrops::policy::NNPolicy<Params>> pol;
+        std::shared_ptr<blackdrops::policy::NNPolicy> pol;
         std::shared_ptr<realtime_tools::RealtimePublisher<omni_controllers::PubMsg>> realtime_pub;
 
         //pol = make_shared<blackdrops::policy::NNPolicy<Params>>(values, vlaues, alvuse);
@@ -188,7 +188,7 @@ namespace arm_speed_safe_controller {
 
        void setParams(const omni_controllers::SubParamMsg::ConstPtr& msg)
         {
-          Eigen::VectorXd params; //copy the parameters in a local public array, save time information
+          Eigen::VectorXd params(msg->params.size()); //copy the parameters in a local public array, save time information
 
           //std::vector<double>::iterator index;
 
@@ -199,9 +199,9 @@ namespace arm_speed_safe_controller {
           // flag = true;
 
           for (int i=0; i<msg->params.size(); i++)
-          params=msg->params(i);
+            params(i) = msg->params[i];
 
-          pol.set_params(params);   //set the policy parameters
+          pol->set_params(params);   //set the policy parameters
           flag = true;
 
           //save the time and Duration
@@ -212,16 +212,23 @@ namespace arm_speed_safe_controller {
           max_iterations = (int)T/dT;
         }
 
+        static Eigen::VectorXd joints_to_eigen(const std::vector<std::shared_ptr<hardware_interface::JointHandle> > &v) {
+          Eigen::VectorXd res(v.size());
+          for (size_t i = 0; i < v.size(); ++i)
+            res[i] = v[i]->getPosition();
+          return res;
+        }
+
         void update(const ros::Time& /*time*/, const ros::Duration& period)
         {
            if (flag) //blackdrops parameters to be implemented
            {
              if (count<max_iterations) //during the episode
              {
-               commands = pol.next(joints);
+               commands = pol->next(joints_to_eigen(joints));
 
                for(int i=0;i<commands.size();i++)
-                commandList.push_back(commands(i)); 
+                commandList.push_back(commands(i));
                //commandList(count)=commands;
 
                //_constraint.enforce(commands, period);
@@ -285,11 +292,11 @@ namespace arm_speed_safe_controller {
   };
 
   /** \cond HIDDEN_SYMBOLS */
-  struct NoSafetyConstraints {
-      bool init(const std::vector<std::shared_ptr<hardware_interface::JointHandle>>& joints,
-          ros::NodeHandle& nh);
-      bool enforce(std::vector<double>& commands, const ros::Duration& period);
-  };
+  // struct NoSafetyConstraints {
+  //     bool init(const std::vector<std::shared_ptr<hardware_interface::JointHandle>>& joints,
+  //         ros::NodeHandle& nh);
+  //     bool enforce(std::vector<double>& commands, const ros::Duration& period);
+  // };
   /** \endcond */
 
 } // namespace arm_speed_safe_controller

@@ -63,41 +63,37 @@
 
 namespace blackdrops {
     namespace policy {
-        template <typename Params>
         struct NNPolicy {
 
             using nn_t = nn::Mlp<nn::Neuron<nn::PfWSum<>, nn::AfTanhNoBias<>>, nn::Connection<double, double>>;
 
-            NNPolicy(double boundary, size_t state_dim, size_t hidden_neurons, size_t action_dim, const Eigen::VectorXd& limits, const Eigen::VectorXd& max_u)
+            NNPolicy(double boundary, size_t state_dim, size_t hidden_neurons, size_t action_dim, const Eigen::VectorXd& limits, const Eigen::VectorXd& max_u):
+            _boundary(boundary),
+            _random(false),
+            _nn(std::make_shared<nn_t>(state_dim, hidden_neurons, action_dim)),
+            _limits(limits),
+            _state_dim(state_dim),
+            _action_dim(action_dim),
+            _max_u(max_u)
           {
-              _boundary = boundary;
-              _random = false;
-              _nn = std::make_shared<nn_t>(
-                  state_dim,
-                  hidden_neurons,
-                  action_dim);
               _nn->init();
               _params = Eigen::VectorXd::Zero(_nn->get_nb_connections());
-              _limits = limits;
-              _state_dim = state_dim;
-              _action_dim = action_dim;
-              _max_u = max_u;
-          }
+            }
 
             Eigen::VectorXd next(const Eigen::VectorXd& state) const
             {
-                if (_random || _params.size() == 0) {
+              /*  if (_random || _params.size() == 0) {
                     //Eigen::VectorXd act = (limbo::tools::random_vector(Params::nn_policy::action_dim()).array() * 2 - 1.0);
                     Eigen::VectorXd act = (random_vector(_action_dim).array() * 2 - 1.0);
                     for (int i = 0; i < act.size(); i++) {
-                        act(i) = act(i) * Params::nn_policy::max_u(i);
+                        act(i) = act(i) * _max_u(i);
                     }
                     return act;
-                }
+                }*/
 
                 Eigen::VectorXd nstate = state.array() / _limits.array(); //((state - _means).array() / (_sigmas * 3).array()); //state.array() / _limits.array();
 
-                std::vector<double> inputs(Params::nn_policy::state_dim());
+                std::vector<double> inputs(_state_dim);
                 Eigen::VectorXd::Map(inputs.data(), inputs.size()) = nstate;
 
                 _nn->step(inputs);
@@ -107,7 +103,7 @@ namespace blackdrops {
                 Eigen::VectorXd act = Eigen::VectorXd::Map(outputs.data(), outputs.size());
 
                 for (int i = 0; i < act.size(); i++) {
-                    act(i) = act(i) * Params::nn_policy::max_u(i);
+                    act(i) = act(i) * _max_u(i);
                 }
                 return act;
             }
@@ -138,21 +134,24 @@ namespace blackdrops {
                 //     return limbo::tools::random_vector(_nn->get_nb_connections()).array() * 2.0 * _boundary - _boundary;
                 // return _params;
 
-                if (_random || _params.size() == 0)
-                  return random_vector(_nn->get_nb_connections()).array() * 2.0 * _boundary - _boundary;
+            //    if (_random || _params.size() == 0)
+            //     return random_vector(_nn->get_nb_connections()).array() * 2.0 * _boundary - _boundary;
                 return _params;
 
             }
-
-            std::shared_ptr<nn_t> _nn;
+          protected:
             Eigen::VectorXd _params;
-            bool _random;
 
             Eigen::VectorXd _means;
             Eigen::MatrixXd _sigmas;
             Eigen::VectorXd _limits;
 
             double _boundary;
+            bool _random;
+            std::shared_ptr<nn_t> _nn;
+            size_t _state_dim;
+            size_t _action_dim;
+            Eigen::VectorXd _max_u;
         };
     }
 }
