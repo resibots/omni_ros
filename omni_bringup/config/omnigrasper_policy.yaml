@@ -50,8 +50,8 @@ dynamixel_controllers:
     publish_rate: 5
 
   omni_policy_controller:
-    # type: omni_controllers/OmnigrasperUnsafePolicyController
-    type: omni_controllers/OmnigrasperConstraintPolicyController
+    type: omni_controllers/OmnigrasperUnsafePolicyController
+    # type: omni_controllers/OmnigrasperConstraintPolicyController
     # type: omni_controllers/OmnigrasperSpeedSafeController
     # type: omni_controllers/ArmSpeedUnsafeController
     # type: velocity_controllers/JointTrajectoryController
