@@ -43,15 +43,15 @@ you accept its terms. -->
        value="$(find omni_bringup)/custom_rosconsole.conf"/> -->
 
   <!-- URDF robot description -->
-  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find dynamixel_control_hw)/urdf/sample.urdf" />
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find dynamixel_control)/urdf/sample.urdf" />
 
   <!-- launch the arm -->
     <!-- Parameters for the hardware interface and controllers -->
     <rosparam file="$(find omni_bringup)/config/omnigrasper_policy.yaml"/>
 
     <!-- starting the hardware interface and controllers -->
-    <node name="dynamixel_control" pkg="dynamixel_control_hw"
-          type="dynamixel_control_hw_v1" output="screen" clear_params="true"
+    <node name="dynamixel_control" pkg="dynamixel_control"
+          type="dynamixel_control_p1" output="screen" clear_params="true"
           required="true"/>
     <node name="controller" pkg="controller_manager" type="spawner"
           respawn="false" output="screen" clear_params="true"

@@ -51,9 +51,9 @@ dynamixel_controllers:
 
   omni_policy_controller:
     # type: omni_controllers/OmnigrasperUnsafePolicyController
-    # type: omni_controllers/OmnigrasperConstraintPolicyController
+    type: omni_controllers/OmnigrasperConstraintPolicyController
     # type: omni_controllers/OmnigrasperSpeedSafeController
-    type: omni_controllers/ArmSpeedUnsafeController
+    # type: omni_controllers/ArmSpeedUnsafeController
     # type: velocity_controllers/JointTrajectoryController
     gains: # Required because we're controlling a velocity interface
       arm_joint_1: {p: 1,  d: 0.1, i: 0.1, i_clamp: 1}
