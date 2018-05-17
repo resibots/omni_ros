@@ -121,24 +121,32 @@ namespace arm_speed_safe_controller {
             publish_flag = false;
             count = 0;
             max_iterations = (int)T/dT;
-            commands << 0.0, 0.0, 0.0, 0.0, 0.0;
+            //commands << 0.0, 0.0, 0.0, 0.0, 0.0;
+            commands << 0.0, 0.0;
 
             //double M_PI = 3.14;
             double boundary = 1;
-            int state_dim = 5;
-            int hidden_neurons = 10;
-            int action_dim = 5;
+            //int state_dim = 5;
+            //int hidden_neurons = 10;
+            //int action_dim = 5;
+
+            int state_dim = 2;
+            int action_dim = 2;
+            int hidden_neurons = 1;
+
             Eigen::VectorXd limits;
             //limits << M_PI, M_PI/4., M_PI/2., M_PI, M_PI/2.;
-            limits << 3.14, 0.78, 1.57, 3.14, 1.57;
+            //limits << 3.14, 0.78, 1.57, 3.14, 1.57;
+            limits << 3.14, 0.78;
             Eigen::VectorXd max_u;
-            max_u << 1.0, 1.0, 1.0, 1.0, 1.0;
+            //max_u << 1.0, 1.0, 1.0, 1.0, 1.0;
+            max_u << 1.0, 1.0;
 
             pol = std::make_shared<blackdrops::policy::NNPolicy>(boundary, state_dim, hidden_neurons, action_dim, limits, max_u);
 
-            _sub_command = nh.subscribe<std_msgs::Float64MultiArray>("command", 1, &PolicyController::commandCB, this);
-            _sub_params = nh.subscribe<omni_controllers::SubParamMsg>("policy_params",1,&PolicyController::setParams, this);
-            realtime_pub.reset(new realtime_tools::RealtimePublisher<omni_controllers::PubMsg>(nh, "joint_states", 1));
+            _sub_command = nh.subscribe<std_msgs::Float64MultiArray>("commands", 1, &PolicyController::commandCB, this);
+            _sub_params = nh.subscribe<omni_controllers::SubParamMsg>("policyParams",1,&PolicyController::setParams, this);
+            realtime_pub.reset(new realtime_tools::RealtimePublisher<omni_controllers::PubMsg>(nh, "jointStates", 1));
             // realtime_pub.reset(new realtime_tools::RealtimePublisher<omni_controllers::PubMsg>(nh, "joint_states", 1));
 
             ros::spin();

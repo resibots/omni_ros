@@ -27,8 +27,7 @@ add_message_files(
 )
 
 generate_messages(
-DEPENDENCIES
-
+  DEPENDENCIES
 )
 
 # Declare catkin package
@@ -52,7 +51,9 @@ add_library(${PROJECT_NAME}
   src/arm_speed_safe_controller.cpp
 )
 
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+add_executable(TestTopic src/TestTopic.cpp)
+# target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+target_link_libraries(TestTopic ${catkin_LIBRARIES})
 
 # Install
 install(DIRECTORY include/${PROJECT_NAME}/

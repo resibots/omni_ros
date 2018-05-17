@@ -51,7 +51,15 @@
 
 namespace arm_speed_safe_controller {
 
-    struct NoSafetyConstraints;
+    // struct NoSafetyConstraints;
+
+    /** \cond HIDDEN_SYMBOLS */
+    struct NoSafetyConstraints {
+        bool init(const std::vector<std::shared_ptr<hardware_interface::JointHandle>>& joints,
+            ros::NodeHandle& nh);
+        bool enforce(std::vector<double>& commands, const ros::Duration& period);
+    };
+    /** \endcond */
 
     /**
      * \brief Speed command controller for a robotic arm, with safety constraints.
@@ -148,14 +156,6 @@ namespace arm_speed_safe_controller {
             commands_buffer.writeFromNonRT(msg->data);
         }
     };
-
-    /** \cond HIDDEN_SYMBOLS */
-    struct NoSafetyConstraints {
-        bool init(const std::vector<std::shared_ptr<hardware_interface::JointHandle>>& joints,
-            ros::NodeHandle& nh);
-        bool enforce(std::vector<double>& commands, const ros::Duration& period);
-    };
-    /** \endcond */
 
 } // namespace arm_speed_safe_controller
 

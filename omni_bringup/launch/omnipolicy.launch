@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<!-- This file is a part of the ERC ResiBots project.
+
+This software is governed by the CeCILL license under French law and abiding by
+the rules of distribution of free software. You can use, modify and/ or redistribute
+the software under the terms of the CeCILL license as circulated by CEA, CNRS
+and INRIA at the following URL "http://www.cecill.info". As a counterpart to the
+access to the source code and rights to copy, modify and redistribute granted by
+the license, users are provided only with a limited warranty and the software's
+author, the holder of the economic rights, and the successive licensors have only
+limited liability. In this respect, the user's attention is drawn to the risks
+associated with loading, using, modifying and/or developing or reproducing the
+software by the user in light of its specific status of free software, that may
+mean that it is complicated to manipulate, and that also therefore means that it
+is reserved for developers and experienced professionals having in-depth computer
+knowledge. Users are therefore encouraged to load and test the software's
+suitability as regards their requirements in conditions enabling the security of
+their systems and/or data to be ensured and, more generally, to use and operate
+it in the same conditions as regards security. The fact that you are presently
+reading this means that you have had knowledge of the CeCILL license and that
+you accept its terms. -->
+
+<launch>
+  <!--
+    What is done here
+      - load URDF description the TF tree
+      - control node for the arm (dynamixel hardware interface)
+      - control node for the YouBot mobile base (youbot driver)
+
+    Arguments
+      The arguments of this launch file can be described with
+        `roslaunch omni_bringup omnigrasper.launch - -ros-args`
+
+    Topics published
+      TODO: descibe published topics
+
+    Subscribed topics
+      Depends on the arm_control_mode, as far as the arm goes
+      TODO: list subscribed topics for the base and the arm
+  -->
+
+  <!-- <env name="ROSCONSOLE_CONFIG_FILE"
+       value="$(find omni_bringup)/custom_rosconsole.conf"/> -->
+
+  <!-- URDF robot description -->
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find dynamixel_control_hw)/urdf/sample.urdf" />
+
+  <!-- launch the arm -->
+    <!-- Parameters for the hardware interface and controllers -->
+    <rosparam file="$(find omni_bringup)/config/omnigrasper_policy.yaml"/>
+
+    <!-- starting the hardware interface and controllers -->
+    <node name="dynamixel_control" pkg="dynamixel_control_hw"
+          type="dynamixel_control_hw_v1" output="screen" clear_params="true"
+          required="true"/>
+    <node name="controller" pkg="controller_manager" type="spawner"
+          respawn="false" output="screen" clear_params="true"
+          args="/dynamixel_controllers/joint_state_controller
+                /dynamixel_controllers/omni_policy_controller"/>
+
+    <!-- Publish robot's state in the tf tree -->
+    <remap from="joint_states" to="/arm/joint_states"/>
+</launch>

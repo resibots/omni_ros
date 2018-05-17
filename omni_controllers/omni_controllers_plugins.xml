@@ -1,5 +1,17 @@
 <library path="lib/libomni_controllers">
 
+
+
+
+  <class name="omni_controllers/ArmSpeedUnsafeController"
+      type="arm_speed_safe_controller::ArmSpeedUnsafeController"
+      base_class_type="controller_interface::ControllerBase">
+    <description>
+      This controller is unsafe
+    </description>
+  </class>
+
+
   <class name="omni_controllers/OmnigrasperSpeedSafeController"
       type="arm_speed_safe_controller::OmnigrasperSpeedSafeController"
       base_class_type="controller_interface::ControllerBase">
@@ -19,6 +31,27 @@
       base_class_type="controller_interface::ControllerBase">
     <description>
       This controller sends velocity commands to joints of the Omnigrasper arm, respecting height constraints (joints not lower than given height). Contrary to OmnigrasperSpeedSafeController, this controller will smoothly decrease the speed to zero while we reach the limit height It expects a VelocityJointInterface type of hardware interface.
+    </description>
+  </class>
+  <class name="omni_controllers/OmnigrasperConstraintPolicyController"
+      type="arm_speed_safe_controller::OmnigrasperConstraintPolicyController"
+      base_class_type="controller_interface::ControllerBase">
+    <description>
+      Yes, yes, I know. There should be documentation here...
+    </description>
+  </class>
+  <class name="omni_controllers/OmnigrasperSmoothConstraintPolicyController"
+      type="arm_speed_safe_controller::OmnigrasperSmoothConstraintPolicyController"
+      base_class_type="controller_interface::ControllerBase">
+    <description>
+      And yes again, we should say what we do, but...
+    </description>
+  </class>
+  <class name="omni_controllers/OmnigrasperUnsafePolicyController"
+      type="arm_speed_safe_controller::OmnigrasperUnsafePolicyController"
+      base_class_type="controller_interface::ControllerBase">
+    <description>
+      This one is unsafe. Beware !
     </description>
   </class>
 
