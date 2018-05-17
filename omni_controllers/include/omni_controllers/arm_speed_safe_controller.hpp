@@ -40,14 +40,14 @@
 #ifndef OMNI_CONTROLLERS_ARM_SPEED_SAFE_H
 #define OMNI_CONTROLLERS_ARM_SPEED_SAFE_H
 
-#include <vector>
 #include <string>
+#include <vector>
 
-#include <ros/node_handle.h>
-#include <hardware_interface/joint_command_interface.h>
 #include <controller_interface/controller.h>
-#include <std_msgs/Float64MultiArray.h>
+#include <hardware_interface/joint_command_interface.h>
 #include <realtime_tools/realtime_buffer.h>
+#include <ros/node_handle.h>
+#include <std_msgs/Float64MultiArray.h>
 
 namespace arm_speed_safe_controller {
 
@@ -156,6 +156,20 @@ namespace arm_speed_safe_controller {
             commands_buffer.writeFromNonRT(msg->data);
         }
     };
+
+    /** \cond HIDDEN_SYMBOLS */
+    struct NoSafetyConstraints {
+        bool init(const std::vector<std::shared_ptr<hardware_interface::JointHandle>>& joints,
+            ros::NodeHandle& nh)
+        {
+            return true;
+        }
+        bool enforce(std::vector<double>& commands, const ros::Duration& period)
+        {
+            return true;
+        }
+    };
+    /** \endcond */
 
 } // namespace arm_speed_safe_controller
 
