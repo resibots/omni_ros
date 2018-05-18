@@ -158,7 +158,7 @@ namespace arm_speed_safe_controller {
 
                     for (unsigned int j = 0; j < n_joints; j++) {
                         jointList.push_back(joints[j]->getPosition());
-                        commandList.push_back(commands(i));
+                        commandList.push_back(commands(j));
                         joints[j]->setCommand(commands(j));
                     }
 
@@ -169,11 +169,12 @@ namespace arm_speed_safe_controller {
                 else //episode is over
                 {
                     commands.setZero(commands.size());
-                    for (unsigned int j = 0; j < n_joints; j++)
+                    for (unsigned int j = 0; j < n_joints; j++){
                         //record the last set of joint states
                         jointList.push_back(joints[j]->getPosition());
                     //send zero velocities
                     joints[j]->setCommand(commands[j]);
+                  }
 
                     //_constraint.enforce(commands, period);
 
@@ -219,6 +220,7 @@ namespace arm_speed_safe_controller {
         // knowing the number of joints.
         std::vector<double> jointList;
         std::vector<double> commandList;
+        Eigen::VectorXd commands;
 
     private:
         SafetyConstraint _constraint;
