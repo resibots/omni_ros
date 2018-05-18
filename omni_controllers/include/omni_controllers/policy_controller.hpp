@@ -51,17 +51,18 @@
 #include <std_msgs/Float64MultiArray.h>
 
 //Local
-#include <omni_controllers/PubMsg.h>
-#include <omni_controllers/SubParamMsg.h>
-#include <omni_controllers/SubPolMsg.h>
+#include <omni_controllers/PublishData.h>
+#include <omni_controllers/PublishMatrix.h>
+#include <omni_controllers/PolicyParams.h>
+#include <omni_controllers/PolicyInit.h>
 #include <omni_controllers/arm_speed_safe_controller.hpp>
 #include <omni_controllers/cartesian_constraint.hpp>
 #include <omni_controllers/policies/NNpolicy.hpp>
 
-namespace arm_policy_controller {
+namespace arm_speed_safe_controller {
 
     /**
-     * FIXME: \brief Speed command controller for a robotic arm, with safety constraints.
+     * FIXME: \Controller to implement Black-drops policies on a robotic arm, with safety constraints.
      *
      * This class forwards the command signal down to a set of joints, if they
      * do not infringe some user-defined safety constraints.
@@ -79,7 +80,7 @@ namespace arm_policy_controller {
     template <class SafetyConstraint = NoSafetyConstraints>
     class PolicyController : public controller_interface::Controller<hardware_interface::VelocityJointInterface> {
     public:
-        PolicyController() : flag(false), publish_flag(false) {}
+        PolicyController() {}
         ~PolicyController() { _sub_command.shutdown(); }
 
         bool init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle& nh)
@@ -127,23 +128,22 @@ namespace arm_policy_controller {
             int state_dim = 2;
             int action_dim = 2;
             int hidden_neurons = 1;
-            Eigen::VectorXd limits(2);
+            Eigen::VectorXd limits;
             limits << 3.14, 0.78;
-            Eigen::VectorXd max_u(2);
+            Eigen::VectorXd max_u;
             max_u << 1.0, 1.0;
 
             _policy = std::make_shared<blackdrops::policy::NNPolicy>(
                 boundary, state_dim, hidden_neurons, action_dim, limits, max_u);
 
             // _sub_command = nh.subscribe<std_msgs::Float64MultiArray>("commands", 1, &PolicyController::commandCB, this);
-            _sub_params = nh.subscribe<omni_controllers::SubParamMsg>("policyParams", 1, &PolicyController::setParams, this);
-            _realtime_pub.reset(new realtime_tools::RealtimePublisher<omni_controllers::PubMsg>(nh, "jointStates", 1));
+            _sub_params = nh.subscribe<omni_controllers::PolicyParams>("policyParams", 1, &PolicyController::setParams, this);
+            _realtime_pub.reset(new realtime_tools::RealtimePublisher<omni_controllers::PublishMatrix>(nh, "jointStates", 1));
 
             return true;
         }
 
-        void
-        starting(const ros::Time& time)
+        void starting(const ros::Time& time)
         {
             // Start controller with 0.0 velocities
             commands_buffer.readFromRT()->assign(n_joints, 0.0);
@@ -158,8 +158,8 @@ namespace arm_policy_controller {
                     commands = _policy->next(joints_to_eigen());
 
                     for (unsigned int j = 0; j < n_joints; j++) {
-                        jointList.push_back(joints[j]->getPosition());
-                        commandList.push_back(commands(j));
+                        JointValues.data.push_back(joints[j]->getPosition());
+                        CommandValues.data.push_back(commands(j));
                         joints[j]->setCommand(commands(j));
                     }
 
@@ -170,12 +170,12 @@ namespace arm_policy_controller {
                 else //episode is over
                 {
                     commands.setZero(commands.size());
-                    for (unsigned int j = 0; j < n_joints; j++) {
+                    for (unsigned int j = 0; j < n_joints; j++){
                         //record the last set of joint states
-                        jointList.push_back(joints[j]->getPosition());
+                        JointValues.data.push_back(joints[j]->getPosition()); //Doubt -- CommandValues size to differ?
                         //send zero velocities
                         joints[j]->setCommand(commands[j]);
-                    }
+                  }
 
                     //_constraint.enforce(commands, period);
 
@@ -194,17 +194,14 @@ namespace arm_policy_controller {
 
             // Publishing the data gathered during the episode
             if (publish_flag && _realtime_pub->trylock()) {
-                for (unsigned i = 0; i < jointList.size(); i++) {
-                    _realtime_pub->msg_.jointList.push_back(jointList[i]);
-                    _realtime_pub->msg_.commandList.push_back(commandList[i]);
-                }
-                _realtime_pub->msg_.rows = max_iterations;
-                _realtime_pub->msg_.columns = n_joints;
+
+                _realtime_pub->msg_.JointPos.push_back(JointValues);
+                _realtime_pub->msg_.CommandVel.push_back(CommandValues);
                 _realtime_pub->unlockAndPublish();
 
                 //clear storage vectors after publishing is over for the last episode
-                std::fill(jointList.begin(), jointList.end(), 0);
-                std::fill(commandList.begin(), commandList.end(), 0);
+                std::fill(JointValues.data.begin(), JointValues.data.end(), 0);
+                std::fill(CommandValues.data.begin(), CommandValues.data.end(), 0);
 
                 publish_flag = false;
             }
@@ -216,11 +213,9 @@ namespace arm_policy_controller {
         realtime_tools::RealtimeBuffer<std::vector<double>> commands_buffer;
         unsigned int n_joints;
 
-        // Note that these are not vector of vectors, but vector of doubles, so
-        // that finally a long vector of all commands is send and extracted by
-        // knowing the number of joints.
-        std::vector<double> jointList;
-        std::vector<double> commandList;
+        //Storing of data for every episode
+        omni_controllers::PublishData JointValues;
+        omni_controllers::PublishData CommandValues;
         Eigen::VectorXd commands;
 
     private:
@@ -233,27 +228,22 @@ namespace arm_policy_controller {
         bool publish_flag, flag;
 
         std::shared_ptr<blackdrops::policy::NNPolicy> _policy;
-        std::shared_ptr<realtime_tools::RealtimePublisher<omni_controllers::PubMsg>> _realtime_pub;
+        std::shared_ptr<realtime_tools::RealtimePublisher<omni_controllers::PublishMatrix>> _realtime_pub;
 
-        void setParams(const omni_controllers::SubParamMsg::ConstPtr& msg)
+        void setParams(const omni_controllers::PolicyParams::ConstPtr& msg)
         {
-            if (!flag) {
-                Eigen::VectorXd params(msg->params.size()); //copy the parameters in a local public array, save time information
+            Eigen::VectorXd params(msg->params.size()); //copy the parameters in a local public array, save time information
 
-                for (int i = 0; i < msg->params.size(); i++)
-                    params(i) = msg->params[i];
+            for (int i = 0; i < msg->params.size(); i++)
+                params(i) = msg->params[i];
 
-                _policy->set_params(params); //set the policy parameters
-                flag = true;
+            _policy->set_params(params); //set the policy parameters
+            flag = true;
 
-                dT = msg->dT;
+            dT = msg->dT;
 
-                //Hence rows can be set now (correspond to number of runs in an episode)
-                max_iterations = (int)msg->t / msg->dT;
-            }
-            else {
-                ROS_WARN("Got new policy parameters during an episode. They are ignored");
-            }
+            //Hence rows can be set now (correspond to number of runs in an episode)
+            max_iterations = (int)msg->t / msg->dT;
         }
 
         inline Eigen::VectorXd joints_to_eigen()
@@ -264,6 +254,6 @@ namespace arm_policy_controller {
             return res;
         }
     };
-} // namespace arm_policy_controller
+} // namespace arm_speed_safe_controller
 
 #endif

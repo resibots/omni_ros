@@ -22,11 +22,13 @@ find_package(Boost REQUIRED COMPONENTS system)
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  PubMsg.msg
-  SubParamMsg.msg
-  SubPolMsg.msg
+  PublishData.msg
+  PublishMatrix.msg
+  PolicyParams.msg
+  PolicyInit.msg
 )
 
+# generate_messages(DEPENDENCIES std_msgs omni_controllers/PublishData)
 generate_messages()
 
 # Declare catkin package
