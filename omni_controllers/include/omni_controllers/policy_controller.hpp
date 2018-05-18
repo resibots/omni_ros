@@ -58,7 +58,7 @@
 #include <omni_controllers/cartesian_constraint.hpp>
 #include <omni_controllers/policies/NNpolicy.hpp>
 
-namespace arm_speed_safe_controller {
+namespace arm_policy_controller {
 
     /**
      * FIXME: \brief Speed command controller for a robotic arm, with safety constraints.
@@ -79,7 +79,7 @@ namespace arm_speed_safe_controller {
     template <class SafetyConstraint = NoSafetyConstraints>
     class PolicyController : public controller_interface::Controller<hardware_interface::VelocityJointInterface> {
     public:
-        PolicyController() {}
+        PolicyController() : flag(false), publish_flag(false) {}
         ~PolicyController() { _sub_command.shutdown(); }
 
         bool init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle& nh)
@@ -127,9 +127,9 @@ namespace arm_speed_safe_controller {
             int state_dim = 2;
             int action_dim = 2;
             int hidden_neurons = 1;
-            Eigen::VectorXd limits;
+            Eigen::VectorXd limits(2);
             limits << 3.14, 0.78;
-            Eigen::VectorXd max_u;
+            Eigen::VectorXd max_u(2);
             max_u << 1.0, 1.0;
 
             _policy = std::make_shared<blackdrops::policy::NNPolicy>(
@@ -142,7 +142,8 @@ namespace arm_speed_safe_controller {
             return true;
         }
 
-        void starting(const ros::Time& time)
+        void
+        starting(const ros::Time& time)
         {
             // Start controller with 0.0 velocities
             commands_buffer.readFromRT()->assign(n_joints, 0.0);
@@ -169,12 +170,12 @@ namespace arm_speed_safe_controller {
                 else //episode is over
                 {
                     commands.setZero(commands.size());
-                    for (unsigned int j = 0; j < n_joints; j++){
+                    for (unsigned int j = 0; j < n_joints; j++) {
                         //record the last set of joint states
                         jointList.push_back(joints[j]->getPosition());
-                    //send zero velocities
-                    joints[j]->setCommand(commands[j]);
-                  }
+                        //send zero velocities
+                        joints[j]->setCommand(commands[j]);
+                    }
 
                     //_constraint.enforce(commands, period);
 
@@ -236,18 +237,23 @@ namespace arm_speed_safe_controller {
 
         void setParams(const omni_controllers::SubParamMsg::ConstPtr& msg)
         {
-            Eigen::VectorXd params(msg->params.size()); //copy the parameters in a local public array, save time information
+            if (!flag) {
+                Eigen::VectorXd params(msg->params.size()); //copy the parameters in a local public array, save time information
 
-            for (int i = 0; i < msg->params.size(); i++)
-                params(i) = msg->params[i];
+                for (int i = 0; i < msg->params.size(); i++)
+                    params(i) = msg->params[i];
 
-            _policy->set_params(params); //set the policy parameters
-            flag = true;
+                _policy->set_params(params); //set the policy parameters
+                flag = true;
 
-            dT = msg->dT;
+                dT = msg->dT;
 
-            //Hence rows can be set now (correspond to number of runs in an episode)
-            max_iterations = (int)msg->t / msg->dT;
+                //Hence rows can be set now (correspond to number of runs in an episode)
+                max_iterations = (int)msg->t / msg->dT;
+            }
+            else {
+                ROS_WARN("Got new policy parameters during an episode. They are ignored");
+            }
         }
 
         inline Eigen::VectorXd joints_to_eigen()
@@ -258,6 +264,6 @@ namespace arm_speed_safe_controller {
             return res;
         }
     };
-} // namespace arm_speed_safe_controller
+} // namespace arm_policy_controller
 
 #endif

@@ -43,21 +43,21 @@ you accept its terms. -->
        value="$(find omni_bringup)/custom_rosconsole.conf"/> -->
 
   <!-- URDF robot description -->
-  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find dynamixel_control)/urdf/sample.urdf" />
+  <include file="$(find omni_description)/launch/omnigrasper.launch" />
 
   <!-- launch the arm -->
-    <!-- Parameters for the hardware interface and controllers -->
-    <rosparam file="$(find omni_bringup)/config/omnigrasper_policy.yaml"/>
+  <!-- Parameters for the hardware interface and controllers -->
+  <rosparam file="$(find omni_bringup)/config/omnigrasper_policy.yaml"/>
 
-    <!-- starting the hardware interface and controllers -->
-    <node name="dynamixel_control" pkg="dynamixel_control"
-          type="dynamixel_control_p1" output="screen" clear_params="true"
-          required="true"/>
-    <node name="controller" pkg="controller_manager" type="spawner"
-          respawn="false" output="screen" clear_params="true"
-          args="/dynamixel_controllers/joint_state_controller
-                /dynamixel_controllers/omni_policy_controller"/>
+  <!-- starting the hardware interface and controllers -->
+  <node name="dynamixel_control" pkg="dynamixel_control"
+        type="dynamixel_control_p1" output="screen" clear_params="true"
+        required="true"/>
+  <node name="controller" pkg="controller_manager" type="spawner"
+        respawn="false" output="screen" clear_params="true"
+        args="/dynamixel_controllers/joint_state_controller
+              /dynamixel_controllers/omni_policy_controller"/>
 
-    <!-- Publish robot's state in the tf tree -->
-    <remap from="joint_states" to="/arm/joint_states"/>
+  <!-- Publish robot's state in the tf tree -->
+  <remap from="joint_states" to="/arm/joint_states"/>
 </launch>

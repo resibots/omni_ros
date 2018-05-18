@@ -31,11 +31,14 @@ int main(int argc, char *argv[])
   ros::NodeHandle priv_nh_("~");
   //ros::Rate loop_rate(10);
 
-  ros::Publisher my_msg_pub = nh.advertise<omni_controllers::SubParamMsg>("policyParams", 1);
+  ros::Publisher my_msg_pub = nh.advertise<omni_controllers::SubParamMsg>("/dynamixel_controllers/omni_policy_controller/policyParams", 1);
   // ros::Subscriber sub_params= nh.subscribe<omni_controllers::SubParamMsg>("policyParams",1,setParams);
 
   omni_controllers::SubParamMsg msg;
 
+  ros::Rate rate(1);
+
+  std::cout<<"starting to publish"<<std::endl;
   while(ros::ok())
   {
     //No. of params=(input+1).hidden + (hidden+1)*output
@@ -43,12 +46,10 @@ int main(int argc, char *argv[])
     msg.params={0.5,0.25,0.5,-0.5,0.5,0.25,0.5};
     msg.t=4.0;
     msg.dT=0.1;
-
-    std::cout<<"starting to publish"<<std::endl;
     my_msg_pub.publish(msg);
 
     ros::spinOnce();
-
+    rate.sleep();
   }
 
 
