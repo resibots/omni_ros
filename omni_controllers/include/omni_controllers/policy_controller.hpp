@@ -80,7 +80,8 @@ namespace arm_speed_safe_controller {
     template <class SafetyConstraint = NoSafetyConstraints>
     class PolicyController : public controller_interface::Controller<hardware_interface::VelocityJointInterface> {
     public:
-        PolicyController() {}
+        // PolicyController() {}
+        PolicyController() : flag(false), publish_flag(false), _episode_iterations(0) {}
         ~PolicyController() { _sub_command.shutdown(); }
 
         bool init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle& nh)
@@ -118,20 +119,42 @@ namespace arm_speed_safe_controller {
 
             commands_buffer.writeFromNonRT(std::vector<double>(n_joints, 0.0));
 
-            flag = false;
-            publish_flag = false;
-            _episode_iterations = 0;
+            // flag = false;
+            // publish_flag = false;
+            // _episode_iterations = 0;
 
             // Initialisation of the policy
             // TODO: get these values from ros parameters
-            double boundary = 1;
-            int state_dim = 2;
-            int action_dim = 2;
-            int hidden_neurons = 1;
+
+            // double boundary = 1;
+            // int state_dim = 2;
+            // int action_dim = 2;
+            // int hidden_neurons = 1;
+            // Eigen::VectorXd limits;
+            // limits << 3.14, 0.78;
+            // Eigen::VectorXd max_u;
+            // max_u << 1.0, 1.0;
+
+            int state_dim, action_dim, hidden_neurons;
+            double boundary;
             Eigen::VectorXd limits;
-            limits << 3.14, 0.78;
+            std::vector<double> limits_dummy;
             Eigen::VectorXd max_u;
-            max_u << 1.0, 1.0;
+            std::vector<double> max_u_dummy;
+
+            nh.getParam("state_dim", state_dim);
+            nh.getParam("action_dim", action_dim);
+            nh.getParam("hidden_neurons", hidden_neurons);
+            nh.getParam("boundary", boundary);
+            nh.getParam("limits", limits_dummy);
+            nh.getParam("max_u", max_u_dummy);
+
+            //Convert to Eigen vectors
+            for(unsigned int i = 0; i < state_dim; i++)
+            {
+              limits(i) = limits_dummy[i];
+              max_u(i) = max_u_dummy[i];
+            }
 
             _policy = std::make_shared<blackdrops::policy::NNPolicy>(
                 boundary, state_dim, hidden_neurons, action_dim, limits, max_u);
