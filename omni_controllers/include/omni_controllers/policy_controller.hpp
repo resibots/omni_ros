@@ -146,6 +146,7 @@ namespace arm_speed_safe_controller {
             nh.getParam("limits",limits_dummy);
             nh.getParam("max_u",max_u_dummy);
 
+            //Convert to Eigen vectors
             for(unsigned int i=0; i < state_dim; i++)
             {
               limits(i) = limits_dummy[i];
