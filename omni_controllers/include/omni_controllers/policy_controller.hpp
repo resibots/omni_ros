@@ -290,7 +290,8 @@ namespace arm_speed_safe_controller {
 
                     _commandList.clear();
                 }
-
+                _jointList.clear();
+                _commandList.clear();
                 publish_flag = false;
             } //end of publishing
         } //end of update method
@@ -311,7 +312,7 @@ namespace arm_speed_safe_controller {
 
         // Temporary vectors that store all values during the whole episode
         std::vector<double> _jointList;
-        std::vector<double> _commandList; //make private
+        std::vector<double> _commandList;
 
         //Temporary Storing of values as vectors (for every iteration in an episode)
         // omni_controllers::PublishData _JointValues;
