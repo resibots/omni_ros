@@ -161,7 +161,8 @@ namespace arm_speed_safe_controller {
 
             // _sub_command = nh.subscribe<std_msgs::Float64MultiArray>("commands", 1, &PolicyController::commandCB, this);
             _sub_params = nh.subscribe<omni_controllers::PolicyParams>("policyParams", 1, &PolicyController::setParams, this);
-            _realtime_pub.reset(new realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>(nh, "jointStates", 1));
+            _realtime_pub_joints.reset(new realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>(nh, "States", 1));
+            _realtime_pub_commands.reset(new realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>(nh, "Actions", 1));
 
             return true;
         }
@@ -183,8 +184,8 @@ namespace arm_speed_safe_controller {
                     for (unsigned int j = 0; j < n_joints; j++) {
                         //_CommandValues.data.push_back(_commands(jointList.push_back(joints[j]->getPosition());j));
                         //_JointValues.data.push_back(joints[j]->getPosition());
-                        commandList.push_back(_commands(j));
-                        jointList.push_back(joints[j]->getPosition());
+                        _commandList.push_back(_commands(j));
+                        _jointList.push_back(joints[j]->getPosition());
                         joints[j]->setCommand(_commands(j));
                     }
 
@@ -209,7 +210,7 @@ namespace arm_speed_safe_controller {
                     for (unsigned int j = 0; j < n_joints; j++) {
                         //record the last set of joint states
                         // _JointValues.data.push_back(joints[j]->getPosition());
-                        jointList.push_back(joints[j]->getPosition());
+                        _jointList.push_back(joints[j]->getPosition());
                         //send zero velocities
                         joints[j]->setCommand(0);
                     }
@@ -237,40 +238,67 @@ namespace arm_speed_safe_controller {
 
             // Publishing the data gathered during the episode
 
-            if (publish_flag && _realtime_pub->trylock()) {
+            if (publish_flag) {
 
-                // fill out message:
-                _realtime_pub->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
-                _realtime_pub->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
-                _realtime_pub->msg_.layout.dim[0].label = "IterationsOfEpisode";
-                _realtime_pub->msg_.layout.dim[1].label = "Joints";
-                _realtime_pub->msg_.layout.dim[0].size = max_iterations; //H
-                _realtime_pub->msg_.layout.dim[1].size = n_joints; //W
-                _realtime_pub->msg_.layout.dim[0].stride = max_iterations * n_joints;
-                _realtime_pub->msg_.layout.dim[1].stride = n_joints;
-                _realtime_pub->msg_.layout.data_offset = 0;
-                // std::vector<int> vec(W * H, 0);
-                // for (int i = 0; i < H; i++)
-                //     for (int j = 0; j < W; j++)
-                //         vec[i * W + j] = array[i][j];
-                _realtime_pub->msg_.data = jointList;
+                if (_realtime_pub_joints->trylock()) {
 
-                _realtime_pub->unlockAndPublish();
+                    //check details at http://docs.ros.org/api/std_msgs/html/msg/MultiArrayLayout.html
+                    //multiarray(i,j,k) = data[data_offset + dim_stride[1]*i + dim_stride[2]*j + k]
+                    // fill out message:
+                    _realtime_pub_joints->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
+                    _realtime_pub_joints->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
+                    _realtime_pub_joints->msg_.layout.dim[0].label = "Iterations";
+                    _realtime_pub_joints->msg_.layout.dim[1].label = "Joints";
+                    _realtime_pub_joints->msg_.layout.dim[0].size = max_iterations; //H
+                    _realtime_pub_joints->msg_.layout.dim[1].size = n_joints; //W
+                    _realtime_pub_joints->msg_.layout.dim[0].stride = max_iterations * n_joints;
+                    _realtime_pub_joints->msg_.layout.dim[1].stride = n_joints;
+                    _realtime_pub_joints->msg_.layout.data_offset = 0;
+
+                    _realtime_pub_joints->msg_.data = _jointList;
+
+                    _realtime_pub_joints->unlockAndPublish();
+
+                    if (_realtime_pub_joints->trylock()) {
+                        _realtime_pub_joints->msg_.data.clear();
+                        _realtime_pub_joints->unlock();
+                    }
+
+                    _jointList.clear();
+                }
+
+                if (_realtime_pub_commands->trylock()) {
+
+                    _realtime_pub_commands->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
+                    _realtime_pub_commands->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
+                    _realtime_pub_commands->msg_.layout.dim[0].label = "Iterations";
+                    _realtime_pub_commands->msg_.layout.dim[1].label = "Joints";
+                    _realtime_pub_commands->msg_.layout.dim[0].size = max_iterations; //H
+                    _realtime_pub_commands->msg_.layout.dim[1].size = n_joints; //W
+                    _realtime_pub_commands->msg_.layout.dim[0].stride = max_iterations * n_joints;
+                    _realtime_pub_commands->msg_.layout.dim[1].stride = n_joints;
+                    _realtime_pub_commands->msg_.layout.data_offset = 0;
+
+                    _realtime_pub_commands->msg_.data = _commandList;
+
+                    _realtime_pub_commands->unlockAndPublish();
+
+                    if (_realtime_pub_commands->trylock()) {
+                        _realtime_pub_commands->msg_.data.clear();
+                        _realtime_pub_commands->unlock();
+                    }
+
+                    _commandList.clear();
+                }
+
                 publish_flag = false;
-                jointList.clear();
-                commandList.clear();
-            }
-
+            } //end of publishing
         } //end of update method
 
         std::vector<std::string> joint_names;
         std::vector<std::shared_ptr<hardware_interface::JointHandle>> joints;
         realtime_tools::RealtimeBuffer<std::vector<double>> commands_buffer;
         unsigned int n_joints;
-
-        // Temporary vectors that store all values during the whole episode
-        std::vector<double> jointList;
-        std::vector<double> commandList; //make private
 
     private:
         SafetyConstraint _constraint;
@@ -281,9 +309,13 @@ namespace arm_speed_safe_controller {
         int max_iterations, _episode_iterations;
         bool publish_flag, Bdp_eps_flag;
 
+        // Temporary vectors that store all values during the whole episode
+        std::vector<double> _jointList;
+        std::vector<double> _commandList; //make private
+
         //Temporary Storing of values as vectors (for every iteration in an episode)
-        omni_controllers::PublishData _JointValues;
-        omni_controllers::PublishData _CommandValues;
+        // omni_controllers::PublishData _JointValues;
+        // omni_controllers::PublishData _CommandValues;
 
         //Temporary Storing of data in matrix form
         //for al literations in an episode (col: no. of joints, rows: no. of iterations during an episode)
@@ -293,7 +325,8 @@ namespace arm_speed_safe_controller {
 
         std::shared_ptr<blackdrops::policy::NNPolicy> _policy;
         // std::shared_ptr<realtime_tools::RealtimePublisher<omni_controllers::PublishMatrix>> _realtime_pub;
-        std::shared_ptr<realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>> _realtime_pub;
+        std::shared_ptr<realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>> _realtime_pub_joints;
+        std::shared_ptr<realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>> _realtime_pub_commands;
 
         void setParams(const omni_controllers::PolicyParams::ConstPtr& msg)
         {
