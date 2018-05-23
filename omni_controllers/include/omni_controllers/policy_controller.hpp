@@ -49,6 +49,7 @@
 #include <realtime_tools/realtime_publisher.h>
 #include <ros/node_handle.h>
 #include <std_msgs/Float64MultiArray.h>
+#include <std_msgs/MultiArrayDimension.h>
 
 //Local
 #include <omni_controllers/PublishData.h>
@@ -160,7 +161,7 @@ namespace arm_speed_safe_controller {
 
             // _sub_command = nh.subscribe<std_msgs::Float64MultiArray>("commands", 1, &PolicyController::commandCB, this);
             _sub_params = nh.subscribe<omni_controllers::PolicyParams>("policyParams", 1, &PolicyController::setParams, this);
-            _realtime_pub.reset(new realtime_tools::RealtimePublisher<omni_controllers::PublishMatrix>(nh, "jointStates", 1));
+            _realtime_pub.reset(new realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>(nh, "jointStates", 1));
 
             return true;
         }
@@ -180,27 +181,26 @@ namespace arm_speed_safe_controller {
                     _commands = _policy->next(joints_to_eigen());
 
                     for (unsigned int j = 0; j < n_joints; j++) {
-                        _CommandValues.data.push_back(_commands(j));
-                        _JointValues.data.push_back(joints[j]->getPosition());
+                        //_CommandValues.data.push_back(_commands(jointList.push_back(joints[j]->getPosition());j));
+                        //_JointValues.data.push_back(joints[j]->getPosition());
+                        commandList.push_back(_commands(j));
+                        jointList.push_back(joints[j]->getPosition());
                         joints[j]->setCommand(_commands(j));
                     }
 
                     // _constraint.enforce(commands, period);
 
-                    //Store in temporary matrices _EpisodeItr.JointPos and _EpisodeItr.CommandVel
-                    // _EpisodeItr.JointPos.push_back(_JointValues);
-                    // _EpisodeItr.CommandVel.push_back(_CommandValues);
-                    if (_realtime_pub->trylock()) {
-                        _realtime_pub->msg_.JointPos.push_back(_JointValues);
-                        _realtime_pub->msg_.CommandVel.push_back(_CommandValues);
-
-                        _realtime_pub->unlock();
-                    }
+                    // if (_realtime_pub->trylock()) {
+                    //     _realtime_pub->msg_.JointPos.push_back(_JointValues);
+                    //     _realtime_pub->msg_.CommandVel.push_back(_CommandValues);
+                    //
+                    //     _realtime_pub->unlock();
+                    // }
                     //create a warning for else
 
                     //clear storage vectors after publishing is over for the last iteration
-                    _JointValues.data.clear();
-                    _CommandValues.data.clear();
+                    // _JointValues.data.clear();
+                    // _CommandValues.data.clear();
 
                     _episode_iterations++;
                 }
@@ -208,16 +208,17 @@ namespace arm_speed_safe_controller {
                 {
                     for (unsigned int j = 0; j < n_joints; j++) {
                         //record the last set of joint states
-                        _JointValues.data.push_back(joints[j]->getPosition());
+                        // _JointValues.data.push_back(joints[j]->getPosition());
+                        jointList.push_back(joints[j]->getPosition());
                         //send zero velocities
                         joints[j]->setCommand(0);
                     }
 
-                    if (_realtime_pub->trylock()) {
-                        _realtime_pub->msg_.JointPos.push_back(_JointValues);
-
-                        _realtime_pub->unlock();
-                    }
+                    // if (_realtime_pub->trylock()) {
+                    //     _realtime_pub->msg_.JointPos.push_back(_JointValues);
+                    //
+                    //     _realtime_pub->unlock();
+                    // }
 
                     //_constraint.enforce(commands, period);
 
@@ -235,12 +236,29 @@ namespace arm_speed_safe_controller {
             }
 
             // Publishing the data gathered during the episode
-            // omni_controllers::PublishData tmpJoints;
-            // omni_controllers::PublishData tmpVel;
 
             if (publish_flag && _realtime_pub->trylock()) {
+
+                // fill out message:
+                _realtime_pub->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
+                _realtime_pub->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
+                _realtime_pub->msg_.layout.dim[0].label = "IterationsOfEpisode";
+                _realtime_pub->msg_.layout.dim[1].label = "Joints";
+                _realtime_pub->msg_.layout.dim[0].size = max_iterations; //H
+                _realtime_pub->msg_.layout.dim[1].size = n_joints; //W
+                _realtime_pub->msg_.layout.dim[0].stride = max_iterations * n_joints;
+                _realtime_pub->msg_.layout.dim[1].stride = n_joints;
+                _realtime_pub->msg_.layout.data_offset = 0;
+                // std::vector<int> vec(W * H, 0);
+                // for (int i = 0; i < H; i++)
+                //     for (int j = 0; j < W; j++)
+                //         vec[i * W + j] = array[i][j];
+                _realtime_pub->msg_.data = jointList;
+
                 _realtime_pub->unlockAndPublish();
                 publish_flag = false;
+                jointList.clear();
+                commandList.clear();
             }
 
         } //end of update method
@@ -249,6 +267,10 @@ namespace arm_speed_safe_controller {
         std::vector<std::shared_ptr<hardware_interface::JointHandle>> joints;
         realtime_tools::RealtimeBuffer<std::vector<double>> commands_buffer;
         unsigned int n_joints;
+
+        // Temporary vectors that store all values during the whole episode
+        std::vector<double> jointList;
+        std::vector<double> commandList; //make private
 
     private:
         SafetyConstraint _constraint;
@@ -270,7 +292,8 @@ namespace arm_speed_safe_controller {
         Eigen::VectorXd _commands;
 
         std::shared_ptr<blackdrops::policy::NNPolicy> _policy;
-        std::shared_ptr<realtime_tools::RealtimePublisher<omni_controllers::PublishMatrix>> _realtime_pub;
+        // std::shared_ptr<realtime_tools::RealtimePublisher<omni_controllers::PublishMatrix>> _realtime_pub;
+        std::shared_ptr<realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>> _realtime_pub;
 
         void setParams(const omni_controllers::PolicyParams::ConstPtr& msg)
         {
