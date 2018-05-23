@@ -62,26 +62,23 @@
 namespace arm_speed_safe_controller {
 
     /**
-     * FIXME: \Controller to implement Black-drops policies on a robotic arm, with safety constraints.
+     * FIXME: \Controller to implement Black-drops policies on a robotic arm, without safety constraints.
      *
-     * This class forwards the command signal down to a set of joints, if they
-     * do not infringe some user-defined safety constraints.
-     *
-     * \tparam T class implementing the safety constraints
+     * This class forwards the policy action output in the form of velocity command signals
+      down to a set of joints
      *
      * \section ROS interface
      *
      * \param type hardware interface type.
      * \param joints Names of the joints to control.
      *
-     * Subscribes to:
-     * - \b command (std_msgs::Float64MultiArray) : The joint commands to apply.
+     * Subscribes to custom msg :
+     omni_controllers::PolicyParams - to accept parameter list of the policy for every episode
      */
     template <class SafetyConstraint = NoSafetyConstraints>
     class PolicyController : public controller_interface::Controller<hardware_interface::VelocityJointInterface> {
     public:
-        // PolicyController() {}
-        PolicyController() : flag(false), publish_flag(false), _episode_iterations(0) {}
+        PolicyController() {}
         ~PolicyController() { _sub_command.shutdown(); }
 
         bool init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle& nh)
@@ -119,13 +116,12 @@ namespace arm_speed_safe_controller {
 
             commands_buffer.writeFromNonRT(std::vector<double>(n_joints, 0.0));
 
-            // flag = false;
-            // publish_flag = false;
-            // _episode_iterations = 0;
+            Bdp_eps_flag = false;
+            publish_flag = false;
+            _episode_iterations = 0;
 
             // Initialisation of the policy
             // TODO: get these values from ros parameters
-
             // double boundary = 1;
             // int state_dim = 2;
             // int action_dim = 2;
@@ -135,22 +131,22 @@ namespace arm_speed_safe_controller {
             // Eigen::VectorXd max_u;
             // max_u << 1.0, 1.0;
 
-            int state_dim, action_dim, hidden_neurons;
-            double boundary;
             Eigen::VectorXd limits;
-            std::vector<double> limits_dummy;
             Eigen::VectorXd max_u;
+
+            std::vector<double> limits_dummy;
             std::vector<double> max_u_dummy;
 
-            nh.getParam("state_dim", state_dim);
-            nh.getParam("action_dim", action_dim);
-            nh.getParam("hidden_neurons", hidden_neurons);
-            nh.getParam("boundary", boundary);
-            nh.getParam("limits", limits_dummy);
-            nh.getParam("max_u", max_u_dummy);
+            int state_dim, action_dim, hidden_neurons;
+            double boundary;
 
-            //Convert to Eigen vectors
-            for(unsigned int i = 0; i < state_dim; i++)
+            nh.getParam("state_dim",state_dim);
+            nh.getParam("action_dim",action_dim);
+            nh.getParam("hidden_neurons",hidden_neurons);
+            nh.getParam("limits",limits_dummy);
+            nh.getParam("max_u",max_u_dummy);
+
+            for(unsigned int i=0; i < state_dim; i++)
             {
               limits(i) = limits_dummy[i];
               max_u(i) = max_u_dummy[i];
@@ -174,7 +170,7 @@ namespace arm_speed_safe_controller {
 
         void update(const ros::Time& /*time*/, const ros::Duration& period)
         {
-            if (flag) // blackdrops parameters to be implemented
+            if (Bdp_eps_flag) // blackdrops parameters to be implemented
             {
                 if (_episode_iterations < max_iterations) //during the episode
                 {
@@ -203,7 +199,7 @@ namespace arm_speed_safe_controller {
                     //_constraint.enforce(commands, period);
 
                     //reset/set flags and _episode_iterations
-                    flag = false;
+                    Bdp_eps_flag = false;
                     publish_flag = true;
                     _episode_iterations = 0;
                 }
@@ -248,7 +244,7 @@ namespace arm_speed_safe_controller {
 
         double columns, rows, T, dT;
         int max_iterations, _episode_iterations;
-        bool publish_flag, flag;
+        bool publish_flag, Bdp_eps_flag;
 
         std::shared_ptr<blackdrops::policy::NNPolicy> _policy;
         std::shared_ptr<realtime_tools::RealtimePublisher<omni_controllers::PublishMatrix>> _realtime_pub;
@@ -261,7 +257,7 @@ namespace arm_speed_safe_controller {
                 params(i) = msg->params[i];
 
             _policy->set_params(params); //set the policy parameters
-            flag = true;
+            Bdp_eps_flag = true;
 
             dT = msg->dT;
 
