@@ -52,10 +52,10 @@
 #include <std_msgs/MultiArrayDimension.h>
 
 //Local
+#include <omni_controllers/PolicyInit.h>
+#include <omni_controllers/PolicyParams.h>
 #include <omni_controllers/PublishData.h>
 #include <omni_controllers/PublishMatrix.h>
-#include <omni_controllers/PolicyParams.h>
-#include <omni_controllers/PolicyInit.h>
 #include <omni_controllers/arm_speed_safe_controller.hpp>
 #include <omni_controllers/cartesian_constraint.hpp>
 #include <omni_controllers/policies/NNpolicy.hpp>
@@ -162,7 +162,11 @@ namespace arm_speed_safe_controller {
             // _sub_command = nh.subscribe<std_msgs::Float64MultiArray>("commands", 1, &PolicyController::commandCB, this);
             _sub_params = nh.subscribe<omni_controllers::PolicyParams>("policyParams", 1, &PolicyController::setParams, this);
             _realtime_pub_joints.reset(new realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>(nh, "States", 1));
+            _realtime_pub_joints->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
+            _realtime_pub_joints->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
             _realtime_pub_commands.reset(new realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>(nh, "Actions", 1));
+            _realtime_pub_commands->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
+            _realtime_pub_commands->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
 
             return true;
         }
@@ -239,14 +243,11 @@ namespace arm_speed_safe_controller {
             // Publishing the data gathered during the episode
 
             if (publish_flag) {
-
                 if (_realtime_pub_joints->trylock()) {
 
                     //check details at http://docs.ros.org/api/std_msgs/html/msg/MultiArrayLayout.html
                     //multiarray(i,j,k) = data[data_offset + dim_stride[1]*i + dim_stride[2]*j + k]
                     // fill out message:
-                    _realtime_pub_joints->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
-                    _realtime_pub_joints->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
                     _realtime_pub_joints->msg_.layout.dim[0].label = "Iterations";
                     _realtime_pub_joints->msg_.layout.dim[1].label = "Joints";
                     _realtime_pub_joints->msg_.layout.dim[0].size = max_iterations; //H
@@ -266,11 +267,7 @@ namespace arm_speed_safe_controller {
 
                     _jointList.clear();
                 }
-
                 if (_realtime_pub_commands->trylock()) {
-
-                    _realtime_pub_commands->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
-                    _realtime_pub_commands->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
                     _realtime_pub_commands->msg_.layout.dim[0].label = "Iterations";
                     _realtime_pub_commands->msg_.layout.dim[1].label = "Joints";
                     _realtime_pub_commands->msg_.layout.dim[0].size = max_iterations; //H
@@ -290,8 +287,6 @@ namespace arm_speed_safe_controller {
 
                     _commandList.clear();
                 }
-                _jointList.clear();
-                _commandList.clear();
                 publish_flag = false;
             } //end of publishing
         } //end of update method
