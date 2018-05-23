@@ -1,40 +1,40 @@
 /*********************************************************************
- * Software License Agreement (BSD License)
- *
- *  Copyright (c) 2008, Willow Garage, Inc.
- *  Copyright (c) 2012, hiDOF, Inc.
- *  Copyright (c) 2013, PAL Robotics, S.L.
- *  Copyright (c) 2014, Fraunhofer IPA
- *  Copyright (c) 2018, INRIA
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *   * Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above
- *     copyright notice, this list of conditions and the following
- *     disclaimer in the documentation and/or other materials provided
- *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- *  POSSIBILITY OF SUCH DAMAGE.
- *********************************************************************/
+* Software License Agreement (BSD License)
+*
+*  Copyright (c) 2008, Willow Garage, Inc.
+*  Copyright (c) 2012, hiDOF, Inc.
+*  Copyright (c) 2013, PAL Robotics, S.L.
+*  Copyright (c) 2014, Fraunhofer IPA
+*  Copyright (c) 2018, INRIA
+*  All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
 
 #ifndef POLICY_CONTROLLER_H
 #define POLICY_CONTROLLER_H
@@ -62,19 +62,19 @@
 namespace arm_speed_safe_controller {
 
     /**
-     * FIXME: \Controller to implement Black-drops policies on a robotic arm, without safety constraints.
-     *
-     * This class forwards the policy action output in the form of velocity command signals
-      down to a set of joints
-     *
-     * \section ROS interface
-     *
-     * \param type hardware interface type.
-     * \param joints Names of the joints to control.
-     *
-     * Subscribes to custom msg :
-     omni_controllers::PolicyParams - to accept parameter list of the policy for every episode
-     */
+    * FIXME: \Controller to implement Black-drops policies on a robotic arm, without safety constraints.
+    *
+    * This class forwards the policy action output in the form of velocity command signals
+    down to a set of joints
+    *
+    * \section ROS interface
+    *
+    * \param type hardware interface type.
+    * \param joints Names of the joints to control.
+    *
+    * Subscribes to custom msg :
+    omni_controllers::PolicyParams - to accept parameter list of the policy for every episode
+    */
     template <class SafetyConstraint = NoSafetyConstraints>
     class PolicyController : public controller_interface::Controller<hardware_interface::VelocityJointInterface> {
     public:
@@ -131,26 +131,28 @@ namespace arm_speed_safe_controller {
             // Eigen::VectorXd max_u;
             // max_u << 1.0, 1.0;
 
-            Eigen::VectorXd limits;
-            Eigen::VectorXd max_u;
-
             std::vector<double> limits_dummy;
             std::vector<double> max_u_dummy;
 
             int state_dim, action_dim, hidden_neurons;
             double boundary;
 
-            nh.getParam("state_dim",state_dim);
-            nh.getParam("action_dim",action_dim);
-            nh.getParam("hidden_neurons",hidden_neurons);
-            nh.getParam("limits",limits_dummy);
-            nh.getParam("max_u",max_u_dummy);
+            if (!nh.getParam("policyparams/state_dim", state_dim)
+                || !nh.getParam("policyparams/action_dim", action_dim)
+                || !nh.getParam("policyparams/hidden_neurons", hidden_neurons)
+                || !nh.getParam("policyparams/limits", limits_dummy)
+                || !nh.getParam("policyparams/max_u", max_u_dummy)) {
+                ROS_ERROR_STREAM("Some parameters not received!");
+                return false;
+            }
+
+            Eigen::VectorXd limits(state_dim);
+            Eigen::VectorXd max_u(state_dim);
 
             //Convert to Eigen vectors
-            for(unsigned int i=0; i < state_dim; i++)
-            {
-              limits(i) = limits_dummy[i];
-              max_u(i) = max_u_dummy[i];
+            for (unsigned int i = 0; i < state_dim; i++) {
+                limits(i) = limits_dummy[i];
+                max_u(i) = max_u_dummy[i];
             }
 
             _policy = std::make_shared<blackdrops::policy::NNPolicy>(
@@ -175,27 +177,47 @@ namespace arm_speed_safe_controller {
             {
                 if (_episode_iterations < max_iterations) //during the episode
                 {
-                    commands = _policy->next(joints_to_eigen());
+                    _commands = _policy->next(joints_to_eigen());
 
                     for (unsigned int j = 0; j < n_joints; j++) {
-                        JointValues.data.push_back(joints[j]->getPosition());
-                        CommandValues.data.push_back(commands(j));
-                        joints[j]->setCommand(commands(j));
+                        _CommandValues.data.push_back(_commands(j));
+                        _JointValues.data.push_back(joints[j]->getPosition());
+                        joints[j]->setCommand(_commands(j));
                     }
 
                     // _constraint.enforce(commands, period);
+
+                    //Store in temporary matrices _EpisodeItr.JointPos and _EpisodeItr.CommandVel
+                    // _EpisodeItr.JointPos.push_back(_JointValues);
+                    // _EpisodeItr.CommandVel.push_back(_CommandValues);
+                    if (_realtime_pub->trylock()) {
+                        _realtime_pub->msg_.JointPos.push_back(_JointValues);
+                        _realtime_pub->msg_.CommandVel.push_back(_CommandValues);
+
+                        _realtime_pub->unlock();
+                    }
+                    //create a warning for else
+
+                    //clear storage vectors after publishing is over for the last iteration
+                    _JointValues.data.clear();
+                    _CommandValues.data.clear();
 
                     _episode_iterations++;
                 }
                 else //episode is over
                 {
-                    commands.setZero(commands.size());
-                    for (unsigned int j = 0; j < n_joints; j++){
+                    for (unsigned int j = 0; j < n_joints; j++) {
                         //record the last set of joint states
-                        JointValues.data.push_back(joints[j]->getPosition()); //Doubt -- CommandValues size to differ?
+                        _JointValues.data.push_back(joints[j]->getPosition());
                         //send zero velocities
-                        joints[j]->setCommand(commands[j]);
-                  }
+                        joints[j]->setCommand(0);
+                    }
+
+                    if (_realtime_pub->trylock()) {
+                        _realtime_pub->msg_.JointPos.push_back(_JointValues);
+
+                        _realtime_pub->unlock();
+                    }
 
                     //_constraint.enforce(commands, period);
 
@@ -213,16 +235,11 @@ namespace arm_speed_safe_controller {
             }
 
             // Publishing the data gathered during the episode
+            // omni_controllers::PublishData tmpJoints;
+            // omni_controllers::PublishData tmpVel;
+
             if (publish_flag && _realtime_pub->trylock()) {
-
-                _realtime_pub->msg_.JointPos.push_back(JointValues);
-                _realtime_pub->msg_.CommandVel.push_back(CommandValues);
                 _realtime_pub->unlockAndPublish();
-
-                //clear storage vectors after publishing is over for the last episode
-                std::fill(JointValues.data.begin(), JointValues.data.end(), 0);
-                std::fill(CommandValues.data.begin(), CommandValues.data.end(), 0);
-
                 publish_flag = false;
             }
 
@@ -233,19 +250,24 @@ namespace arm_speed_safe_controller {
         realtime_tools::RealtimeBuffer<std::vector<double>> commands_buffer;
         unsigned int n_joints;
 
-        //Storing of data for every episode
-        omni_controllers::PublishData JointValues;
-        omni_controllers::PublishData CommandValues;
-        Eigen::VectorXd commands;
-
     private:
         SafetyConstraint _constraint;
         ros::Subscriber _sub_command;
         ros::Subscriber _sub_params;
 
-        double columns, rows, T, dT;
+        double T, dT; //_rows to help in the publish matrix
         int max_iterations, _episode_iterations;
         bool publish_flag, Bdp_eps_flag;
+
+        //Temporary Storing of values as vectors (for every iteration in an episode)
+        omni_controllers::PublishData _JointValues;
+        omni_controllers::PublishData _CommandValues;
+
+        //Temporary Storing of data in matrix form
+        //for al literations in an episode (col: no. of joints, rows: no. of iterations during an episode)
+        // omni_controllers::PublishMatrix _EpisodeItr;ROS_MASTER_URI=http://localhost:11311
+
+        Eigen::VectorXd _commands;
 
         std::shared_ptr<blackdrops::policy::NNPolicy> _policy;
         std::shared_ptr<realtime_tools::RealtimePublisher<omni_controllers::PublishMatrix>> _realtime_pub;

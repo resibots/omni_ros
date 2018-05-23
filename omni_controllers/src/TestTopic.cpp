@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
     //taking hidden as 1 for now, i=2, o=2, so total=7
     msg.params={0.5,0.25,0.5,-0.5,0.5,0.25,0.5};
     msg.t=4.0;
-    msg.dT=0.1;
+    msg.dT=1.0;
     my_msg_pub.publish(msg);
 
     ros::spinOnce();
