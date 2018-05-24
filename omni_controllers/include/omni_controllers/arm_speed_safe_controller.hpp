@@ -124,11 +124,11 @@ namespace arm_speed_safe_controller {
         {
             std::vector<double>& commands = *commands_buffer.readFromRT();
 
-            _constraint.enforce(period);
-
             for (unsigned int i = 0; i < n_joints; i++) {
                 joints[i]->setCommand(commands[i]);
             }
+
+            _constraint.enforce(period);
         }
 
         std::vector<std::string> joint_names;
