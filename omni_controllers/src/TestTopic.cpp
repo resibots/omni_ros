@@ -13,9 +13,7 @@
 //Local
 #include <omni_controllers/arm_speed_safe_controller.hpp>
 #include <omni_controllers/cartesian_constraint.hpp>
-#include <omni_controllers/PubMsg.h>
-#include <omni_controllers/SubParamMsg.h>
-#include <omni_controllers/SubPolMsg.h>
+#include <omni_controllers/PolicyParams.h>
 #include <omni_controllers/policies/NNpolicy.hpp>
 #include <omni_controllers/policies/binary_matrix.hpp>
 
@@ -32,10 +30,10 @@ int main(int argc, char *argv[])
   ros::NodeHandle priv_nh_("~");
   //ros::Rate loop_rate(10);
 
-  ros::Publisher my_msg_pub = nh.advertise<omni_controllers::SubParamMsg>("/dynamixel_controllers/omni_policy_controller/policyParams", 1);
+  ros::Publisher my_msg_pub = nh.advertise<omni_controllers::PolicyParams>("/dynamixel_controllers/omni_policy_controller/policyParams", 1);
   // ros::Subscriber sub_params= nh.subscribe<omni_controllers::SubParamMsg>("policyParams",1,setParams);
 
-  omni_controllers::SubParamMsg msg;
+  omni_controllers::PolicyParams msg;
 
   ros::Rate rate(1);
 
