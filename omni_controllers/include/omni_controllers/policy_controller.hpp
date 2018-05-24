@@ -138,11 +138,11 @@ namespace arm_speed_safe_controller {
             int state_dim, action_dim, hidden_neurons;
             double boundary;
 
-            if (!nh.getParam("policyparams/state_dim", state_dim)
-                || !nh.getParam("policyparams/action_dim", action_dim)
-                || !nh.getParam("policyparams/hidden_neurons", hidden_neurons)
-                || !nh.getParam("policyparams/limits", limits_dummy)
-                || !nh.getParam("policyparams/max_u", max_u_dummy)) {
+            if (!nh.getParam("policy_params/state_dim", state_dim)
+                || !nh.getParam("policy_params/action_dim", action_dim)
+                || !nh.getParam("policy_params/hidden_neurons", hidden_neurons)
+                || !nh.getParam("policy_params/limits", limits_dummy)
+                || !nh.getParam("policy_params/max_u", max_u_dummy)) {
                 ROS_ERROR_STREAM("Some parameters not received!");
                 return false;
             }
@@ -192,7 +192,7 @@ namespace arm_speed_safe_controller {
                         if (_episode_iterations > 0)
                             _jointList.push_back(joints[j]->getPosition());
                         joints[j]->setCommand(_commands(j));
-                        // _constraint.enforce(period);
+
                     }
 
                     // _constraint.enforce(commands, period);
@@ -294,6 +294,7 @@ namespace arm_speed_safe_controller {
                 }
                 publish_flag = false;
             } //end of publishing
+            _constraint.enforce(period);
         } //end of update method
 
         std::vector<std::string> joint_names;
