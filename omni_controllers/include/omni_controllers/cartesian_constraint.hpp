@@ -1,15 +1,15 @@
 #ifndef OMNI_CONTROLLERS_CARTESIAN_CONSTRAINT
 #define OMNI_CONTROLLERS_CARTESIAN_CONSTRAINT
 
-#include <ros/node_handle.h>
-#include <hardware_interface/joint_command_interface.h> // defines JointHandle
 #include <XmlRpcException.h>
+#include <hardware_interface/joint_command_interface.h> // defines JointHandle
+#include <ros/node_handle.h>
 
-#include <sstream> // for debug messages
-#include <unordered_set>
+#include <Eigen/Core>
 #include <algorithm> // std::equal
 #include <cmath> // for sin/cos, computing direct kinematic model
-#include <Eigen/Core>
+#include <sstream> // for debug messages
+#include <unordered_set>
 
 namespace arm_speed_safe_controller {
 
@@ -234,17 +234,18 @@ namespace arm_speed_safe_controller {
             set joint limits.
             @return true if and only if the joints are outside the limits
         **/
-        bool enforce(std::vector<double>& commands, const ros::Duration& period)
+        bool enforce(const ros::Duration& period)
         {
             std::vector<double> angles, future_angles;
-            for (size_t i = 0; i < _joints.size(); i++) {
-                auto joint = _joints[i];
+            for (auto joint : _joints) {
                 angles.push_back(joint->getPosition());
-                future_angles.push_back(joint->getPosition() + commands[i] * period.toSec());
+                future_angles.push_back(joint->getPosition() + joint->getCommand() * period.toSec());
             }
 
             if (_zone_triggered(angles, future_angles)) {
-                commands.assign(N_joints, 0);
+                for (auto joint : _joints) {
+                    joint->setCommand(0);
+                }
                 // tell client software that we entered the safety mode
                 return true;
             }
@@ -301,25 +302,25 @@ namespace arm_speed_safe_controller {
      */
     class OmnigrasperHeightSmooth : public OmnigrasperHeightConstraintBase {
     public:
-
         /**
             The main method of this class. Stops all actuators if any one is beyond
             set joint limits.
             @return true if and only if the joints are outside the limits
         **/
-        bool enforce(std::vector<double>& commands, const ros::Duration& period)
+        bool enforce(const ros::Duration& period)
         {
             std::vector<double> angles, future_angles;
-            for (size_t i = 0; i < _joints.size(); i++) {
-                auto joint = _joints[i];
+            for (auto joint : _joints) {
                 angles.push_back(joint->getPosition());
-                future_angles.push_back(joint->getPosition() + commands[i] * period.toSec());
+                future_angles.push_back(joint->getPosition() + joint->getCommand() * period.toSec());
             }
 
             double ratio;
             if ((ratio = _zone_triggered(angles, future_angles)) < 1) {
-                std::transform(commands.begin(), commands.end(), commands.begin(),
-                    [=](double c) -> double { return c * ratio; });
+                std::for_each(_joints.begin(), _joints.end(),
+                    [=](std::shared_ptr<hardware_interface::JointHandle> joint) {
+                        joint->setCommand(joint->getCommand() * ratio);
+                    });
                 // tell client software that we entered the safety mode
                 return true;
             }

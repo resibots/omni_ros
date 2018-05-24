@@ -124,7 +124,7 @@ namespace arm_speed_safe_controller {
         {
             std::vector<double>& commands = *commands_buffer.readFromRT();
 
-            _constraint.enforce(commands, period);
+            _constraint.enforce(period);
 
             for (unsigned int i = 0; i < n_joints; i++) {
                 joints[i]->setCommand(commands[i]);
@@ -156,7 +156,7 @@ namespace arm_speed_safe_controller {
         {
             return true;
         }
-        bool enforce(std::vector<double>& commands, const ros::Duration& period)
+        bool enforce(const ros::Duration& period)
         {
             return true;
         }
