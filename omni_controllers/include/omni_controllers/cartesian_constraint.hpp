@@ -85,20 +85,25 @@ namespace arm_speed_safe_controller {
         {
             XmlRpc::XmlRpcValue heights_param; // temporary map, from parameter server
             if (nh.getParam("min_heights", heights_param)) {
-                ROS_ASSERT(heights_param.getType() == XmlRpc::XmlRpcValue::TypeArray);
+                ROS_ASSERT(heights_param.getType()
+                    == XmlRpc::XmlRpcValue::TypeArray);
                 try {
-                    // for (XmlRpc::XmlRpcValue::ValueStruct::const_iterator it = heights_param.begin(); it != heights_param.end(); ++it) {
                     for (int i = 0; i < heights_param.size(); ++i) {
-                        ROS_ASSERT(heights_param[i].getType() == XmlRpc::XmlRpcValue::TypeStruct);
+                        ROS_ASSERT(heights_param[i].getType()
+                            == XmlRpc::XmlRpcValue::TypeStruct);
                         XmlRpc::XmlRpcValue& entry = heights_param[i];
                         if (entry.hasMember("hard_min_height")
                             && entry.hasMember("soft_min_height")) {
 
-                            // soft height limit is not allowed to be lower than the hard one
-                            if ((double)entry["soft_min_height"] < (double)entry["hard_min_height"]) {
+                            // soft height limit is not allowed to be lower than
+                            // the hard one
+                            if ((double)entry["soft_min_height"]
+                                < (double)entry["hard_min_height"]) {
                                 ROS_ERROR_STREAM("The soft min height ("
-                                    << (double)entry["soft_min_height"] << ") should not be lower than "
-                                    << "the hard min height (" << (double)entry["hard_min_height"] << ")");
+                                    << (double)entry["soft_min_height"]
+                                    << ") should not be lower than "
+                                    << "the hard min height ("
+                                    << (double)entry["hard_min_height"] << ")");
                                 return false;
                             }
 
@@ -113,16 +118,20 @@ namespace arm_speed_safe_controller {
                                 new_zone.x_max = (double)entry["x_max"];
                                 new_zone.y_min = (double)entry["y_min"];
                                 new_zone.y_max = (double)entry["y_max"];
-                                new_zone.hard_min_height = (double)entry["hard_min_height"];
-                                new_zone.soft_min_height = (double)entry["soft_min_height"];
+                                new_zone.hard_min_height
+                                    = (double)entry["hard_min_height"];
+                                new_zone.soft_min_height
+                                    = (double)entry["soft_min_height"];
                                 _zones.push_back(new_zone);
                             }
                             else {
                                 // No boundaries defined, means this is the
                                 // default constraint
                                 if (!_global_zone_set) {
-                                    _global_zone.hard_min_height = (double)entry["hard_min_height"];
-                                    _global_zone.soft_min_height = (double)entry["soft_min_height"];
+                                    _global_zone.hard_min_height
+                                        = (double)entry["hard_min_height"];
+                                    _global_zone.soft_min_height
+                                        = (double)entry["soft_min_height"];
                                     _global_zone_set = true;
                                 }
                                 else {
@@ -205,7 +214,8 @@ namespace arm_speed_safe_controller {
                 0., 0., 0., 1.;
 
             // Position of the last joint
-            Eigen::Matrix4d last_joint_trans = T_plate_0 * T_0_1 * T_1_2 * T_2_3 * T_3_4 * T_4_5;
+            Eigen::Matrix4d last_joint_trans = T_plate_0 * T_0_1 * T_1_2
+                * T_2_3 * T_3_4 * T_4_5;
             Eigen::Vector3d last_joint_pos = last_joint_trans.col(3).head(3);
 
             // Position of the end effector's tip
@@ -230,8 +240,8 @@ namespace arm_speed_safe_controller {
     class OmnigrasperHeightConstraint : public OmnigrasperHeightConstraintBase {
     public:
         /**
-            The main method of this class. Stops all actuators if any one is beyond
-            set joint limits.
+            The main method of this class. Stops all actuators if any one is
+            beyond set joint limits.
             @return true if and only if the joints are outside the limits
         **/
         bool enforce(const ros::Duration& period)
@@ -239,7 +249,8 @@ namespace arm_speed_safe_controller {
             std::vector<double> angles, future_angles;
             for (auto joint : _joints) {
                 angles.push_back(joint->getPosition());
-                future_angles.push_back(joint->getPosition() + joint->getCommand() * period.toSec());
+                future_angles.push_back(
+                    joint->getPosition() + joint->getCommand() * period.toSec());
             }
 
             if (_zone_triggered(angles, future_angles)) {
@@ -260,18 +271,21 @@ namespace arm_speed_safe_controller {
          * 
          * @return true if at least one of the height constraints is not respected
          */
-        bool _zone_triggered(std::vector<double>& angles, std::vector<double>& future_angles)
+        bool _zone_triggered(std::vector<double>& angles,
+            std::vector<double>& future_angles)
         {
             Eigen::Vector3d current_lowest = _lowest_joint(angles),
                             future_lowest = _lowest_joint(future_angles);
 
             bool triggered = false;
             if (_global_zone_set) {
-                triggered = _check_zone(_global_zone, current_lowest, future_lowest, true);
+                triggered = _check_zone(_global_zone, current_lowest,
+                    future_lowest, true);
             }
 
             for (auto zone : _zones) {
-                triggered = triggered || _check_zone(zone, current_lowest, future_lowest);
+                triggered = triggered
+                    || _check_zone(zone, current_lowest, future_lowest);
             }
 
             return triggered;
@@ -289,7 +303,8 @@ namespace arm_speed_safe_controller {
                 // Stopping condition: being below the hard limit or
                 //                      being below  soft limit and still going down
                 if (current_lowest(2) <= zone.hard_min_height
-                    || (current_lowest(2) <= zone.soft_min_height && future_lowest(2) < current_lowest(2))) {
+                    || (current_lowest(2) <= zone.soft_min_height
+                           && future_lowest(2) < current_lowest(2))) {
                     return true;
                 }
             }
@@ -303,8 +318,8 @@ namespace arm_speed_safe_controller {
     class OmnigrasperHeightSmooth : public OmnigrasperHeightConstraintBase {
     public:
         /**
-            The main method of this class. Stops all actuators if any one is beyond
-            set joint limits.
+            The main method of this class. Stops all actuators if any one is
+            beyond set joint limits.
             @return true if and only if the joints are outside the limits
         **/
         bool enforce(const ros::Duration& period)
@@ -312,7 +327,8 @@ namespace arm_speed_safe_controller {
             std::vector<double> angles, future_angles;
             for (auto joint : _joints) {
                 angles.push_back(joint->getPosition());
-                future_angles.push_back(joint->getPosition() + joint->getCommand() * period.toSec());
+                future_angles.push_back(
+                    joint->getPosition() + joint->getCommand() * period.toSec());
             }
 
             double ratio;
@@ -335,14 +351,16 @@ namespace arm_speed_safe_controller {
          * 
          * @return true if at least one of the height constraints is not respected
          */
-        double _zone_triggered(std::vector<double>& angles, std::vector<double>& future_angles)
+        double _zone_triggered(std::vector<double>& angles,
+            std::vector<double>& future_angles)
         {
             Eigen::Vector3d current_lowest = _lowest_joint(angles),
                             future_lowest = _lowest_joint(future_angles);
 
             double ratio = 1;
             if (_global_zone_set) {
-                ratio = _check_zone(_global_zone, current_lowest, future_lowest, true);
+                ratio = _check_zone(_global_zone, current_lowest,
+                    future_lowest, true);
             }
 
             for (auto zone : _zones) {
@@ -367,8 +385,12 @@ namespace arm_speed_safe_controller {
                 || global_zone) {
                 // Stopping condition: being below the hard limit or
                 //                      being below  soft limit and still going down
-                if (current_lowest(2) <= zone.soft_min_height) {
-                    return (current_lowest(2) - zone.hard_min_height) / (zone.soft_min_height - zone.hard_min_height);
+                if (current_lowest(2) <= zone.hard_min_height) {
+                    return 0;
+                }
+                else if (current_lowest(2) <= zone.soft_min_height) {
+                    return std::abs((current_lowest(2) - zone.hard_min_height)
+                        / (zone.soft_min_height - zone.hard_min_height));
                 }
             }
             return 1;
