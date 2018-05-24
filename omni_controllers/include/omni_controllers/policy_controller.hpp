@@ -189,9 +189,10 @@ namespace arm_speed_safe_controller {
                         //_CommandValues.data.push_back(_commands(jointList.push_back(joints[j]->getPosition());j));
                         //_JointValues.data.push_back(joints[j]->getPosition());
                         _commandList.push_back(_commands(j));
-                        if(_episode_iterations>0)
-                        _jointList.push_back(joints[j]->getPosition());
+                        if (_episode_iterations > 0)
+                            _jointList.push_back(joints[j]->getPosition());
                         joints[j]->setCommand(_commands(j));
+                        // _constraint.enforce(period);
                     }
 
                     // _constraint.enforce(commands, period);
@@ -218,6 +219,7 @@ namespace arm_speed_safe_controller {
                         _jointList.push_back(joints[j]->getPosition());
                         //send zero velocities
                         joints[j]->setCommand(0);
+                        // _constraint.enforce(period);
                     }
 
                     // if (_realtime_pub->trylock()) {
@@ -235,8 +237,10 @@ namespace arm_speed_safe_controller {
                 }
             }
             else { // outside of an episode, send zero velocities
-                for (unsigned int j = 0; j < n_joints; j++)
+                for (unsigned int j = 0; j < n_joints; j++) {
                     joints[j]->setCommand(0);
+                    // _constraint.enforce(period);
+                }
 
                 //_constraint.enforce(commands, period);
             }
