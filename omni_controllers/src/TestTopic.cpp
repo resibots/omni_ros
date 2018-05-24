@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 
     //msg.params={0.5,0.25,0.5,-0.5,0.5,0.25,0.5};
     msg.t=4.0;
-    msg.dT=1.0;
+    msg.dT=0.5;
     my_msg_pub.publish(msg);
 
     ros::spinOnce();
