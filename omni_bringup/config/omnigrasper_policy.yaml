@@ -57,7 +57,7 @@ dynamixel_controllers:
     # type: omni_controllers/OmnigrasperConstraintPolicyController
     # type: omni_controllers/OmnigrasperSpeedSafeController
     # type: omni_controllers/ArmSpeedUnsafeController
-    
+
     # type: velocity_controllers/JointTrajectoryController
     # gains: # Required because we're controlling a velocity interface
     #   arm_0_1: {p: 1,  d: 0.1, i: 0.1, i_clamp: 1}
@@ -68,9 +68,9 @@ dynamixel_controllers:
     joints:
       - arm_0_1
       - arm_1_2
-      # - arm_2_3
-      # - arm_3_4
-      # - arm_4_5
+      - arm_2_3
+      - arm_3_4
+      - arm_4_5
     min_heights:
       - # height limit to protect the arm and the mobile base from each other
         x_min: -0.145
@@ -79,3 +79,9 @@ dynamixel_controllers:
         y_max: 0.20
         hard_min_height: 0.1
         soft_min_height: 0.15
+    policy_params:
+      state_dim: 5
+      action_dim: 5
+      hidden_neurons: 10
+      limits: [3.14, 3.14, 3.14, 3.14, 3.14]
+      max_u: [1.0, 1.0, 1.0, 1.0, 1.0]
