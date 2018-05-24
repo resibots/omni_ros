@@ -189,6 +189,7 @@ namespace arm_speed_safe_controller {
                         //_CommandValues.data.push_back(_commands(jointList.push_back(joints[j]->getPosition());j));
                         //_JointValues.data.push_back(joints[j]->getPosition());
                         _commandList.push_back(_commands(j));
+                        if(_episode_iterations>0)
                         _jointList.push_back(joints[j]->getPosition());
                         joints[j]->setCommand(_commands(j));
                     }

@@ -17,6 +17,7 @@
 #include <omni_controllers/SubParamMsg.h>
 #include <omni_controllers/SubPolMsg.h>
 #include <omni_controllers/policies/NNpolicy.hpp>
+#include <omni_controllers/policies/binary_matrix.hpp>
 
 // void setParams(const omni_controllers::SubParamMsg::ConstPtr& msg)
 //  {
@@ -38,12 +39,25 @@ int main(int argc, char *argv[])
 
   ros::Rate rate(1);
 
+  Eigen::VectorXd params(115);
+
+  Eigen::read_binary<Eigen::VectorXd>("/home/deba/Code/limbo/results/policy_params_1.bin", params);
+
+  //std::cout<<"params"<<params.transpose()<<std::endl;
+
   std::cout<<"starting to publish"<<std::endl;
   while(ros::ok())
   {
-    //No. of params=(input+1).hidden + (hidden+1)*output
+    //No. of params=(input+1).hidden neurons + (hidden+1)*output
     //taking hidden as 1 for now, i=2, o=2, so total=7
-    msg.params={0.5,0.25,0.5,-0.5,0.5,0.25,0.5};
+    //for 5 joints, total = (5+1)*10 + (11)*5 = 115
+
+    msg.params.clear();
+    for(unsigned int i=0; i< params.size(); i++){
+      msg.params.push_back(params(i));
+    }
+
+    //msg.params={0.5,0.25,0.5,-0.5,0.5,0.25,0.5};
     msg.t=4.0;
     msg.dT=1.0;
     my_msg_pub.publish(msg);
