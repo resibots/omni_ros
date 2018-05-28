@@ -36,8 +36,8 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
-#ifndef POLICY_CONTROLLER_H
-#define POLICY_CONTROLLER_H
+#ifndef POLICY_CONTROLLER_WITH_RESET_H
+#define POLICY_CONTROLLER_WITH_RESET_H
 
 #include <string>
 #include <vector>
@@ -77,10 +77,10 @@ namespace arm_speed_safe_controller {
     omni_controllers::PolicyParams - to accept parameter list of the policy for every episode
     */
     template <class SafetyConstraint = NoSafetyConstraints>
-    class PolicyController : public controller_interface::Controller<hardware_interface::VelocityJointInterface> {
+    class PolicyControllerWithReset : public controller_interface::Controller<hardware_interface::VelocityJointInterface> {
     public:
-        PolicyController() {}
-        ~PolicyController() { _sub_command.shutdown(); }
+        PolicyControllerWithReset() {}
+        ~PolicyControllerWithReset() { _sub_command.shutdown(); }
 
         bool init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle& nh)
         {
@@ -119,18 +119,8 @@ namespace arm_speed_safe_controller {
 
             Bdp_eps_flag = false;
             publish_flag = false;
+            reset_flag = false;
             _episode_iterations = 0;
-
-            // Initialisation of the policy
-            // TODO: get these values from ros parameters
-            // double boundary = 1;
-            // int state_dim = 2;
-            // int action_dim = 2;
-            // int hidden_neurons = 1;
-            // Eigen::VectorXd limits;
-            // limits << 3.14, 0.78;
-            // Eigen::VectorXd max_u;
-            // max_u << 1.0, 1.0;
 
             std::vector<double> limits_dummy;
             std::vector<double> max_u_dummy;
@@ -160,13 +150,15 @@ namespace arm_speed_safe_controller {
                 boundary, state_dim, hidden_neurons, action_dim, limits, max_u);
 
             // _sub_command = nh.subscribe<std_msgs::Float64MultiArray>("commands", 1, &PolicyController::commandCB, this);
-            _sub_params = nh.subscribe<omni_controllers::PolicyParams>("policyParams", 1, &PolicyController::setParams, this);
+            _sub_params = nh.subscribe<omni_controllers::PolicyParams>("policyParams", 1, &PolicyControllerWithReset::setParams, this);
             _realtime_pub_joints.reset(new realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>(nh, "States", 1));
             _realtime_pub_joints->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
             _realtime_pub_joints->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
             _realtime_pub_commands.reset(new realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>(nh, "Actions", 1));
             _realtime_pub_commands->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
             _realtime_pub_commands->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
+
+            _defaultConfig = {0.0, 0.0, 0.0, 0.0, 0.0};
 
             return true;
         }
@@ -186,28 +178,12 @@ namespace arm_speed_safe_controller {
                     _commands = _policy->next(joints_to_eigen());
 
                     for (unsigned int j = 0; j < n_joints; j++) {
-                        //_CommandValues.data.push_back(_commands(jointList.push_back(joints[j]->getPosition());j));
-                        //_JointValues.data.push_back(joints[j]->getPosition());
                         _commandList.push_back(_commands(j));
                         if (_episode_iterations > 0)
                             _jointList.push_back(joints[j]->getPosition());
                         joints[j]->setCommand(_commands(j));
-
+                        _constraint.enforce(period);
                     }
-
-                    // _constraint.enforce(commands, period);
-
-                    // if (_realtime_pub->trylock()) {
-                    //     _realtime_pub->msg_.JointPos.push_back(_JointValues);
-                    //     _realtime_pub->msg_.CommandVel.push_back(_CommandValues);
-                    //
-                    //     _realtime_pub->unlock();
-                    // }
-                    //create a warning for else
-
-                    //clear storage vectors after publishing is over for the last iteration
-                    // _JointValues.data.clear();
-                    // _CommandValues.data.clear();
 
                     _episode_iterations++;
                 }
@@ -215,38 +191,81 @@ namespace arm_speed_safe_controller {
                 {
                     for (unsigned int j = 0; j < n_joints; j++) {
                         //record the last set of joint states
-                        // _JointValues.data.push_back(joints[j]->getPosition());
                         _jointList.push_back(joints[j]->getPosition());
                         //send zero velocities
                         joints[j]->setCommand(0);
-                        // _constraint.enforce(period);
+                        _constraint.enforce(period);
                     }
-
-                    // if (_realtime_pub->trylock()) {
-                    //     _realtime_pub->msg_.JointPos.push_back(_JointValues);
-                    //
-                    //     _realtime_pub->unlock();
-                    // }
-
-                    //_constraint.enforce(commands, period);
 
                     //reset/set flags and _episode_iterations
                     Bdp_eps_flag = false;
                     publish_flag = true;
+                    reset_flag = true;
                     _episode_iterations = 0;
                 }
-            }
-            else { // outside of an episode, send zero velocities
-                for (unsigned int j = 0; j < n_joints; j++) {
-                    joints[j]->setCommand(0);
-                    // _constraint.enforce(period);
+            } //End of blackdrops mode
+
+            else if (reset_flag) { //Return to default configuration
+
+                std::vector<double> q;
+                Eigen::VectorXd velocities(5);
+
+                double time_step = 0.05;
+                double threshold = 1e-3;
+                double gain = 0.2 / (M_PI * time_step);
+
+                // Current angles
+                for (unsigned int i = 0; i < n_joints; i++)
+                    q.push_back(joints[i]->getPosition());
+
+                // Move joint angles in the 0 - 2π range ??
+
+                // Error : difference between target and current angle
+                std::vector<double> q_err(n_joints, 0.0);
+                for (unsigned i = 0; i < n_joints; i++)
+                    q_err.at(i) = _defaultConfig.at(i) - q.at(i);
+
+                // Highest error among all joints
+                double derr = -std::numeric_limits<double>::max();
+                for (unsigned i = 0; i < n_joints; i++) {
+                    if (std::abs(q_err.at(i)) > derr)
+                        derr = std::abs(q_err.at(i));
                 }
 
-                //_constraint.enforce(commands, period);
-            }
+                if (derr > threshold) {
+
+                    //Compute velocities to be sent
+                    for (unsigned i = 0; i < n_joints; i++) {
+                        if (std::abs(q_err.at(i)) > threshold) {
+                            velocities(i) = q_err.at(i) * gain;
+
+                            if (velocities(i) > 1.0)
+                                velocities(i) = 1.0;
+                            if (velocities(i) < -1.0)
+                                velocities(i) = -1.0;
+                        }
+                        else
+                            velocities(i) = 0.0;
+                    }
+
+                    // Send velocity commands
+                    for (unsigned int j = 0; j < n_joints; j++)
+                        joints[j]->setCommand(velocities(j));
+                }
+                else //Default configuration already reached
+                    reset_flag = false;
+            } //End of reset mode (do not use enforce here)
+
+            else {
+                // Outside of an episode and when already at default configuration, send zero velocities
+                for (unsigned int j = 0; j < n_joints; j++){
+                    joints[j]->setCommand(0);
+                    _constraint.enforce(period);
+                  }
+
+            } //End of if-block related to sending correct velocities depending on: blackdrops/reset/zero modes
 
             // Publishing the data gathered during the episode
-
             if (publish_flag) {
                 if (_realtime_pub_joints->trylock()) {
 
@@ -294,10 +313,11 @@ namespace arm_speed_safe_controller {
                 }
                 publish_flag = false;
             } //end of publishing
-            _constraint.enforce(period);
+            // _constraint.enforce(period);
         } //end of update method
 
-        std::vector<std::string> joint_names;
+        std::vector<std::string>
+            joint_names;
         std::vector<std::shared_ptr<hardware_interface::JointHandle>> joints;
         realtime_tools::RealtimeBuffer<std::vector<double>> commands_buffer;
         unsigned int n_joints;
@@ -309,19 +329,14 @@ namespace arm_speed_safe_controller {
 
         double T, dT; //_rows to help in the publish matrix
         int max_iterations, _episode_iterations;
-        bool publish_flag, Bdp_eps_flag;
+        bool publish_flag, Bdp_eps_flag, reset_flag;
 
         // Temporary vectors that store all values during the whole episode
         std::vector<double> _jointList;
         std::vector<double> _commandList;
 
-        //Temporary Storing of values as vectors (for every iteration in an episode)
-        // omni_controllers::PublishData _JointValues;
-        // omni_controllers::PublishData _CommandValues;
-
-        //Temporary Storing of data in matrix form
-        //for al literations in an episode (col: no. of joints, rows: no. of iterations during an episode)
-        // omni_controllers::PublishMatrix _EpisodeItr;ROS_MASTER_URI=http://localhost:11311
+        //Default joint angle values for reset purposes
+        std::vector<double> _defaultConfig;
 
         Eigen::VectorXd _commands;
 
@@ -353,7 +368,7 @@ namespace arm_speed_safe_controller {
                 res[i] = joints[i]->getPosition();
             return res;
         }
-    }; //PolicyControllerWithReset
+    }; // policy_controller
 } // namespace arm_speed_safe_controller
 
 #endif

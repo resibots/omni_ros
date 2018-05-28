@@ -55,7 +55,8 @@ dynamixel_controllers:
 
   omni_policy_controller:
     # type: omni_controllers/OmnigrasperUnsafePolicyController
-    type: omni_controllers/OmnigrasperSmoothConstraintPolicyController
+    # type: omni_controllers/OmnigrasperSmoothConstraintPolicyController
+    type: omni_controllers/OmnigrasperSmoothConstraintPolicyControllerWithReset
     # type: omni_controllers/OmnigrasperSpeedSafeController
     # type: omni_controllers/ArmSpeedUnsafeController
 

@@ -11,7 +11,6 @@
     </description>
   </class>
 
-
   <class name="omni_controllers/OmnigrasperSpeedSafeController"
       type="arm_speed_safe_controller::OmnigrasperSpeedSafeController"
       base_class_type="controller_interface::ControllerBase">
@@ -55,4 +54,11 @@
     </description>
   </class>
 
+  <class name="omni_controllers/OmnigrasperSmoothConstraintPolicyControllerWithReset"
+      type="arm_speed_safe_controller::OmnigrasperSmoothConstraintPolicyControllerWithReset"
+      base_class_type="controller_interface::ControllerBase">
+    <description>
+      Policy controller using black-drops parameters, with safety constraints and default configuration for reset purposes
+    </description>
+  </class>
 </library>
