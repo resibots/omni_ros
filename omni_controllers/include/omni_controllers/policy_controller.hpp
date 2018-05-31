@@ -52,10 +52,7 @@
 #include <std_msgs/MultiArrayDimension.h>
 
 //Local
-#include <omni_controllers/PolicyInit.h>
 #include <omni_controllers/PolicyParams.h>
-#include <omni_controllers/PublishData.h>
-#include <omni_controllers/PublishMatrix.h>
 #include <omni_controllers/arm_speed_safe_controller.hpp>
 #include <omni_controllers/cartesian_constraint.hpp>
 #include <omni_controllers/policies/NNpolicy.hpp>

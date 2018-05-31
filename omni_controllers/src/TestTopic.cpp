@@ -17,54 +17,63 @@
 #include <omni_controllers/policies/NNpolicy.hpp>
 #include <omni_controllers/policies/binary_matrix.hpp>
 
-// void setParams(const omni_controllers::SubParamMsg::ConstPtr& msg)
-//  {
-//    ROS_INFO("Subscribing started, time t=: [%f]", msg->t);
-//    ros::spin();
-//  }
-
-int main(int argc, char *argv[])
+void getStates(const std_msgs::Float64MultiArray::ConstPtr& msgStates)
 {
-  ros::init(argc, argv, "Publish_params");
-  ros::NodeHandle nh;
-  ros::NodeHandle priv_nh_("~");
-  //ros::Rate loop_rate(10);
+    ROS_INFO("Subscribing started to state values");
+    //_flagStates = true;
+    ros::spinOnce();
+}
 
-  ros::Publisher my_msg_pub = nh.advertise<omni_controllers::PolicyParams>("/dynamixel_controllers/omni_policy_controller/policyParams", 1);
-  // ros::Subscriber sub_params= nh.subscribe<omni_controllers::SubParamMsg>("policyParams",1,setParams);
+void getActions(const std_msgs::Float64MultiArray::ConstPtr& msgActions)
+{
+    ROS_INFO("Subscribing started to action values");
+    //_flagActions = true;
+    ros::spinOnce();
+}
 
-  omni_controllers::PolicyParams msg;
+int main(int argc, char* argv[])
+{
+    ros::init(argc, argv, "Publish_params");
+    ros::NodeHandle nh;
 
-  ros::Rate rate(1);
+    ros::Publisher my_msg_pub = nh.advertise<omni_controllers::PolicyParams>("/dynamixel_controllers/omni_policy_controller/policyParams", 1);
 
-  Eigen::VectorXd params(115);
+    Eigen::VectorXd params(115);
+    Eigen::read_binary<Eigen::VectorXd>("/home/deba/Code/limbo/results/policy_params_1.bin", params);
 
-  Eigen::read_binary<Eigen::VectorXd>("/home/deba/Code/limbo/results/policy_params_1.bin", params);
-
-  //std::cout<<"params"<<params.transpose()<<std::endl;
-
-  std::cout<<"starting to publish"<<std::endl;
-  while(ros::ok())
-  {
-    //No. of params=(input+1).hidden neurons + (hidden+1)*output
-    //taking hidden as 1 for now, i=2, o=2, so total=7
-    //for 5 joints, total = (5+1)*10 + (11)*5 = 115
-
+    omni_controllers::PolicyParams msg;
     msg.params.clear();
-    for(unsigned int i=0; i< params.size(); i++){
-      msg.params.push_back(params(i));
+    for (unsigned int i = 0; i < params.size(); i++) {
+        msg.params.push_back(params(i));
     }
 
-    //msg.params={0.5,0.25,0.5,-0.5,0.5,0.25,0.5};
-    msg.t=4.0;
-    msg.dT=0.5;
-    my_msg_pub.publish(msg);
+    msg.t = 4.0;
+    msg.dT = 0.5;
+    std::cout << "starting to publish" << std::endl;
+    while (ros::ok()) {
+        my_msg_pub.publish(msg);
+        ros::spinOnce();
+    }
 
-    ros::spinOnce();
-    rate.sleep();
-  }
+    //Publish only once
 
+    // _flagActions = false;
+    // _flagStates = false;
 
+    ros::Subscriber robot_pos_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_policy_controller/States", 1, getStates);
+    ros::Subscriber robot_vel_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_policy_controller/Actions", 1, getActions);
 
-return 0;
+    // double count = 0;
+    // double limit = msg.t/msg.dT;
+    //
+    // while (ros::ok() && count<limit) {
+    //     robot_pos_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_policy_controller/States", 1, getStates);
+    //     robot_vel_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_policy_controller/Actions", 1, getActions);
+    //     count++;
+    //     ros::spinOnce();
+    // }
 }
+
+//No. of params=(input+1).hidden neurons + (hidden+1)*output
+//taking hidden as 1 for now, i=2, o=2, so total=7
+//for 5 joints, total = (5+1)*10 + (11)*5 = 115

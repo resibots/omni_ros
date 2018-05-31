@@ -1,2 +1,0 @@
-PublishData[] JointPos
-PublishData[] CommandVel
