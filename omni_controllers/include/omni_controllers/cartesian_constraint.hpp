@@ -374,19 +374,24 @@ namespace arm_speed_safe_controller {
          * 
          * @return 1 if we are outside of boundaries and between 0 and 1
          *  otherwise, proportional to the distance between soft_min_height
-         *  and hard_min_height
+         *  and hard_min_height. Also, between these two thresholds, if the arm
+         *  is going up again, the value returned is 1 too.
          */
         double _check_zone(const Zone& zone, Eigen::Vector3d current_lowest,
             Eigen::Vector3d future_lowest, bool global_zone = false)
         {
-            // Zoning condition: are the relevant joints in this zone
+            // Zoning condition: are the relevant joints in this zone?
             if ((current_lowest(0) >= zone.x_min && current_lowest(0) <= zone.x_max
                     && current_lowest(1) >= zone.y_min && current_lowest(1) <= zone.y_max)
                 || global_zone) {
                 // Stopping condition: being below the hard limit or
                 //                      being below  soft limit and still going down
                 if (current_lowest(2) <= zone.hard_min_height) {
-                    return 0;
+                    // If the arm is trying to raise again
+                    if (future_lowest(2) > current_lowest(2))
+                        return 1;
+                    else
+                        return 0;
                 }
                 else if (current_lowest(2) <= zone.soft_min_height) {
                     return std::abs((current_lowest(2) - zone.hard_min_height)
