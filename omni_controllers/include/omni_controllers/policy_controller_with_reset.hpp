@@ -170,7 +170,9 @@ namespace arm_speed_safe_controller {
         {
             if (Bdp_eps_flag) // blackdrops parameters to be implemented
             {
-                if (_episode_iterations < max_iterations) //during the episode
+                ros::Time curr_time = ros::Time::now();
+                // if (_episode_iterations < max_iterations) //during the episode
+                if ((_episode_iterations < max_iterations) && (curr_time.toSec() - _prev_time.toSec() >= dT)) //during the episode, when blackdrops commands can be sent
                 {
                     _commands = _policy->next(joints_to_eigen());
 
@@ -179,10 +181,18 @@ namespace arm_speed_safe_controller {
                         if (_episode_iterations > 0)
                             _jointList.push_back(joints[j]->getPosition());
                         joints[j]->setCommand(_commands(j));
-                        _constraint.enforce(period);
+                        // _constraint.enforce(period);
                     }
-
+                    _prev_time = ros::Time::now();
                     _episode_iterations++;
+                }
+
+                else if ((_episode_iterations < max_iterations) && (curr_time.toSec() - _prev_time.toSec()) < dT) //wait period during an ongoing episode
+                {
+                    for (unsigned int j = 0; j < n_joints; j++) {
+                        joints[j]->setCommand(_commands(j)); //Sending the earlier set of commands
+                            // _constraint.enforce(period);
+                    }
                 }
                 else //episode is over
                 {
@@ -191,7 +201,7 @@ namespace arm_speed_safe_controller {
                         _jointList.push_back(joints[j]->getPosition());
                         //send zero velocities
                         joints[j]->setCommand(0);
-                        _constraint.enforce(period);
+                        // _constraint.enforce(period);
                     }
 
                     //reset/set flags and _episode_iterations
@@ -251,14 +261,14 @@ namespace arm_speed_safe_controller {
                 }
                 else //Default configuration already reached
                     reset_flag = false;
-            } //End of reset mode (do not use enforce here)
+            } //End of reset mode
 
             else {
                 // Outside of an episode and when already at default configuration, send zero velocities
-                for (unsigned int j = 0; j < n_joints; j++){
+                for (unsigned int j = 0; j < n_joints; j++) {
                     joints[j]->setCommand(0);
-                    _constraint.enforce(period);
-                  }
+                }
+                // _constraint.enforce(period);
 
             } //End of if-block related to sending correct velocities depending on: blackdrops/reset/zero modes
 
@@ -310,7 +320,7 @@ namespace arm_speed_safe_controller {
                 }
                 publish_flag = false;
             } //end of publishing
-            // _constraint.enforce(period);
+            _constraint.enforce(period);
         } //end of update method
 
         std::vector<std::string>
@@ -336,6 +346,7 @@ namespace arm_speed_safe_controller {
         std::vector<double> _defaultConfig;
 
         Eigen::VectorXd _commands;
+        ros::Time _prev_time;
 
         std::shared_ptr<blackdrops::policy::NNPolicy> _policy;
         // std::shared_ptr<realtime_tools::RealtimePublisher<omni_controllers::PublishMatrix>> _realtime_pub;
@@ -356,6 +367,8 @@ namespace arm_speed_safe_controller {
 
             //Hence rows can be set now (correspond to number of runs in an episode)
             max_iterations = (int)msg->t / msg->dT;
+
+            _prev_time = ros::Time::now() - ros::Duration(2*dT);
         }
 
         inline Eigen::VectorXd joints_to_eigen()

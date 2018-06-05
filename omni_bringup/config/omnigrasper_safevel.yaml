@@ -27,7 +27,7 @@ dynamixel_controllers:
     publish_rate: 50
 
   omni_arm_controller:
-    type: omni_controllers/OmnigrasperSpeedSafeController
+    type: omni_controllers/OmnigrasperSpeedSmoothedSafeController
     joints:
       - arm_0_1
       - arm_1_2
@@ -42,9 +42,9 @@ dynamixel_controllers:
         y_max: 0.20
         hard_min_height: 0.1
         soft_min_height: 0.15
-#      - # the general height limit, applies everywhere
-#        hard_min_height: -0.12
-#        soft_min_height: -0.07
+      - # the general height limit, applies everywhere
+        hard_min_height: -0.12
+        soft_min_height: -0.07
 
 dynamixel_control:
   default_command_interface: velocity
