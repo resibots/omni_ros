@@ -135,11 +135,14 @@ namespace arm_speed_safe_controller {
             }
 
             Eigen::VectorXd limits(state_dim);
-            Eigen::VectorXd max_u(state_dim);
+            Eigen::VectorXd max_u(action_dim);
 
             //Convert to Eigen vectors
             for (unsigned int i = 0; i < state_dim; i++) {
                 limits(i) = limits_dummy[i];
+            }
+
+            for (unsigned int i = 0; i < action_dim; i++) {
                 max_u(i) = max_u_dummy[i];
             }
 
@@ -156,7 +159,8 @@ namespace arm_speed_safe_controller {
             _realtime_pub_commands->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
 
             _defaultConfig = {0.0, 0.0, 0.0, 0.0, 0.0};
-
+            // std::cout << "initialisation successful" << std::endl;
+            ROS_INFO("Intialization is OK");
             return true;
         }
 
@@ -168,27 +172,37 @@ namespace arm_speed_safe_controller {
 
         void update(const ros::Time& /*time*/, const ros::Duration& period)
         {
+
             if (Bdp_eps_flag) // blackdrops parameters to be implemented
             {
                 ros::Time curr_time = ros::Time::now();
+                ROS_INFO("Update:Starting blackdrops");
                 // if (_episode_iterations < max_iterations) //during the episode
                 if ((_episode_iterations < max_iterations) && (curr_time.toSec() - _prev_time.toSec() >= dT)) //during the episode, when blackdrops commands can be sent
                 {
-                    _commands = _policy->next(joints_to_eigen());
-
+                    ROS_INFO("Update:Running blackdrops commands");
+                    _commands = _policy->next(states_to_eigen());
+                    ROS_INFO("Update: Commands received after policy update : OK");
                     for (unsigned int j = 0; j < n_joints; j++) {
                         _commandList.push_back(_commands(j));
-                        if (_episode_iterations > 0)
-                            _jointList.push_back(joints[j]->getPosition());
+                        if (_episode_iterations > 0) {
+                            // _velocityList.push_back(joints[j]->getVelocity());
+                            _jointVelList.push_back(joints[j]->getPosition());
+                            _jointVelList.push_back(joints[j]->getVelocity());
+                        }
                         joints[j]->setCommand(_commands(j));
                         // _constraint.enforce(period);
+                        // std::cout<<joints[j]->getPosition()<<" ";
                     }
+                    // std::cout<<std::endl;
                     _prev_time = ros::Time::now();
                     _episode_iterations++;
+                    std::cout << "executed blackdrops commands" << std::endl;
                 }
 
                 else if ((_episode_iterations < max_iterations) && (curr_time.toSec() - _prev_time.toSec()) < dT) //wait period during an ongoing episode
                 {
+                    std::cout << "update phase of wait of timesteps during blackdrops" << std::endl;
                     for (unsigned int j = 0; j < n_joints; j++) {
                         joints[j]->setCommand(_commands(j)); //Sending the earlier set of commands
                             // _constraint.enforce(period);
@@ -198,7 +212,8 @@ namespace arm_speed_safe_controller {
                 {
                     for (unsigned int j = 0; j < n_joints; j++) {
                         //record the last set of joint states
-                        _jointList.push_back(joints[j]->getPosition());
+                        _jointVelList.push_back(joints[j]->getPosition());
+                        _jointVelList.push_back(joints[j]->getVelocity());
                         //send zero velocities
                         joints[j]->setCommand(0);
                         // _constraint.enforce(period);
@@ -213,7 +228,7 @@ namespace arm_speed_safe_controller {
             } //End of blackdrops mode
 
             else if (reset_flag) { //Return to default configuration
-
+                std::cout << "reset starting" << std::endl;
                 std::vector<double> q;
                 Eigen::VectorXd velocities(5);
 
@@ -274,20 +289,21 @@ namespace arm_speed_safe_controller {
 
             // Publishing the data gathered during the episode
             if (publish_flag) {
+                std::cout << "publishing is starting" << std::endl;
                 if (_realtime_pub_joints->trylock()) {
 
                     //check details at http://docs.ros.org/api/std_msgs/html/msg/MultiArrayLayout.html
                     //multiarray(i,j,k) = data[data_offset + dim_stride[1]*i + dim_stride[2]*j + k]
                     // fill out message:
                     _realtime_pub_joints->msg_.layout.dim[0].label = "Iterations";
-                    _realtime_pub_joints->msg_.layout.dim[1].label = "JointStates";
+                    _realtime_pub_joints->msg_.layout.dim[1].label = "JointAndVelStates";
                     _realtime_pub_joints->msg_.layout.dim[0].size = max_iterations; //H
-                    _realtime_pub_joints->msg_.layout.dim[1].size = n_joints; //W
-                    _realtime_pub_joints->msg_.layout.dim[0].stride = n_joints;
+                    _realtime_pub_joints->msg_.layout.dim[1].size = n_joints * 2; //W
+                    _realtime_pub_joints->msg_.layout.dim[0].stride = n_joints * 2;
                     _realtime_pub_joints->msg_.layout.dim[1].stride = 1;
                     _realtime_pub_joints->msg_.layout.data_offset = 0;
 
-                    _realtime_pub_joints->msg_.data = _jointList;
+                    _realtime_pub_joints->msg_.data = _jointVelList;
 
                     _realtime_pub_joints->unlockAndPublish();
 
@@ -296,7 +312,7 @@ namespace arm_speed_safe_controller {
                         _realtime_pub_joints->unlock();
                     }
 
-                    _jointList.clear();
+                    _jointVelList.clear();
                 }
                 if (_realtime_pub_commands->trylock()) {
                     _realtime_pub_commands->msg_.layout.dim[0].label = "Iterations";
@@ -339,7 +355,7 @@ namespace arm_speed_safe_controller {
         bool publish_flag, Bdp_eps_flag, reset_flag;
 
         // Temporary vectors that store all values during the whole episode
-        std::vector<double> _jointList;
+        std::vector<double> _jointVelList;
         std::vector<double> _commandList;
 
         //Default joint angle values for reset purposes
@@ -355,6 +371,7 @@ namespace arm_speed_safe_controller {
 
         void setParams(const omni_controllers::PolicyParams::ConstPtr& msg)
         {
+            std::cout << "starting callback function, receiving blackdrops params" << std::endl;
             Eigen::VectorXd params(msg->params.size()); //copy the parameters in a local public array, save time information
 
             for (int i = 0; i < msg->params.size(); i++)
@@ -366,16 +383,21 @@ namespace arm_speed_safe_controller {
             dT = msg->dT;
 
             //Hence rows can be set now (correspond to number of runs in an episode)
-            max_iterations = (int)msg->t / msg->dT;
+            max_iterations = std::ceil(msg->t / msg->dT) + 1;
 
-            _prev_time = ros::Time::now() - ros::Duration(2*dT);
+            _prev_time = ros::Time::now() - ros::Duration(2 * dT);
         }
 
-        inline Eigen::VectorXd joints_to_eigen()
+        inline Eigen::VectorXd states_to_eigen()
         {
-            Eigen::VectorXd res(joints.size());
-            for (size_t i = 0; i < joints.size(); ++i)
+            Eigen::VectorXd res(joints.size()*2);
+
+            for (size_t i = 0; i < joints.size(); ++i){
                 res[i] = joints[i]->getPosition();
+                res[5+i] = joints[i]->getVelocity();
+              }
+            // for (size_t i = joints.size(); i < joints.size()*2; ++i)
+
             return res;
         }
     }; // policy_controller
