@@ -160,7 +160,7 @@ namespace arm_speed_safe_controller {
 
             _defaultConfig = {0.0, 0.0, 0.0, 0.0, 0.0};
             // std::cout << "initialisation successful" << std::endl;
-            ROS_INFO("Intialization is OK");
+            // ROS_INFO("Intialization is OK");
             return true;
         }
 
@@ -176,33 +176,38 @@ namespace arm_speed_safe_controller {
             if (Bdp_eps_flag) // blackdrops parameters to be implemented
             {
                 ros::Time curr_time = ros::Time::now();
-                ROS_INFO("Update:Starting blackdrops");
+                // ROS_INFO("Update:Starting blackdrops");
                 // if (_episode_iterations < max_iterations) //during the episode
                 if ((_episode_iterations < max_iterations) && (curr_time.toSec() - _prev_time.toSec() >= dT)) //during the episode, when blackdrops commands can be sent
                 {
-                    ROS_INFO("Update:Running blackdrops commands");
+                    // ROS_INFO("Update:Running blackdrops commands");
                     _commands = _policy->next(states_to_eigen());
-                    ROS_INFO("Update: Commands received after policy update : OK");
+                    // ROS_INFO("Update: Commands received after policy update : OK");
                     for (unsigned int j = 0; j < n_joints; j++) {
                         _commandList.push_back(_commands(j));
                         if (_episode_iterations > 0) {
                             // _velocityList.push_back(joints[j]->getVelocity());
                             _jointVelList.push_back(joints[j]->getPosition());
-                            _jointVelList.push_back(joints[j]->getVelocity());
+                            // _jointVelList.push_back(joints[j]->getVelocity());
                         }
                         joints[j]->setCommand(_commands(j));
                         // _constraint.enforce(period);
                         // std::cout<<joints[j]->getPosition()<<" ";
                     }
+                    for (unsigned int j = 0; j < n_joints; j++) {
+                      if (_episode_iterations > 0) {
+                        _jointVelList.push_back(joints[j]->getVelocity());
+                      }
+                    }
                     // std::cout<<std::endl;
                     _prev_time = ros::Time::now();
                     _episode_iterations++;
-                    std::cout << "executed blackdrops commands" << std::endl;
+                    // std::cout << "executed blackdrops commands" << std::endl;
                 }
 
                 else if ((_episode_iterations < max_iterations) && (curr_time.toSec() - _prev_time.toSec()) < dT) //wait period during an ongoing episode
                 {
-                    std::cout << "update phase of wait of timesteps during blackdrops" << std::endl;
+                    // std::cout << "update phase of wait of timesteps during blackdrops" << std::endl;
                     for (unsigned int j = 0; j < n_joints; j++) {
                         joints[j]->setCommand(_commands(j)); //Sending the earlier set of commands
                             // _constraint.enforce(period);
@@ -228,7 +233,7 @@ namespace arm_speed_safe_controller {
             } //End of blackdrops mode
 
             else if (reset_flag) { //Return to default configuration
-                std::cout << "reset starting" << std::endl;
+                // std::cout << "reset starting" << std::endl;
                 std::vector<double> q;
                 Eigen::VectorXd velocities(5);
 
@@ -371,7 +376,7 @@ namespace arm_speed_safe_controller {
 
         void setParams(const omni_controllers::PolicyParams::ConstPtr& msg)
         {
-            std::cout << "starting callback function, receiving blackdrops params" << std::endl;
+            // std::cout << "starting callback function, receiving blackdrops params" << std::endl;
             Eigen::VectorXd params(msg->params.size()); //copy the parameters in a local public array, save time information
 
             for (int i = 0; i < msg->params.size(); i++)
