@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <fstream>
 
 // ROS
 #include <ros/node_handle.h>
@@ -29,38 +30,51 @@ namespace global {
 void getStates(const std_msgs::Float64MultiArray::ConstPtr& msgStates)
 {
     ROS_INFO("Subscribing started to record state values");
+    std::ofstream states;
+    states.open("states.dat");
+
+    if (!states) { // file couldn't be opened
+        std::cerr << "Error: States file could not be opened" << std::endl;
+        exit(1);
+    }
 
     for (unsigned int i = 0; i < msgStates->layout.dim[0].size; i++) {
         std::vector<double> temp;
-        for (unsigned int j = 0; j < msgStates->layout.dim[1].size; j++)
+        for (unsigned int j = 0; j < msgStates->layout.dim[1].size; j++) {
             temp.push_back(msgStates->data[msgStates->layout.dim[0].stride * i + j]);
+            states << (msgStates->data[msgStates->layout.dim[0].stride * i + j]) << " ";
+        }
 
         global::states.push_back(temp);
-
+        states << std::endl;
     }
-
+    states.close();
     global::received_states = true;
 }
 
 void getActions(const std_msgs::Float64MultiArray::ConstPtr& msgActions)
 {
     ROS_INFO("Subscribing started to record action values");
+    std::ofstream actions;
+    actions.open("actions.dat");
+
+    if (!actions) { // file couldn't be opened
+        std::cerr << "Error: States file could not be opened" << std::endl;
+        exit(1);
+    }
 
     for (unsigned int i = 0; i < msgActions->layout.dim[0].size; i++) {
         std::vector<double> temp;
-        for (unsigned int j = 0; j < msgActions->layout.dim[1].size; j++)
-            temp.push_back(msgActions->data[msgActions->layout.dim[0].stride * i + j]);
+        for (unsigned int j = 0; j < msgActions->layout.dim[1].size; j++){
+          temp.push_back(msgActions->data[msgActions->layout.dim[0].stride * i + j]);
+          actions << (msgActions->data[msgActions->layout.dim[0].stride * i + j]) << " ";
+        }
 
         global::actions.push_back(temp);
-
+        actions << std::endl;
     }
 
-    // std::cout<<"Print to check"<<std::endl;
-    // for (auto row: global::actions) {
-    //   for (auto element:row)
-    //     std::cout<<element<<" ";
-    //   std::cout<<std::endl;
-    // }
+    actions.close();
     global::received_actions = true;
 }
 
@@ -74,7 +88,7 @@ int main(int argc, char* argv[])
     ros::Subscriber robot_vel_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_policy_controller/Actions", 1, getActions);
 
     Eigen::VectorXd params(115);
-    Eigen::read_binary<Eigen::VectorXd>("/home/deba/Code/limbo/results/policy_params_1.bin", params);
+    Eigen::read_binary<Eigen::VectorXd>("/home/deba/Code/limbo/results/policy_params_2.bin", params);
 
     omni_controllers::PolicyParams msg;
     msg.params.clear();
@@ -83,12 +97,11 @@ int main(int argc, char* argv[])
     }
 
     msg.t = 4.0;
-    msg.dT = 0.5;
+    msg.dT = 0.1;
 
     my_msg_pub.publish(msg);
-    while(!global::received_actions || !global::received_states)
-      ros::spinOnce();
-
+    while (!global::received_actions || !global::received_states)
+        ros::spinOnce();
 }
 
 //No. of params=(input+1).hidden neurons + (hidden+1)*output

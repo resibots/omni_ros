@@ -218,11 +218,15 @@ namespace arm_speed_safe_controller {
                     for (unsigned int j = 0; j < n_joints; j++) {
                         //record the last set of joint states
                         _jointVelList.push_back(joints[j]->getPosition());
-                        _jointVelList.push_back(joints[j]->getVelocity());
+                        // _jointVelList.push_back(joints[j]->getVelocity());
                         //send zero velocities
                         joints[j]->setCommand(0);
                         // _constraint.enforce(period);
                     }
+
+                    for (unsigned int j = 0; j < n_joints; j++) {
+                      _jointVelList.push_back(joints[j]->getVelocity());
+                      }
 
                     //reset/set flags and _episode_iterations
                     Bdp_eps_flag = false;
@@ -294,7 +298,7 @@ namespace arm_speed_safe_controller {
 
             // Publishing the data gathered during the episode
             if (publish_flag) {
-                std::cout << "publishing is starting" << std::endl;
+                // std::cout << "publishing is starting" << std::endl;
                 if (_realtime_pub_joints->trylock()) {
 
                     //check details at http://docs.ros.org/api/std_msgs/html/msg/MultiArrayLayout.html
