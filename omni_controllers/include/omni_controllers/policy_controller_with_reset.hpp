@@ -185,19 +185,19 @@ namespace arm_speed_safe_controller {
                     // ROS_INFO("Update: Commands received after policy update : OK");
                     for (unsigned int j = 0; j < n_joints; j++) {
                         _commandList.push_back(_commands(j));
-                        if (_episode_iterations > 0) {
+                        // if (_episode_iterations > 0) {
                             // _velocityList.push_back(joints[j]->getVelocity());
-                            _jointVelList.push_back(joints[j]->getPosition());
+                        _jointVelList.push_back(joints[j]->getPosition());
                             // _jointVelList.push_back(joints[j]->getVelocity());
-                        }
+                        // }
                         joints[j]->setCommand(_commands(j));
                         // _constraint.enforce(period);
                         // std::cout<<joints[j]->getPosition()<<" ";
                     }
                     for (unsigned int j = 0; j < n_joints; j++) {
-                      if (_episode_iterations > 0) {
-                        _jointVelList.push_back(joints[j]->getVelocity());
-                      }
+                      // if (_episode_iterations > 0) {
+                      _jointVelList.push_back(joints[j]->getVelocity());
+                      // }
                     }
                     // std::cout<<std::endl;
                     _prev_time = ros::Time::now();
