@@ -22,7 +22,7 @@
 
 
 dynamixel_controllers:
-  omni_policy_controller:
+  omni_arm_controller:
     type: omni_controllers/OmnigrasperSmoothConstraintPolicyControllerWithReset
     joints:
       - arm_0_1
@@ -36,3 +36,6 @@ dynamixel_controllers:
       hidden_neurons: 10
       limits: [3.14159265359, 0.78539816339, 1.5707963268, 3.14159265359, 1.5707963268, 1.0, 1.0, 1.0, 1.0, 1.0]
       max_u: [1.0, 1.0, 1.0, 1.0, 1.0]
+
+dynamixel_control:
+  default_command_interface: velocity
