@@ -4,17 +4,10 @@
       type="arm_speed_safe_controller::ArmSpeedUnsafeController"
       base_class_type="controller_interface::ControllerBase">
     <description>
-      This controller is unsafe
+      This controller is unsafe. It sends velocity commands to joints of the Omnigrasper arm.
     </description>
   </class>
 
-  <class name="omni_controllers/OmnigrasperSpeedSafeController"
-      type="arm_speed_safe_controller::OmnigrasperSpeedSafeController"
-      base_class_type="controller_interface::ControllerBase">
-    <description>
-      This controller sends velocity commands to joints without any constraint. It expects a VelocityJointInterface type of hardware interface.
-    </description>
-  </class>
   <class name="omni_controllers/OmnigrasperSpeedSafeController"
       type="arm_speed_safe_controller::OmnigrasperSpeedSafeController"
       base_class_type="controller_interface::ControllerBase">
