@@ -37,6 +37,7 @@
 
 #include <omni_controllers/arm_speed_safe_controller.hpp>
 #include <omni_controllers/cartesian_constraint.hpp>
+#include <omni_controllers/lazy_controller.hpp>
 #include <pluginlib/class_list_macros.h>
 
 namespace arm_speed_safe_controller {
@@ -45,6 +46,17 @@ namespace arm_speed_safe_controller {
     typedef arm_speed_safe_controller::ArmSpeedSafeController<OmnigrasperHeightSmooth> OmnigrasperSpeedSmoothedSafeController;
 } // namespace arm_speed_safe_controller
 
-PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::ArmSpeedUnsafeController, controller_interface::ControllerBase)
-PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperSpeedSafeController, controller_interface::ControllerBase)
-PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperSpeedSmoothedSafeController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::ArmSpeedUnsafeController,
+    controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperSpeedSafeController,
+    controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperSpeedSmoothedSafeController,
+    controller_interface::ControllerBase)
+
+namespace lazy_controller {
+    typedef lazy_controller::LazyController<
+        arm_speed_safe_controller::OmnigrasperHeightSmooth>
+        OmnigrasperSmoothLazyController;
+}
+PLUGINLIB_EXPORT_CLASS(lazy_controller::OmnigrasperSmoothLazyController,
+    controller_interface::ControllerBase)

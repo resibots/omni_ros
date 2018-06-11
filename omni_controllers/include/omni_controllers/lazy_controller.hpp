@@ -1,4 +1,3 @@
-
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
@@ -37,8 +36,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#ifndef OMNI_CONTROLLERS_ARM_SPEED_SAFE_H
-#define OMNI_CONTROLLERS_ARM_SPEED_SAFE_H
+#ifndef OMNI_CONTROLLERS_LAZY_H
+#define OMNI_CONTROLLERS_LAZY_H
 
 #include <string>
 #include <vector>
@@ -47,17 +46,20 @@
 #include <hardware_interface/joint_command_interface.h>
 #include <realtime_tools/realtime_buffer.h>
 #include <ros/node_handle.h>
-#include <std_msgs/Float64MultiArray.h>
+#include <std_msgs/Float64.h>
 
-namespace arm_speed_safe_controller {
+#include <omni_controllers/arm_speed_safe_controller.hpp>
+
+namespace lazy_controller {
 
     struct NoSafetyConstraints;
 
     /**
-     * \brief Speed command controller for a robotic arm, with safety constraints.
+     * \brief Not a controller, but a debugging tool for safety limits in
+     *      Omnigrasper
      *
-     * This class forwards the command signal down to a set of joints, if they
-     * do not infringe some user-defined safety constraints.
+     * This class does nothing but publish the distance to the closest safety
+     * limit area. It is used for debugging purposes only.
      *
      * \tparam T class implementing the safety constraints
      *
@@ -66,29 +68,33 @@ namespace arm_speed_safe_controller {
      * \param type hardware interface type.
      * \param joints Names of the joints to control.
      *
-     * Subscribes to:
-     * - \b command (std_msgs::Float64MultiArray) : The joint commands to apply.
+     * Publishes to:
+     * - \b min_height (std_msgs::Float64) : how far we are from the closest
+     *   safety limit.
      */
     template <class SafetyConstraint = NoSafetyConstraints>
-    class ArmSpeedSafeController : public controller_interface::Controller<hardware_interface::VelocityJointInterface> {
+    class LazyController : public controller_interface::
+                               Controller<hardware_interface::VelocityJointInterface> {
     public:
-        ArmSpeedSafeController() {}
-        ~ArmSpeedSafeController() { _sub_command.shutdown(); }
+        LazyController() {}
+        ~LazyController() {}
 
         bool init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle& nh)
         {
-            // List of controlled joints
+            // Get the list of controlled joints
             std::string param_name = "joints";
             if (!nh.getParam(param_name, joint_names)) {
                 ROS_ERROR_STREAM("Failed to getParam '" << param_name << "' (namespace: " << nh.getNamespace() << ").");
                 return false;
             }
             n_joints = joint_names.size();
-
             if (n_joints == 0) {
                 ROS_ERROR_STREAM("List of joint names is empty.");
                 return false;
             }
+            previousAngles.resize(n_joints);
+
+            // Retrieve handles to the joints
             for (unsigned int i = 0; i < n_joints; i++) {
                 try {
                     joints.push_back(
@@ -102,71 +108,43 @@ namespace arm_speed_safe_controller {
                 }
             }
 
-            // Safety Constraint
+            // Init the safety constraint
             if (!_constraint.init(joints, nh)) {
                 ROS_ERROR_STREAM("Initialisation of the safety contraint failed");
                 return false;
             }
 
-            commands_buffer.writeFromNonRT(std::vector<double>(n_joints, 0.0));
+            _realtime_pub_margin
+                = std::make_shared<realtime_tools::RealtimePublisher<std_msgs::Float64>>(
+                    nh, "margin", 4);
 
-            _sub_command = nh.subscribe<std_msgs::Float64MultiArray>("command", 1, &ArmSpeedSafeController::commandCB, this);
             return true;
         }
 
-        void starting(const ros::Time& time)
-        {
-            // Start controller with 0.0 velocities
-            commands_buffer.readFromRT()->assign(n_joints, 0.0);
-        }
+        void starting(const ros::Time& time) {}
 
         void update(const ros::Time& /*time*/, const ros::Duration& period)
         {
-            std::vector<double>& commands = *commands_buffer.readFromRT();
-
-            for (unsigned int i = 0; i < n_joints; i++) {
-                joints[i]->setCommand(commands[i]);
+            for (auto joint : joints) {
+                joint->setCommand(0);
             }
-
-            _constraint.enforce(period);
+            if (_realtime_pub_margin->trylock()) {
+                _realtime_pub_margin->msg_.data = _constraint.consult(period);
+                _realtime_pub_margin->unlockAndPublish();
+            }
         }
 
         std::vector<std::string> joint_names;
         std::vector<std::shared_ptr<hardware_interface::JointHandle>> joints;
-        realtime_tools::RealtimeBuffer<std::vector<double>> commands_buffer;
+        std::shared_ptr<realtime_tools::RealtimePublisher<std_msgs::Float64>>
+            _realtime_pub_margin;
         unsigned int n_joints;
 
     private:
         SafetyConstraint _constraint;
-        ros::Subscriber _sub_command;
-        void commandCB(const std_msgs::Float64MultiArrayConstPtr& msg)
-        {
-            if (msg->data.size() != n_joints) {
-                ROS_ERROR_STREAM("Dimension of command (" << msg->data.size() << ") does not match number of joints (" << n_joints << ")! Not executing!");
-                return;
-            }
-            commands_buffer.writeFromNonRT(msg->data);
-        }
+        std::vector<double> previousAngles;
     };
 
-    /** \cond HIDDEN_SYMBOLS */
-    struct NoSafetyConstraints {
-        bool init(const std::vector<std::shared_ptr<hardware_interface::JointHandle>>& joints,
-            ros::NodeHandle& nh)
-        {
-            return true;
-        }
-        bool enforce(const ros::Duration& period)
-        {
-            return true;
-        }
-        double consult(const ros::Duration& period)
-        {
-            return std::numeric_limits<double>::max();
-        }
-    };
-    /** \endcond */
-
-} // namespace arm_speed_safe_controller
+} // namespace lazy_controller
 
 #endif

@@ -22,4 +22,12 @@
     </description>
   </class>
 
+  <class name="omni_controllers/OmnigrasperSmoothLazyController"
+      type="lazy_controller::OmnigrasperSmoothLazyController"
+      base_class_type="controller_interface::ControllerBase">
+    <description>
+      This controller complies to the user's force applied on the arm (position mode) and reports how close is the nearest safety limit.
+    </description>
+  </class>
+
 </library>

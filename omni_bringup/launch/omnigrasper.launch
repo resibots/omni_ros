@@ -46,8 +46,8 @@ you accept its terms. -->
   <arg name="use_arm" default="true" />
   <arg name="use_mocap" default="false" />
   <arg name="arm_control_mode" default="velocity"
-       doc="how the joints of the arm are controlled : position, velocity or
-            safevel (enforce safety constraints on the arm)"/>
+       doc="how the joints of the arm are controlled : position, velocity,
+            safevel or test-limits (enforce safety constraints on the arm)"/>
 
   <!-- URDF robot description -->
   <include file="$(find omni_description)/launch/omnigrasper.launch" />
@@ -74,6 +74,7 @@ you accept its terms. -->
     <rosparam if="$(eval arg('arm_control_mode') == 'position')" file="$(find omni_bringup)/config/omnigrasper_pos.yaml"/>
     <rosparam if="$(eval arg('arm_control_mode') == 'velocity')" file="$(find omni_bringup)/config/omnigrasper_vel.yaml"/>
     <rosparam if="$(eval arg('arm_control_mode') == 'safevel')" file="$(find omni_bringup)/config/omnigrasper_safevel.yaml"/>
+    <rosparam if="$(eval arg('arm_control_mode') == 'test-limits')" file="$(find omni_bringup)/config/omnigrasper_test_limits.yaml"/>
 
     <!-- starting the hardware interface and controllers -->
     <node name="dynamixel_control" pkg="dynamixel_control_hw"

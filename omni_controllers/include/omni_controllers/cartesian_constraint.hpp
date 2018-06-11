@@ -3,6 +3,7 @@
 
 #include <XmlRpcException.h>
 #include <hardware_interface/joint_command_interface.h> // defines JointHandle
+#include <realtime_tools/realtime_publisher.h>
 #include <ros/node_handle.h>
 
 #include <Eigen/Core>
@@ -208,9 +209,9 @@ namespace arm_speed_safe_controller {
                 std::sin(angles[4]), -std::cos(angles[4]), 0., 0.,
                 0., 0., 0., 1.;
             Eigen::Matrix4d T_5_hook;
-            T_5_hook << 1., 0., 0., -0.06,
-                0., 0., -1., -0.17,
-                0., 1., 0., 0.,
+            T_5_hook << 1., 0., 0., 0.,
+                0., 0., -1., -0.12,
+                0., 1., 0., -0.006,
                 0., 0., 0., 1.;
 
             // Position of the last joint
@@ -239,21 +240,14 @@ namespace arm_speed_safe_controller {
      */
     class OmnigrasperHeightConstraint : public OmnigrasperHeightConstraintBase {
     public:
-        /**
-            The main method of this class. Stops all actuators if any one is
-            beyond set joint limits.
-            @return true if and only if the joints are outside the limits
-        **/
+        /** The main method of this class. Stops all actuators if any one is
+         *  beyond set joint limits.
+         * 
+         * @return true if and only if the joints are outside the limits
+         */
         bool enforce(const ros::Duration& period)
         {
-            std::vector<double> angles, future_angles;
-            for (auto joint : _joints) {
-                angles.push_back(joint->getPosition());
-                future_angles.push_back(
-                    joint->getPosition() + joint->getCommand() * period.toSec());
-            }
-
-            if (_zone_triggered(angles, future_angles)) {
+            if (_zone_triggered(period)) {
                 for (auto joint : _joints) {
                     joint->setCommand(0);
                 }
@@ -264,6 +258,23 @@ namespace arm_speed_safe_controller {
                 return false;
         }
 
+        /** Tell how far we are from the joint limit. 0 means that we reached
+         * it and 1 that we are far. Values in between would mean that we are
+         * approaching.
+         * 
+         * For this specific implementation, the information is binary. You
+         * would only get 0 or 1.
+         * 
+         * @return proximity to the safety limit
+         */
+        double consult(const ros::Duration& period)
+        {
+            if (_zone_triggered(period))
+                return 0;
+            else
+                return 1;
+        }
+
     protected:
         /** Check among all zones whether any is triggered
          * This means that we check whether any of the watched joints is below
@@ -271,9 +282,15 @@ namespace arm_speed_safe_controller {
          * 
          * @return true if at least one of the height constraints is not respected
          */
-        bool _zone_triggered(std::vector<double>& angles,
-            std::vector<double>& future_angles)
+        bool _zone_triggered(const ros::Duration& period)
         {
+            std::vector<double> angles, future_angles;
+            for (auto joint : _joints) {
+                angles.push_back(joint->getPosition());
+                future_angles.push_back(
+                    joint->getPosition() + joint->getCommand() * period.toSec());
+            }
+
             Eigen::Vector3d current_lowest = _lowest_joint(angles),
                             future_lowest = _lowest_joint(future_angles);
 
@@ -324,15 +341,8 @@ namespace arm_speed_safe_controller {
         **/
         bool enforce(const ros::Duration& period)
         {
-            std::vector<double> angles, future_angles;
-            for (auto joint : _joints) {
-                angles.push_back(joint->getPosition());
-                future_angles.push_back(
-                    joint->getPosition() + joint->getCommand() * period.toSec());
-            }
-
-            double ratio;
-            if ((ratio = _zone_triggered(angles, future_angles)) < 1) {
+            double ratio = _zone_triggered(period);
+            if (ratio < 1) {
                 std::for_each(_joints.begin(), _joints.end(),
                     [=](std::shared_ptr<hardware_interface::JointHandle> joint) {
                         joint->setCommand(joint->getCommand() * ratio);
@@ -344,16 +354,34 @@ namespace arm_speed_safe_controller {
                 return false;
         }
 
+        /** Tell how far we are from the joint limit. 0 means that we reached
+         * it and 1 that we are far. Values in between would mean that we are
+         * approaching.
+         * 
+         * @return proximity to the safety limit
+         */
+        double consult(const ros::Duration& period)
+        {
+            return _zone_triggered(period);
+        }
+
     protected:
         /** Check among all zones whether any is triggered
          * This means that we check whether any of the watched joints is below
          * one of the limits we defined, a.k.a. zones.
          * 
-         * @return true if at least one of the height constraints is not respected
+         * @return value between 0 and 1, corresponding to the ratio to be
+         *  applied to the velocities.
          */
-        double _zone_triggered(std::vector<double>& angles,
-            std::vector<double>& future_angles)
+        double _zone_triggered(const ros::Duration& period)
         {
+            std::vector<double> angles, future_angles;
+            for (auto joint : _joints) {
+                angles.push_back(joint->getPosition());
+                future_angles.push_back(
+                    joint->getPosition() + joint->getCommand() * period.toSec());
+            }
+
             Eigen::Vector3d current_lowest = _lowest_joint(angles),
                             future_lowest = _lowest_joint(future_angles);
 
