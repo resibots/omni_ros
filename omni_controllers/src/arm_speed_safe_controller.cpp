@@ -47,12 +47,8 @@ namespace arm_speed_safe_controller {
     typedef arm_speed_safe_controller::ArmSpeedSafeController<OmnigrasperHeightConstraint> OmnigrasperSpeedSafeController;
     typedef arm_speed_safe_controller::ArmSpeedSafeController<OmnigrasperHeightSmooth> OmnigrasperSpeedSmoothedSafeController;
 
-    typedef arm_speed_safe_controller::PolicyController<> OmnigrasperUnsafePolicyController;
-    typedef arm_speed_safe_controller::PolicyController<OmnigrasperHeightConstraint> OmnigrasperConstraintPolicyController;
     typedef arm_speed_safe_controller::PolicyController<OmnigrasperHeightSmooth> OmnigrasperSmoothConstraintPolicyController;
 
-    typedef arm_speed_safe_controller::PolicyControllerWithReset<> OmnigrasperUnsafePolicyControllerWithReset;
-    typedef arm_speed_safe_controller::PolicyControllerWithReset<OmnigrasperHeightConstraint> OmnigrasperConstraintPolicyControllerWithReset;
     typedef arm_speed_safe_controller::PolicyControllerWithReset<OmnigrasperHeightSmooth> OmnigrasperSmoothConstraintPolicyControllerWithReset;
 
 } // namespace arm_speed_safe_controller
@@ -64,17 +60,9 @@ PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperSpeedSafeController
 PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperSpeedSmoothedSafeController,
     controller_interface::ControllerBase)
 
-PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperUnsafePolicyController,
-    controller_interface::ControllerBase)
-PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperConstraintPolicyController,
-    controller_interface::ControllerBase)
 PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperSmoothConstraintPolicyController,
     controller_interface::ControllerBase)
 
-PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperUnsafePolicyControllerWithReset,
-    controller_interface::ControllerBase)
-PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperConstraintPolicyControllerWithReset,
-    controller_interface::ControllerBase)
 PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperSmoothConstraintPolicyControllerWithReset,
     controller_interface::ControllerBase)
 
