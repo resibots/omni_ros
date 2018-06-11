@@ -20,46 +20,20 @@
 # you accept its terms.
 
 
-dynamixel_control:
-  loop_frequency: 100
-  cycle_time_error_threshold: 0.05
-  serial_interface: /dev/ttyUSB0
-  baudrate: 1000000 # in bauds
-  read_timeout: 0.02 # in seconds
-  scan_timeout: 0.02
-  # correspondance between hardware IDs of the actuators and their names in ROS
-  servos:
-    arm_0_1:
-      id: 1
-      max_speed: 0.2
-      offset: 3.14159265359
-    arm_1_2:
-      id: 2
-      max_speed: 0.2
-      offset: 3.14159265359
-    arm_2_3:
-      id: 3
-      max_speed: 0.2
-      offset: 3.14159265359
-    arm_3_4:
-      id: 4
-      max_speed: 0.2
-      offset: 3.14159265359
-    arm_4_5:
-      id: 5
-      max_speed: 0.2
-      offset: 3.14159265359
 
 dynamixel_controllers:
-  omni_arm_controller: # Safety limits for some controllers used with the arm
-    min_heights:
-      - # height limit to protect the arm and the mobile base from each other
-        x_min: -0.18
-        y_min: -0.30
-        x_max: 0.50
-        y_max: 0.30
-        hard_min_height: 0.15
-        soft_min_height: 0.20
-      - # the general height limit, applies everywhere
-        hard_min_height: -0.16
-        soft_min_height: -0.07
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 50
+
+  omni_arm_controller:
+    type: omni_controllers/OmnigrasperSmoothLazyController
+    joints:
+      - arm_0_1
+      - arm_1_2
+      - arm_2_3
+      - arm_3_4
+      - arm_4_5
+
+dynamixel_control:
+  default_command_interface: velocity

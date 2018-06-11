@@ -36,9 +36,10 @@
  *********************************************************************/
 
 #include <omni_controllers/arm_speed_safe_controller.hpp>
+#include <omni_controllers/cartesian_constraint.hpp>
+#include <omni_controllers/lazy_controller.hpp>
 #include <omni_controllers/policy_controller.hpp>
 #include <omni_controllers/policy_controller_with_reset.hpp>
-#include <omni_controllers/cartesian_constraint.hpp>
 #include <pluginlib/class_list_macros.h>
 
 namespace arm_speed_safe_controller {
@@ -56,14 +57,34 @@ namespace arm_speed_safe_controller {
 
 } // namespace arm_speed_safe_controller
 
-PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::ArmSpeedUnsafeController,       controller_interface::ControllerBase)
-PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperSpeedSafeController, controller_interface::ControllerBase)
-PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperSpeedSmoothedSafeController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::ArmSpeedUnsafeController,
+    controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperSpeedSafeController,
+    controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperSpeedSmoothedSafeController,
+    controller_interface::ControllerBase)
 
-PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperUnsafePolicyController, controller_interface::ControllerBase)
-PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperConstraintPolicyController, controller_interface::ControllerBase)
-PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperSmoothConstraintPolicyController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperUnsafePolicyController,
+    controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperConstraintPolicyController,
+    controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperSmoothConstraintPolicyController,
+    controller_interface::ControllerBase)
 
-PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperUnsafePolicyControllerWithReset, controller_interface::ControllerBase)
-PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperConstraintPolicyControllerWithReset, controller_interface::ControllerBase)
-PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperSmoothConstraintPolicyControllerWithReset, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperUnsafePolicyControllerWithReset,
+    controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperConstraintPolicyControllerWithReset,
+    controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperSmoothConstraintPolicyControllerWithReset,
+    controller_interface::ControllerBase)
+
+// Fake controller that does nothing and only reports the distance to the closest
+// height limit of the cartesian safety
+
+namespace lazy_controller {
+    typedef lazy_controller::LazyController<
+        arm_speed_safe_controller::OmnigrasperHeightSmooth>
+        OmnigrasperSmoothLazyController;
+}
+PLUGINLIB_EXPORT_CLASS(lazy_controller::OmnigrasperSmoothLazyController,
+    controller_interface::ControllerBase)
