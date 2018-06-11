@@ -6,22 +6,24 @@ This software is governed by the CeCILL license under French law and abiding by 
   <version>1.0.0</version>
   <description>omni_ros metapackage contains packages to integrate into ROS all of the ERC ResiBots omnidirectional robots</description>
 
-  <maintainer email="fede.allocati@gmail.com">Federico Allocati</maintainer>
+  <author email="fede.allocati@gmail.com">Federico Allocati</author>
+  <author email="dorian.goepp@inria.fr">Dorian Goepp</author>
+  <maintainer email="dorian.goepp@inria.fr">Dorian Goepp</maintainer>
 
   <license>CeCILL</license>
 
   <url type="repository">https://github.com/resibots/omni_ros</url>
   <url type="bugtracker">https://github.com/resibots/omni_ros/issues</url>
 
-  <author email="fede.allocati@gmail.com">Federico Allocati</author>
-
   <buildtool_depend>catkin</buildtool_depend>
 
-  <run_depend>dynamixel_control_hw</run_depend>
+  <run_depend>dynamixel_control</run_depend>
+  <run_depend>omni_bringup</run_depend>
+  <run_depend>omni_controllers</run_depend>
   <run_depend>omni_description</run_depend>
   <run_depend>omni_driver</run_depend>
 
-   <export>
+  <export>
     <metapackage/>
   </export>
 </package>

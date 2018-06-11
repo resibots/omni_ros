@@ -1,0 +1,51 @@
+<library path="lib/libomni_controllers">
+
+  <class name="omni_controllers/ArmSpeedUnsafeController"
+      type="arm_speed_safe_controller::ArmSpeedUnsafeController"
+      base_class_type="controller_interface::ControllerBase">
+    <description>
+      This controller is unsafe. It sends velocity commands to joints of the Omnigrasper arm.
+    </description>
+  </class>
+
+  <class name="omni_controllers/OmnigrasperSpeedSafeController"
+      type="arm_speed_safe_controller::OmnigrasperSpeedSafeController"
+      base_class_type="controller_interface::ControllerBase">
+    <description>
+      This controller sends velocity commands to joints of the Omnigrasper arm, respecting height constraints (joints not lower than given height). It expects a VelocityJointInterface type of hardware interface.
+    </description>
+  </class>
+
+  <class name="omni_controllers/OmnigrasperSpeedSmoothedSafeController"
+      type="arm_speed_safe_controller::OmnigrasperSpeedSmoothedSafeController"
+      base_class_type="controller_interface::ControllerBase">
+    <description>
+      This controller sends velocity commands to joints of the Omnigrasper arm, respecting height constraints (joints not lower than given height). Contrary to OmnigrasperSpeedSafeController, this controller will smoothly decrease the speed to zero while we reach the limit height It expects a VelocityJointInterface type of hardware interface.
+    </description>
+  </class>
+
+  <class name="omni_controllers/OmnigrasperSmoothConstraintPolicyController"
+      type="arm_speed_safe_controller::OmnigrasperSmoothConstraintPolicyController"
+      base_class_type="controller_interface::ControllerBase">
+    <description>
+      Policy controller using black-drops parameters, with safety constraints and without reset configurations
+    </description>
+  </class>
+
+  <class name="omni_controllers/OmnigrasperSmoothLazyController"
+      type="lazy_controller::OmnigrasperSmoothLazyController"
+      base_class_type="controller_interface::ControllerBase">
+    <description>
+      This controller complies to the user's force applied on the arm (position mode) and reports how close is the nearest safety limit.
+    </description>
+  </class>
+
+  <class name="omni_controllers/OmnigrasperSmoothConstraintPolicyControllerWithReset"
+      type="arm_speed_safe_controller::OmnigrasperSmoothConstraintPolicyControllerWithReset"
+      base_class_type="controller_interface::ControllerBase">
+    <description>
+      Policy controller using black-drops parameters, with safety constraints and default configuration for reset purposes
+    </description>
+  </class>
+
+</library>

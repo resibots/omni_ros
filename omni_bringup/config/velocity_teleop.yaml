@@ -1,0 +1,55 @@
+joy_node:
+  dev: /dev/input/js1
+
+teleop:
+  arm:
+    type: topic
+    message_type: std_msgs/Float64MultiArray
+    topic_name: /dynamixel_controllers/omni_arm_controller/command
+    deadman_buttons: [5]
+    axis_mappings:
+      -
+        axis: 0
+        target: data[0]
+        scale: 1.0
+      -
+        axis: 1
+        target: data[1]
+        scale: 1.0
+      -
+        axis: 4
+        target: data[2]
+        scale: 1.0
+      -
+        axis: 3
+        target: data[3]
+        scale: 1.0
+
+    message_value:
+      -
+        target: data[4]
+        value: 0
+  arm_last:
+    type: topic
+    message_type: std_msgs/Float64MultiArray
+    topic_name: /dynamixel_controllers/omni_arm_controller/command
+    deadman_buttons: [4]
+    message_value:
+      -
+        target: data[0]
+        value: 0
+      -
+        target: data[1]
+        value: 0
+      -
+        target: data[2]
+        value: 0
+      -
+        target: data[3]
+        value: 0
+
+    axis_mappings:
+      -
+        axis: 1
+        target: data[4]
+        scale: 1.0

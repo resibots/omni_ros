@@ -27,18 +27,28 @@ you accept its terms. -->
       - control node for the arm (dynamixel hardware interface)
       - control node for the YouBot mobile base (youbot driver)
 
+    Arguments
+      The arguments of this launch file can be described with
+        `roslaunch omni_bringup omnigrasper.launch - -ros-args`
+
     Topics published
-      TODO
+      TODO: descibe published topics
 
     Subscribed topics
-      TODO
+      Depends on the arm_control_mode, as far as the arm goes
+      TODO: list subscribed topics for the base and the arm
   -->
 
-  <arg name="use_base" default="true" />
+  <!-- <env name="ROSCONSOLE_CONFIG_FILE"
+       value="$(find omni_bringup)/custom_rosconsole.conf"/> -->
+
+  <arg name="use_base" default="false" />
   <arg name="use_arm" default="true" />
   <arg name="use_mocap" default="false" />
-  <arg name="arm_control_mode" default="position"
-       doc="how the joints of the arm are controlled : position or velocity"/>
+  <arg name="arm_control_mode" default="velocity"
+       doc="how the joints of the arm are controlled : position, velocity,
+            safevel (enforce safety constraints on the arm) or policy 
+            (Black-DROPS experiments)"/>
 
   <!-- URDF robot description -->
   <include file="$(find omni_description)/launch/omnigrasper.launch" />
@@ -62,12 +72,20 @@ you accept its terms. -->
   <group if="$(arg use_arm)">
     <!-- Parameters for the hardware interface and controllers -->
     <rosparam file="$(find omni_bringup)/config/omnigrasper_common.yaml"/>
-    <rosparam if="$(eval arg('arm_control_mode') == 'position')" file="$(find omni_bringup)/config/omnigrasper_pos.yaml"/>
-    <rosparam if="$(eval arg('arm_control_mode') == 'velocity')" file="$(find omni_bringup)/config/omnigrasper_vel.yaml"/>
+    <rosparam if="$(eval arg('arm_control_mode') == 'position')"
+      file="$(find omni_bringup)/config/omnigrasper_pos.yaml"/>
+    <rosparam if="$(eval arg('arm_control_mode') == 'velocity')"
+      file="$(find omni_bringup)/config/omnigrasper_vel.yaml"/>
+    <rosparam if="$(eval arg('arm_control_mode') == 'safevel')"
+      file="$(find omni_bringup)/config/omnigrasper_safevel.yaml"/>
+    <rosparam if="$(eval arg('arm_control_mode') == 'policy')"
+      file="$(find omni_bringup)/config/omnigrasper_policy.yaml"/>
+    <rosparam if="$(eval arg('arm_control_mode') == 'test-limits')"
+      file="$(find omni_bringup)/config/omnigrasper_test_limits.yaml"/>
 
     <!-- starting the hardware interface and controllers -->
     <node name="dynamixel_control" pkg="dynamixel_control_hw"
-          type="dynamixel_control_hw_v2" output="screen" clear_params="true"
+          type="dynamixel_control_p2" output="screen" clear_params="true"
           required="true"/>
     <node name="controller" pkg="controller_manager" type="spawner"
           respawn="false" output="screen" clear_params="true"
