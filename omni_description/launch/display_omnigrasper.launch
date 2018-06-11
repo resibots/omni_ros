@@ -8,7 +8,7 @@
 
   <!-- Start state publishers -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
-  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+  <node if="$(arg gui)" name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
 
   <!-- Start Rviz -->
   <node name="rviz" pkg="rviz" type="rviz"
