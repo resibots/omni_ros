@@ -22,10 +22,6 @@
 
 
 dynamixel_controllers:
-  joint_state_controller:
-    type: joint_state_controller/JointStateController
-    publish_rate: 50
-
   omni_arm_controller:
     type: omni_controllers/OmnigrasperSmoothLazyController
     joints:

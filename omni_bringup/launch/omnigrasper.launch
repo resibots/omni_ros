@@ -47,7 +47,8 @@ you accept its terms. -->
   <arg name="use_mocap" default="false" />
   <arg name="arm_control_mode" default="velocity"
        doc="how the joints of the arm are controlled : position, velocity,
-            safevel or test-limits (enforce safety constraints on the arm)"/>
+            safevel (enforce safety constraints on the arm) or policy 
+            (Black-DROPS experiments)"/>
 
   <!-- URDF robot description -->
   <include file="$(find omni_description)/launch/omnigrasper.launch" />
@@ -71,13 +72,19 @@ you accept its terms. -->
   <group if="$(arg use_arm)">
     <!-- Parameters for the hardware interface and controllers -->
     <rosparam file="$(find omni_bringup)/config/omnigrasper_common.yaml"/>
-    <rosparam if="$(eval arg('arm_control_mode') == 'position')" file="$(find omni_bringup)/config/omnigrasper_pos.yaml"/>
-    <rosparam if="$(eval arg('arm_control_mode') == 'velocity')" file="$(find omni_bringup)/config/omnigrasper_vel.yaml"/>
-    <rosparam if="$(eval arg('arm_control_mode') == 'safevel')" file="$(find omni_bringup)/config/omnigrasper_safevel.yaml"/>
-    <rosparam if="$(eval arg('arm_control_mode') == 'test-limits')" file="$(find omni_bringup)/config/omnigrasper_test_limits.yaml"/>
+    <rosparam if="$(eval arg('arm_control_mode') == 'position')"
+      file="$(find omni_bringup)/config/omnigrasper_pos.yaml"/>
+    <rosparam if="$(eval arg('arm_control_mode') == 'velocity')"
+      file="$(find omni_bringup)/config/omnigrasper_vel.yaml"/>
+    <rosparam if="$(eval arg('arm_control_mode') == 'safevel')"
+      file="$(find omni_bringup)/config/omnigrasper_safevel.yaml"/>
+    <rosparam if="$(eval arg('arm_control_mode') == 'policy')"
+      file="$(find omni_bringup)/config/omnigrasper_policy.yaml"/>
+    <rosparam if="$(eval arg('arm_control_mode') == 'test-limits')"
+      file="$(find omni_bringup)/config/omnigrasper_test_limits.yaml"/>
 
     <!-- starting the hardware interface and controllers -->
-    <node name="dynamixel_control" pkg="dynamixel_control"
+    <node name="dynamixel_control" pkg="dynamixel_control_hw"
           type="dynamixel_control_p2" output="screen" clear_params="true"
           required="true"/>
     <node name="controller" pkg="controller_manager" type="spawner"

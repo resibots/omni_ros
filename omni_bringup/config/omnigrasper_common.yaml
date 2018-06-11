@@ -51,6 +51,10 @@ dynamixel_control:
       offset: 3.14159265359
 
 dynamixel_controllers:
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 50
+
   omni_arm_controller: # Safety limits for some controllers used with the arm
     min_heights:
       - # height limit to protect the arm and the mobile base from each other
