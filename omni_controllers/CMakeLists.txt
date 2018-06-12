@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   control_msgs
   std_msgs
+  std_srvs
   control_toolbox
   controller_interface
   hardware_interface
@@ -33,6 +34,7 @@ catkin_package(
   CATKIN_DEPENDS
     control_msgs
     std_msgs
+    std_srvs
     control_toolbox
     controller_interface
     hardware_interface

@@ -50,6 +50,7 @@
 #include <ros/node_handle.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <std_msgs/MultiArrayDimension.h>
+#include <std_srvs/Empty.h>
 
 //Local
 #include <omni_controllers/PolicyParams.h>
@@ -117,6 +118,7 @@ namespace arm_speed_safe_controller {
             Bdp_eps_flag = false;
             publish_flag = false;
             reset_flag = false;
+            manual_reset_flag = false;
             _episode_iterations = 0;
 
             std::vector<double> limits_dummy;
@@ -151,6 +153,9 @@ namespace arm_speed_safe_controller {
 
             // _sub_command = nh.subscribe<std_msgs::Float64MultiArray>("commands", 1, &PolicyController::commandCB, this);
             _sub_params = nh.subscribe<omni_controllers::PolicyParams>("policyParams", 1, &PolicyControllerWithReset::setParams, this);
+            _serv_reset = nh.advertiseService("manualReset", &PolicyControllerWithReset::manualReset, this);
+            // _serv_reset = nh.advertiseService<std_srvs::Empty.srv>("manualReset", &PolicyControllerWithReset::manualReset, this);
+
             _realtime_pub_joints.reset(new realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>(nh, "States", 1));
             _realtime_pub_joints->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
             _realtime_pub_joints->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
@@ -186,18 +191,18 @@ namespace arm_speed_safe_controller {
                     for (unsigned int j = 0; j < n_joints; j++) {
                         _commandList.push_back(_commands(j));
                         // if (_episode_iterations > 0) {
-                            // _velocityList.push_back(joints[j]->getVelocity());
+                        // _velocityList.push_back(joints[j]->getVelocity());
                         _jointVelList.push_back(joints[j]->getPosition());
-                            // _jointVelList.push_back(joints[j]->getVelocity());
+                        // _jointVelList.push_back(joints[j]->getVelocity());
                         // }
                         joints[j]->setCommand(_commands(j));
                         // _constraint.enforce(period);
                         // std::cout<<joints[j]->getPosition()<<" ";
                     }
                     for (unsigned int j = 0; j < n_joints; j++) {
-                      // if (_episode_iterations > 0) {
-                      _jointVelList.push_back(joints[j]->getVelocity());
-                      // }
+                        // if (_episode_iterations > 0) {
+                        _jointVelList.push_back(joints[j]->getVelocity());
+                        // }
                     }
                     // std::cout<<std::endl;
                     _prev_time = ros::Time::now();
@@ -225,8 +230,8 @@ namespace arm_speed_safe_controller {
                     }
 
                     for (unsigned int j = 0; j < n_joints; j++) {
-                      _jointVelList.push_back(joints[j]->getVelocity());
-                      }
+                        _jointVelList.push_back(joints[j]->getVelocity());
+                    }
 
                     //reset/set flags and _episode_iterations
                     Bdp_eps_flag = false;
@@ -236,7 +241,7 @@ namespace arm_speed_safe_controller {
                 }
             } //End of blackdrops mode
 
-            else if (reset_flag) { //Return to default configuration
+            else if (reset_flag && manual_reset_flag) { //Return to default configuration
                 // std::cout << "reset starting" << std::endl;
                 std::vector<double> q;
                 Eigen::VectorXd velocities(5);
@@ -298,7 +303,7 @@ namespace arm_speed_safe_controller {
 
             // Publishing the data gathered during the episode
             if (publish_flag) {
-                // std::cout << "publishing is starting" << std::endl;
+                // std::cout << "publishing is starting" << std::endl;omni_controllers::ResetManual
                 if (_realtime_pub_joints->trylock()) {
 
                     //check details at http://docs.ros.org/api/std_msgs/html/msg/MultiArrayLayout.html
@@ -358,10 +363,11 @@ namespace arm_speed_safe_controller {
         SafetyConstraint _constraint;
         ros::Subscriber _sub_command;
         ros::Subscriber _sub_params;
+        ros::ServiceServer _serv_reset;
 
         double T, dT; //_rows to help in the publish matrix
         int max_iterations, _episode_iterations;
-        bool publish_flag, Bdp_eps_flag, reset_flag;
+        bool publish_flag, Bdp_eps_flag, reset_flag, manual_reset_flag;
 
         // Temporary vectors that store all values during the whole episode
         std::vector<double> _jointVelList;
@@ -397,14 +403,20 @@ namespace arm_speed_safe_controller {
             _prev_time = ros::Time::now() - ros::Duration(2 * dT);
         }
 
+        bool manualReset(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+        {
+            manual_reset_flag = true;
+            return true;
+        }
+
         inline Eigen::VectorXd states_to_eigen()
         {
-            Eigen::VectorXd res(joints.size()*2);
+            Eigen::VectorXd res(joints.size() * 2);
 
-            for (size_t i = 0; i < joints.size(); ++i){
+            for (size_t i = 0; i < joints.size(); ++i) {
                 res[i] = joints[i]->getPosition();
-                res[5+i] = joints[i]->getVelocity();
-              }
+                res[5 + i] = joints[i]->getVelocity();
+            }
             // for (size_t i = joints.size(); i < joints.size()*2; ++i)
 
             return res;
