@@ -156,6 +156,8 @@ namespace arm_speed_safe_controller {
             _serv_reset = nh.advertiseService("manualReset", &PolicyControllerWithReset::manualReset, this);
             // _serv_reset = nh.advertiseService<std_srvs::Empty.srv>("manualReset", &PolicyControllerWithReset::manualReset, this);
 
+            _realtime_pub_margin = std::make_shared<realtime_tools::RealtimePublisher<std_msgs::Float64>>(nh, "margin", 4);
+
             _realtime_pub_joints.reset(new realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>(nh, "States", 1));
             _realtime_pub_joints->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
             _realtime_pub_joints->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
@@ -208,6 +210,11 @@ namespace arm_speed_safe_controller {
                     _prev_time = ros::Time::now();
                     _episode_iterations++;
                     // std::cout << "executed blackdrops commands" << std::endl;
+
+                    if (_realtime_pub_margin->trylock()) {
+                        _realtime_pub_margin->msg_.data = _constraint.consult(period);
+                        _realtime_pub_margin->unlockAndPublish();
+                    }
                 }
 
                 else if ((_episode_iterations < max_iterations) && (curr_time.toSec() - _prev_time.toSec()) < dT) //wait period during an ongoing episode
@@ -350,6 +357,12 @@ namespace arm_speed_safe_controller {
 
                     _commandList.clear();
                 }
+
+                if (_realtime_pub_margin->trylock()) {
+                    _realtime_pub_margin->msg_.data = _constraint.consult(period);
+                    _realtime_pub_margin->unlockAndPublish();
+                }
+
                 publish_flag = false;
             } //end of publishing
             _constraint.enforce(period);
@@ -385,6 +398,7 @@ namespace arm_speed_safe_controller {
         // std::shared_ptr<realtime_tools::RealtimePublisher<omni_controllers::PublishMatrix>> _realtime_pub;
         std::shared_ptr<realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>> _realtime_pub_joints;
         std::shared_ptr<realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>> _realtime_pub_commands;
+        std::shared_ptr<realtime_tools::RealtimePublisher<std_msgs::Float64>> _realtime_pub_margin;
 
         void setParams(const omni_controllers::PolicyParams::ConstPtr& msg)
         {
