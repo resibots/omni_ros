@@ -248,6 +248,13 @@
             <origin xyz="0 0.039 -0.006"/>
         </joint>
         <link name="arm_link"/>
+
+        <joint name="arm_end_versaball" type="fixed">
+            <parent link="arm_link"/>
+            <child link="versaball_link"/>
+            <origin rpy="${-M_PI/2} 0 0" xyz="0 0.081 0"/>
+        </joint>
+        <link name="versaball_link"/>
     </xacro:macro>
     <!-- end of arm links/joints -->
 </robot>
