@@ -241,7 +241,7 @@ namespace arm_speed_safe_controller {
                 }
             } //End of blackdrops mode
 
-            else if (reset_flag && manual_reset_flag) { //Return to default configuration
+            else if (manual_reset_flag) { //Return to default configuration
                 // std::cout << "reset starting" << std::endl;
                 std::vector<double> q;
                 Eigen::VectorXd velocities(5);
@@ -288,8 +288,10 @@ namespace arm_speed_safe_controller {
                     for (unsigned int j = 0; j < n_joints; j++)
                         joints[j]->setCommand(velocities(j));
                 }
-                else //Default configuration already reached
+                else { //Default configuration already reached
                     reset_flag = false;
+                    manual_reset_flag = false;
+                }
             } //End of reset mode
 
             else {
