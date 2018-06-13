@@ -2,6 +2,14 @@
 
 #### Omnidirectional robots descriptions in form of URDF files
 
+## How to generate the URDF models
+
+In `robots/` you can find generated URDF models for use in ros-independent simulators. These need to be re-generated every time the original Xacro models are changed. An example for `omnigrasper_arm_only.urdf` (from the `omni_description` folder):
+
+```
+rosrun xacro xacro --inorder robots/omnigrasper_arm_only.urdf.xacro > robots/omnigrasper_arm_only.urdf.
+```
+
 ## Authors
 
 - Author/Maintainer: Federico Allocati
