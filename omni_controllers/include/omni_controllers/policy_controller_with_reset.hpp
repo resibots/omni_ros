@@ -188,6 +188,10 @@ namespace arm_speed_safe_controller {
                 if ((_episode_iterations < max_iterations) && (curr_time.toSec() - _prev_time.toSec() >= dT)) //during the episode, when blackdrops commands can be sent
                 {
                     // ROS_INFO("Update:Running blackdrops commands");
+                    // Eigen::VectorXd temp (joints.size() * 2);
+                    // temp = states_to_eigen(); //takes the angles and velocities as states
+                    // temp[joints.size() * 2] = 0.1*(_episode_iterations+1); //add a time step as a state
+
                     _commands = _policy->next(states_to_eigen());
                     // ROS_INFO("Update: Commands received after policy update : OK");
                     for (unsigned int j = 0; j < n_joints; j++) {
@@ -427,14 +431,14 @@ namespace arm_speed_safe_controller {
 
         inline Eigen::VectorXd states_to_eigen()
         {
-            Eigen::VectorXd res(joints.size() * 2);
+            Eigen::VectorXd res(joints.size()*2 + 1);
 
             for (size_t i = 0; i < joints.size(); ++i) {
                 res[i] = joints[i]->getPosition();
                 res[5 + i] = joints[i]->getVelocity();
             }
             // for (size_t i = joints.size(); i < joints.size()*2; ++i)
-
+            res [joints.size()*2 ] = (_episode_iterations+1)*0.1; //to add a state for time (in steps of dT)
             return res;
         }
     }; // policy_controller
