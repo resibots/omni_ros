@@ -438,7 +438,7 @@ namespace arm_speed_safe_controller {
                 res[5 + i] = joints[i]->getVelocity();
             }
             // for (size_t i = joints.size(); i < joints.size()*2; ++i)
-            res [joints.size()*2 ] = (_episode_iterations+1)*0.1; //to add a state for time (in steps of dT)
+            res [joints.size() * 2] = _episode_iterations * dT; //to add a state for time (in steps of dT)
             return res;
         }
     }; // policy_controller
