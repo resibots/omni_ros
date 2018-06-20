@@ -83,12 +83,14 @@ int main(int argc, char* argv[])
     ros::init(argc, argv, "Publish_params");
     ros::NodeHandle nh;
 
-    ros::Publisher my_msg_pub = nh.advertise<omni_controllers::PolicyParams>("/dynamixel_controllers/omni_policy_controller/policyParams", 100, true);
-    ros::Subscriber robot_pos_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_policy_controller/States", 1, getStates);
-    ros::Subscriber robot_vel_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_policy_controller/Actions", 1, getActions);
+    // ros::Publisher my_msg_pub = nh.advertise<omni_controllers::PolicyParams>("/dynamixel_controllers/omni_policy_controller/policyParams", 100, true);
+    // ros::Subscriber robot_pos_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_policy_controller/States", 1, getStates);
+    ros::Publisher my_msg_pub = nh.advertise<omni_controllers::PolicyParams>("/dynamixel_controllers/omni_arm_controller/policyParams", 100, true);
+    ros::Subscriber robot_pos_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_arm_controller/States", 1, getStates);
+    ros::Subscriber robot_vel_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_arm_controller/Actions", 1, getActions);
 
-    Eigen::VectorXd params(115);
-    Eigen::read_binary<Eigen::VectorXd>("/home/deba/Code/limbo/results/policy_params_2.bin", params);
+    Eigen::VectorXd params(175);
+    Eigen::read_binary<Eigen::VectorXd>("/home/deba/Code/limbo/results/policy_params_3.bin", params);
 
     omni_controllers::PolicyParams msg;
     msg.params.clear();
@@ -107,3 +109,5 @@ int main(int argc, char* argv[])
 //No. of params=(input+1).hidden neurons + (hidden+1)*output
 //taking hidden as 1 for now, i=2, o=2, so total=7
 //for 5 joints, total = (5+1)*10 + (11)*5 = 115
+// input states = 11, output states = 5, hidden = 10
+// 12*10 + 11*5 = 120+55 = 175
