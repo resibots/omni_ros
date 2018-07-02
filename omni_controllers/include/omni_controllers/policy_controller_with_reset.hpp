@@ -193,27 +193,36 @@ namespace arm_speed_safe_controller {
                     // temp[joints.size() * 2] = 0.1*(_episode_iterations+1); //add a time step as a state
 
                     _commands = _policy->next(states_to_eigen());
+
                     // ROS_INFO("Update: Commands received after policy update : OK");
                     for (unsigned int j = 0; j < n_joints; j++) {
                         _commandList.push_back(_commands(j));
-                        // if (_episode_iterations > 0) {
-                        // _velocityList.push_back(joints[j]->getVelocity());
                         _jointVelList.push_back(joints[j]->getPosition());
-                        // _jointVelList.push_back(joints[j]->getVelocity());
-                        // }
+
+                        //Set velocity for the 4th joint as zero -- damage 1 -- priors related
+                        // if(j==3)
+                        // _commands(j) = 0.;
+
+                        //change velocity for the 3 joints as halved values -- damage 2 -- priors related
+                        // if(j==2)
+                        // _commands(j) = _commands(j)/2.0;
+                        //
+                        // if(j==3)
+                        // _commands(j) = _commands(j)/2.0;
+                        //
+                        // if(j==4)
+                        // _commands(j) = _commands(j)/2.0;
+
                         joints[j]->setCommand(_commands(j));
-                        // _constraint.enforce(period);
-                        // std::cout<<joints[j]->getPosition()<<" ";
+                        // joints[j]->setCommand(_commands(j));
+                        //std::cout << joints[j]->getPosition() << " ";
                     }
                     for (unsigned int j = 0; j < n_joints; j++) {
-                        // if (_episode_iterations > 0) {
                         _jointVelList.push_back(joints[j]->getVelocity());
-                        // }
                     }
-                    // std::cout<<std::endl;
+
                     _prev_time = ros::Time::now();
                     _episode_iterations++;
-                    // std::cout << "executed blackdrops commands" << std::endl;
 
                     if (_realtime_pub_margin->trylock()) {
                         _realtime_pub_margin->msg_.data = _constraint.consult(period);
@@ -223,10 +232,8 @@ namespace arm_speed_safe_controller {
 
                 else if ((_episode_iterations < max_iterations) && (curr_time.toSec() - _prev_time.toSec()) < dT) //wait period during an ongoing episode
                 {
-                    // std::cout << "update phase of wait of timesteps during blackdrops" << std::endl;
                     for (unsigned int j = 0; j < n_joints; j++) {
                         joints[j]->setCommand(_commands(j)); //Sending the earlier set of commands
-                            // _constraint.enforce(period);
                     }
                 }
                 else //episode is over
@@ -234,7 +241,7 @@ namespace arm_speed_safe_controller {
                     for (unsigned int j = 0; j < n_joints; j++) {
                         //record the last set of joint states
                         _jointVelList.push_back(joints[j]->getPosition());
-                        // _jointVelList.push_back(joints[j]->getVelocity());
+
                         //send zero velocities
                         joints[j]->setCommand(0);
                         // _constraint.enforce(period);
@@ -255,7 +262,7 @@ namespace arm_speed_safe_controller {
             else if (manual_reset_flag) { //Return to default configuration
                 // std::cout << "reset starting" << std::endl;
                 std::vector<double> q;
-                Eigen::VectorXd velocities(5);
+                Eigen::VectorXd velocities(5); //this should be changed to action_dim
 
                 double time_step = 0.05;
                 double threshold = 1e-3;
@@ -286,6 +293,22 @@ namespace arm_speed_safe_controller {
                         if (std::abs(q_err.at(i)) > threshold) {
                             velocities(i) = q_err.at(i) * gain;
 
+                            // if (i==3)
+                            // velocities(i)=0.; // Prior related -- blocking the 4th joint
+
+                            // velocities(i)= (q_err.at(i) * gain);
+                            // velocities(i)= (q_err.at(i) * gain)/2.0;//Creating a fake damage with reduced velocity commands
+
+                            //change velocity for 3 joints as halved values -- damage 2 -- priors related
+                            // if(i==2)
+                            // velocities(i) = velocities(i)/2.0;
+                            //
+                            // if(i==3)
+                            // velocities(i) = velocities(i)/2.0;
+                            //
+                            // if(i==4)
+                            // velocities(i) = velocities(i)/2.0;
+
                             if (velocities(i) > 1.0)
                                 velocities(i) = 1.0;
                             if (velocities(i) < -1.0)
@@ -297,6 +320,7 @@ namespace arm_speed_safe_controller {
 
                     // Send velocity commands
                     for (unsigned int j = 0; j < n_joints; j++)
+                        // joints[j]->setCommand(velocities(j)/2.0);  //Creating a fake damage with reduced velocity commands
                         joints[j]->setCommand(velocities(j));
                 }
                 else { //Default configuration already reached
@@ -431,14 +455,14 @@ namespace arm_speed_safe_controller {
 
         inline Eigen::VectorXd states_to_eigen()
         {
-            Eigen::VectorXd res(joints.size()*2 + 1);
+            Eigen::VectorXd res(joints.size() * 2 + 1);
 
             for (size_t i = 0; i < joints.size(); ++i) {
                 res[i] = joints[i]->getPosition();
                 res[5 + i] = joints[i]->getVelocity();
             }
             // for (size_t i = joints.size(); i < joints.size()*2; ++i)
-            res [joints.size() * 2] = _episode_iterations * dT; //to add a state for time (in steps of dT)
+            res[joints.size() * 2] = _episode_iterations * dT; //to add a state for time (in steps of dT)
             return res;
         }
     }; // policy_controller
