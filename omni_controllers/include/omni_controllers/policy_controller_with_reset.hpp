@@ -199,11 +199,7 @@ namespace arm_speed_safe_controller {
                         _commandList.push_back(_commands(j));
                         _jointVelList.push_back(joints[j]->getPosition());
 
-                        //Set velocity for the 4th joint as zero -- damage 1 -- priors related
-                        // if(j==3)
-                        // _commands(j) = 0.;
-
-                        //change velocity for the 3 joints as halved values -- damage 2 -- priors related
+                     // change velocity for the 3 joints as halved values -- damage 2 -- priors related
                         // if(j==2)
                         // _commands(j) = _commands(j)/2.0;
                         //
@@ -214,7 +210,7 @@ namespace arm_speed_safe_controller {
                         // _commands(j) = _commands(j)/2.0;
 
                         joints[j]->setCommand(_commands(j));
-                        // joints[j]->setCommand(_commands(j));
+                        
                         //std::cout << joints[j]->getPosition() << " ";
                     }
                     for (unsigned int j = 0; j < n_joints; j++) {
@@ -293,6 +289,7 @@ namespace arm_speed_safe_controller {
                         if (std::abs(q_err.at(i)) > threshold) {
                             velocities(i) = q_err.at(i) * gain;
 
+                            //Priors related
                             // if (i==3)
                             // velocities(i)=0.; // Prior related -- blocking the 4th joint
 
@@ -308,6 +305,8 @@ namespace arm_speed_safe_controller {
                             //
                             // if(i==4)
                             // velocities(i) = velocities(i)/2.0;
+                            //
+                            //end of priors related
 
                             if (velocities(i) > 1.0)
                                 velocities(i) = 1.0;
