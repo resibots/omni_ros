@@ -17,11 +17,11 @@ teleop:
         target: data[1]
         scale: 1.0
       -
-        axis: 4
+        axis: 3
         target: data[2]
         scale: 1.0
       -
-        axis: 3
+        axis: 2
         target: data[3]
         scale: 1.0
 
