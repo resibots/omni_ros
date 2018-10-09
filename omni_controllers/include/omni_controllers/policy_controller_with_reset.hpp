@@ -36,6 +36,16 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
+// Making following changes to the original policy controller written for the arm
+//
+// States include only positions of the 6 arm joints, (x, y, theta) for the base and time (use mocap) - total 10 (remove the velocities)
+// Actions include 6 arm velocities, (xdot, ydot, thetadot) for the \cmd_vel topic of the youbot - total 9
+
+// For testing purposes:
+// Step 1: Do not run with blackdrops or change any of how the jointVelList works etc. Simply playback a known policy and send very very low velocity to base to see if this works
+// Step 2: If step 1 works, then test if the motion capture data can be read back
+// Step 3: Change the jointvelList to include the base portions
+
 #ifndef POLICY_CONTROLLER_WITH_RESET_H
 #define POLICY_CONTROLLER_WITH_RESET_H
 
@@ -51,6 +61,9 @@
 #include <std_msgs/Float64MultiArray.h>
 #include <std_msgs/MultiArrayDimension.h>
 #include <std_srvs/Empty.h>
+#include <tf/transform_listener.h>
+#include <tf_conversions/tf_eigen.h>
+// #include <youbot_driver/youbot/YouBotBase.hpp>
 
 //Local
 #include <omni_controllers/PolicyParams.h>
@@ -109,7 +122,7 @@ namespace arm_speed_safe_controller {
 
             // Safety Constraint
             if (!_constraint.init(joints, nh)) {
-                ROS_ERROR_STREAM("Initialisation of the safety contraint failed");
+                ROS_ERROR_STREAM("Initialisation of the safety constraint failed");
                 return false;
             }
 
@@ -151,6 +164,8 @@ namespace arm_speed_safe_controller {
             _policy = std::make_shared<blackdrops::policy::NNPolicy>(
                 boundary, state_dim, hidden_neurons, action_dim, limits, max_u);
 
+            // _listener = new tf::TransformListener;
+
             // _sub_command = nh.subscribe<std_msgs::Float64MultiArray>("commands", 1, &PolicyController::commandCB, this);
             _sub_params = nh.subscribe<omni_controllers::PolicyParams>("policyParams", 1, &PolicyControllerWithReset::setParams, this);
             _serv_reset = nh.advertiseService("manualReset", &PolicyControllerWithReset::manualReset, this);
@@ -179,8 +194,7 @@ namespace arm_speed_safe_controller {
 
         void update(const ros::Time& /*time*/, const ros::Duration& period)
         {
-
-            if (Bdp_eps_flag) // blackdrops parameters to be implemented
+          if (Bdp_eps_flag) // blackdrops policy parameters to be implemented if this flag active
             {
                 ros::Time curr_time = ros::Time::now();
                 // ROS_INFO("Update:Starting blackdrops");
@@ -192,12 +206,16 @@ namespace arm_speed_safe_controller {
                     // temp = states_to_eigen(); //takes the angles and velocities as states
                     // temp[joints.size() * 2] = 0.1*(_episode_iterations+1); //add a time step as a state
 
-                    _commands = _policy->next(states_to_eigen());
+                    _commands = _policy->next(states_to_eigen()); //Get velocity commands by sending current states to policy params
+
+                    //Split into commands for arm and the base
+                    // _commandsArm = _commands.head(6);
+                    // _commandsBase = _commands.tail(3);
 
                     // ROS_INFO("Update: Commands received after policy update : OK");
                     for (unsigned int j = 0; j < n_joints; j++) {
                         _commandList.push_back(_commands(j));
-                        _jointVelList.push_back(joints[j]->getPosition());
+                        _jointVelList.push_back(joints[j]->getPosition()); //change to include values from base
 
                      // change velocity for the 3 joints as halved values -- damage 2 -- priors related
                         // if(j==2)
@@ -210,9 +228,15 @@ namespace arm_speed_safe_controller {
                         // _commands(j) = _commands(j)/2.0;
 
                         joints[j]->setCommand(_commands(j));
-                        
+
                         //std::cout << joints[j]->getPosition() << " ";
                     }
+
+                    //Send velocity values on \cmd_vel topic for the base, push values to commandList and jointVellist also
+
+
+
+                    // Removing velocities from jointVelList
                     for (unsigned int j = 0; j < n_joints; j++) {
                         _jointVelList.push_back(joints[j]->getVelocity());
                     }
@@ -243,6 +267,7 @@ namespace arm_speed_safe_controller {
                         // _constraint.enforce(period);
                     }
 
+                    // Removing velocities from jointVelList
                     for (unsigned int j = 0; j < n_joints; j++) {
                         _jointVelList.push_back(joints[j]->getVelocity());
                     }
@@ -258,7 +283,7 @@ namespace arm_speed_safe_controller {
             else if (manual_reset_flag) { //Return to default configuration
                 // std::cout << "reset starting" << std::endl;
                 std::vector<double> q;
-                Eigen::VectorXd velocities(5); //this should be changed to action_dim
+                Eigen::VectorXd velocities(5); //this should be changed to action_dim and include also the base velocities
 
                 double time_step = 0.05;
                 double threshold = 1e-3;
@@ -407,6 +432,10 @@ namespace arm_speed_safe_controller {
         ros::Subscriber _sub_params;
         ros::ServiceServer _serv_reset;
 
+        tf::TransformListener _listener;
+        tf::StampedTransform _tfWorldToBase; //includes frame-id, child-id etc
+        //tf::Transform _tfWorldToBase;
+
         double T, dT; //_rows to help in the publish matrix
         int max_iterations, _episode_iterations;
         bool publish_flag, Bdp_eps_flag, reset_flag, manual_reset_flag;
@@ -458,10 +487,57 @@ namespace arm_speed_safe_controller {
 
             for (size_t i = 0; i < joints.size(); ++i) {
                 res[i] = joints[i]->getPosition();
-                res[5 + i] = joints[i]->getVelocity();
+                //res[5 + i] = joints[i]->getVelocity();
             }
             // for (size_t i = joints.size(); i < joints.size()*2; ++i)
             res[joints.size() * 2] = _episode_iterations * dT; //to add a state for time (in steps of dT)
+
+            // Eigen::VectorXd res(joints.size() * 2 + 1 + 6 + 4); //6 joint positions + 6 joint velocities, time, 6 for base COM + 3 for base velocities
+
+            // Eigen::VectorXd res(18); //taking only (x,y) for base for now and 3 velocities for wheels (to be recorded) + 12 for joint pos+vel and time = 18
+            //
+            // Rearrange state vector to give :
+            // First, the 6 joint positions of arm
+            // Next, 6 values to define base position (x, y, z) and RPY orientation --- reduce to only (x,y) and one angle later
+            // Then, 6 joint velocities of arm
+            // Next, 4 velocities of base joints
+            // Finally time (in steps of dT)
+            //
+            // // Remember to change the size of the NN to have more commands output
+            //
+            // _listener.lookupTransform("/world", "/omnigrasper", ros::Time(0), _tfWorldToBase);
+            //
+            // // Positions
+            //
+            //Arm
+            // for (size_t i = 0; i < joints.size(); ++i)
+            //     res[i] = joints[i]->getPosition();
+
+            //Base
+            res[6] = _tfWorldToBase.getOrigin().x();
+            res[7] = _tfWorldToBase.getOrigin().y();
+            res[8] = _tfWorldToBase.getOrigin().z();
+
+            //Velocities
+
+            //Arm
+            // for (size_t i = 0; i < joints.size(); ++i)
+            // res[8 + i] = joints[i]->getVelocity();
+
+            //Base
+            // quantity<si::velocity> actualLongitudinalVelocity = 0 * meter_per_second;
+            // quantity<si::velocity> actualTransversalVelocity = 0 * meter_per_second;
+            // quantity<si::angular_velocity> actualAngularVelocity = 0 * radian_per_second;
+            //
+            // // reads the base cartesian velocity (3 values)
+            // _myYouBotBase.getBaseVelocity(actualLongitudinalVelocity, actualTransversalVelocity, actualAngularVelocity); // Remember to create the instance of youbot
+            //
+            // res[14] = actualLongitudinalVelocity;
+            // res[15] = actualTransversalVelocity;
+            // res[16] = actualAngularVelocity;
+            //
+            // res[17] = _episode_iterations * dT;
+
             return res;
         }
     }; // policy_controller

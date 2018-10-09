@@ -108,7 +108,7 @@ namespace arm_speed_safe_controller {
 
             // Safety Constraint
             if (!_constraint.init(joints, nh)) {
-                ROS_ERROR_STREAM("Initialisation of the safety contraint failed");
+                ROS_ERROR_STREAM("Initialisation of the safety constraint failed");
                 return false;
             }
 
