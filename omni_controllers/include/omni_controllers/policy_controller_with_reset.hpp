@@ -437,6 +437,8 @@ namespace arm_speed_safe_controller {
         ros::ServiceServer _serv_reset;
         ros::Publisher _pub_twist;
 
+        geometry_msgs::Twist _twist_msg;
+
         double T, dT; //_rows to help in the publish matrix
         int max_iterations, _episode_iterations;
         bool publish_flag, Bdp_eps_flag, reset_flag, manual_reset_flag;

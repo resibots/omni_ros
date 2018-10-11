@@ -54,19 +54,19 @@ you accept its terms. -->
   <include file="$(find omni_description)/launch/omnigrasper.launch" />
 
   <!-- launch the base -->
-  <group if="$(arg use_base)">
+  <!-- <group if="$(arg use_base)">
     <param name="youBotHasBase" type="bool" value="true"/>
     <param name="youBotDriverCycleFrequencyInHz" type="double" value="50.0"/>
     <param name="youBotConfigurationFilePath" type="string"
            value="$(find youbot_driver)/config"/>
     <param name="youBotBaseJointVelocity" type="double" value="4.0"/>
     <param name="youBotBaseJointAcceleration" type="double" value="4.0"/>
-    <param name="youBotBaseName" type="str" value="youbot-base"/>
+    <param name="youBotBaseName" type="str" value="youbot-base"/> -->
 
     <!-- Start the base driver. -->
-    <node name="youbot_driver" pkg="youbot_driver_ros_interface"
+    <!-- <node name="youbot_driver" pkg="youbot_driver_ros_interface"
           type="youbot_driver_ros_interface" output="screen"/>
-  </group>
+  </group> -->
 
   <!-- launch the arm -->
   <group if="$(arg use_arm)">
@@ -93,7 +93,7 @@ you accept its terms. -->
                 /dynamixel_controllers/omni_arm_controller"/>
 
     <!-- Publish robot's state in the tf tree -->
-    <node name="robot_state_publisher" pkg="robot_state_publisher"
+    <node name="robot_state_publisher_arm" pkg="robot_state_publisher"
           type="robot_state_publisher" >
       <remap from="joint_states" to="/arm/joint_states"/>
     </node>
