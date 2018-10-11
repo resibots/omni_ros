@@ -47,7 +47,7 @@ you accept its terms. -->
   <arg name="use_mocap" default="false" />
   <arg name="arm_control_mode" default="velocity"
        doc="how the joints of the arm are controlled : position, velocity,
-            safevel (enforce safety constraints on the arm) or policy 
+            safevel (enforce safety constraints on the arm) or policy
             (Black-DROPS experiments)"/>
 
   <!-- URDF robot description -->
@@ -85,7 +85,7 @@ you accept its terms. -->
 
     <!-- starting the hardware interface and controllers -->
     <node name="dynamixel_control" pkg="dynamixel_control_hw"
-          type="dynamixel_control_p2" output="screen" clear_params="true"
+          type="dynamixel_control_p1" output="screen" clear_params="true"
           required="true"/>
     <node name="controller" pkg="controller_manager" type="spawner"
           respawn="false" output="screen" clear_params="true"
