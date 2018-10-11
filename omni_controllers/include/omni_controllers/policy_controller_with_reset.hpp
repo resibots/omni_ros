@@ -52,6 +52,11 @@
 #include <std_msgs/MultiArrayDimension.h>
 #include <std_srvs/Empty.h>
 
+#include <geometry_msgs/Twist.h>
+#include <geometry_msgs/Point.h>
+#include <tf/transform_listener.h>
+#include <tf_conversions/tf_eigen.h>
+
 //Local
 #include <omni_controllers/PolicyParams.h>
 #include <omni_controllers/arm_speed_safe_controller.hpp>
@@ -168,6 +173,9 @@ namespace arm_speed_safe_controller {
             _defaultConfig = {0.0, 0.0, 0.0, 0.0, 0.0};
             // std::cout << "initialisation successful" << std::endl;
             // ROS_INFO("Intialization is OK");
+
+            _pub_twist = nh.advertise<geometry_msgs::Twist>("/cmd_vel", 1); // For publishing twist messages to base
+
             return true;
         }
 
@@ -210,12 +218,23 @@ namespace arm_speed_safe_controller {
                         // _commands(j) = _commands(j)/2.0;
 
                         joints[j]->setCommand(_commands(j));
-                        
+
                         //std::cout << joints[j]->getPosition() << " ";
                     }
                     for (unsigned int j = 0; j < n_joints; j++) {
                         _jointVelList.push_back(joints[j]->getVelocity());
                     }
+
+                    // geometry_msgs::Twist twist_msg;
+                    // Send low velocities to test
+                    _twist_msg.linear.y = 0.0;
+                    _twist_msg.linear.x = 0.01;
+                    _twist_msg.linear.z = 0.0;
+                    _twist_msg.angular.z = 0.0;
+                    _twist_msg.angular.y = 0.0;
+                    _twist_msg.angular.x = 0.0;
+
+                    _pub_twist.publish(_twist_msg);
 
                     _prev_time = ros::Time::now();
                     _episode_iterations++;
@@ -246,6 +265,16 @@ namespace arm_speed_safe_controller {
                     for (unsigned int j = 0; j < n_joints; j++) {
                         _jointVelList.push_back(joints[j]->getVelocity());
                     }
+
+                    // Send zero velocities on \cmd_vel
+                    _twist_msg.linear.y = 0.0;
+                    _twist_msg.linear.x = 0.0;
+                    _twist_msg.linear.z = 0.0;
+                    _twist_msg.angular.z = 0.0;
+                    _twist_msg.angular.y = 0.0;
+                    _twist_msg.angular.x = 0.0;
+
+                    _pub_twist.publish(_twist_msg);
 
                     //reset/set flags and _episode_iterations
                     Bdp_eps_flag = false;
@@ -406,6 +435,7 @@ namespace arm_speed_safe_controller {
         ros::Subscriber _sub_command;
         ros::Subscriber _sub_params;
         ros::ServiceServer _serv_reset;
+        ros::Publisher _pub_twist;
 
         double T, dT; //_rows to help in the publish matrix
         int max_iterations, _episode_iterations;
