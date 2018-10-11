@@ -79,6 +79,19 @@ namespace arm_speed_safe_controller {
     * Subscribes to custom msg :
     omni_controllers::PolicyParams - to accept parameter list of the policy for every episode
     */
+
+    // Making following changes to the original policy controller written for the arm
+    //
+    // States include only positions of the 6 arm joints, (x, y, theta) for the base and time (use mocap) - total 10 (remove the velocities)
+    // Actions include 6 arm velocities, (xdot, ydot, thetadot) for the \cmd_vel topic of the youbot - total 9
+
+    // For testing purposes:
+    // Step 1: Do not run with blackdrops or change any of how the jointVelList works etc. Simply playback a known policy and send very very low velocity to base to see if this works -- WORKS OK
+    // Notes : Maybe reset for the base wheels is not needed since out of update loop, there is just nothing to publish on the cmd_vel. (Will it be needed to read the states for next episode? Check later)
+    // Step 2: If step 1 works, then test if the motion capture data can be read back
+    // Step 3: Change the jointvelList to include the base portions
+
+
     template <class SafetyConstraint = NoSafetyConstraints>
     class PolicyControllerWithReset : public controller_interface::Controller<hardware_interface::VelocityJointInterface> {
     public:
@@ -228,7 +241,7 @@ namespace arm_speed_safe_controller {
                     // geometry_msgs::Twist twist_msg;
                     // Send low velocities to test
                     _twist_msg.linear.y = 0.0;
-                    _twist_msg.linear.x = 0.01;
+                    _twist_msg.linear.x = 0.05;
                     _twist_msg.linear.z = 0.0;
                     _twist_msg.angular.z = 0.0;
                     _twist_msg.angular.y = 0.0;

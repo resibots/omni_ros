@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
     ros::Subscriber robot_vel_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_arm_controller/Actions", 1, getActions);
 
     Eigen::VectorXd params(175);
-    Eigen::read_binary<Eigen::VectorXd>("/home/deba/Code/limbo/results/policy_params_3.bin", params);
+    Eigen::read_binary<Eigen::VectorXd>("/home/deba/Code/limbo/Results/results/policy_params_3.bin", params);
 
     omni_controllers::PolicyParams msg;
     msg.params.clear();
