@@ -120,9 +120,9 @@ int main(int argc, char* argv[])
         ros::spinOnce();
 
     try{
-          _listener.waitForTransform("/world", "/omnigrasper", ros::Time(0), ros::Duration(10.0));
+          // _listener.waitForTransform("/world", "/omnigrasper", ros::Time(0), ros::Duration(10.0));
           _listener.lookupTransform("/world", "/omnigrasper", ros::Time(0), _tfWorldToBase);
-                ROS_INFO("test x values:%f",_tfWorldToBase.getOrigin().x());
+                ROS_INFO("test (x,y,z) values:%f,%f,%f",_tfWorldToBase.getOrigin().x(),_tfWorldToBase.getOrigin().y(),_tfWorldToBase.getOrigin().z());
           }
            catch (tf::TransformException &ex) {
              ROS_ERROR("%s",ex.what());
