@@ -12,6 +12,12 @@
 #include <realtime_tools/realtime_buffer.h>
 #include <realtime_tools/realtime_publisher.h>
 
+#include <tf/tf.h>
+#include <tf/transform_listener.h>
+#include <tf_conversions/tf_eigen.h>
+#include <tf/transform_broadcaster.h>
+#include <tf/message_filter.h>
+
 //Local
 #include <omni_controllers/arm_speed_safe_controller.hpp>
 #include <omni_controllers/cartesian_constraint.hpp>
@@ -80,8 +86,13 @@ void getActions(const std_msgs::Float64MultiArray::ConstPtr& msgActions)
 
 int main(int argc, char* argv[])
 {
-    ros::init(argc, argv, "Publish_params");
+    // ros::init(argc, argv, "Publish_params");
+    ros::init(argc, argv, "Publish_params_and_test_TF_listening");
     ros::NodeHandle nh;
+
+    tf::TransformListener _listener;
+    tf::StampedTransform _tfWorldToBase; //includes frame-id, child-id etc
+    // tf::Transform _tfWorldToBase;
 
     // ros::Publisher my_msg_pub = nh.advertise<omni_controllers::PolicyParams>("/dynamixel_controllers/omni_policy_controller/policyParams", 100, true);
     // ros::Subscriber robot_pos_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_policy_controller/States", 1, getStates);
@@ -91,6 +102,9 @@ int main(int argc, char* argv[])
 
     Eigen::VectorXd params(175);
     Eigen::read_binary<Eigen::VectorXd>("/home/deba/Code/limbo/Results/results/policy_params_3.bin", params);
+
+    // _listener.lookupTransform("/omnigrasper", "/world", ros::Time(0), _tfWorldToBase);
+    // ROS_INFO("test x values:%f",_tfWorldToBase.getOrigin().x());
 
     omni_controllers::PolicyParams msg;
     msg.params.clear();
@@ -104,6 +118,17 @@ int main(int argc, char* argv[])
     my_msg_pub.publish(msg);
     while (!global::received_actions || !global::received_states)
         ros::spinOnce();
+
+    try{
+          _listener.waitForTransform("/world", "/omnigrasper", ros::Time(0), ros::Duration(10.0));
+          _listener.lookupTransform("/world", "/omnigrasper", ros::Time(0), _tfWorldToBase);
+                ROS_INFO("test x values:%f",_tfWorldToBase.getOrigin().x());
+          }
+           catch (tf::TransformException &ex) {
+             ROS_ERROR("%s",ex.what());
+             // ros::Duration(1.0).sleep();
+             // continue;
+    }
 }
 
 //No. of params=(input+1).hidden neurons + (hidden+1)*output

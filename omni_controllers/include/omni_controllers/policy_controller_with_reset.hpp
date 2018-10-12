@@ -54,8 +54,11 @@
 
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/Point.h>
+#include <tf/tf.h>
 #include <tf/transform_listener.h>
 #include <tf_conversions/tf_eigen.h>
+#include <tf/transform_broadcaster.h>
+#include <tf/message_filter.h>
 
 //Local
 #include <omni_controllers/PolicyParams.h>
@@ -432,6 +435,9 @@ namespace arm_speed_safe_controller {
                     _realtime_pub_margin->unlockAndPublish();
                 }
 
+                // _listener.lookupTransform("/world", "/omnigrasper", ros::Time(0), _tfWorldToBase);
+                // ROS_INFO("test x values:%f",_tfWorldToBase.getOrigin().x());
+
                 publish_flag = false;
             } //end of publishing
             _constraint.enforce(period);
@@ -451,6 +457,8 @@ namespace arm_speed_safe_controller {
         ros::Publisher _pub_twist;
 
         geometry_msgs::Twist _twist_msg;
+        // tf::TransformListener _listener;
+        // tf::StampedTransform _tfWorldToBase; //includes frame-id, child-id etc
 
         double T, dT; //_rows to help in the publish matrix
         int max_iterations, _episode_iterations;

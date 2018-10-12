@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   velocity_controllers
   message_generation
   geometry_msgs
+  tf
 )
 
 find_package(Eigen3 REQUIRED)
@@ -43,6 +44,7 @@ catkin_package(
     velocity_controllers
     message_runtime
     geometry_msgs
+    tf
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
 )
