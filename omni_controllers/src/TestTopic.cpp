@@ -119,10 +119,16 @@ int main(int argc, char* argv[])
     while (!global::received_actions || !global::received_states)
         ros::spinOnce();
 
+    //std_msgs::Float64 COM_val;
+
     try{
           // _listener.waitForTransform("/world", "/omnigrasper", ros::Time(0), ros::Duration(10.0));
           _listener.lookupTransform("/world", "/omnigrasper", ros::Time(0), _tfWorldToBase);
-                ROS_INFO("test (x,y,z) values:%f,%f,%f",_tfWorldToBase.getOrigin().x(),_tfWorldToBase.getOrigin().y(),_tfWorldToBase.getOrigin().z());
+                //ROS_INFO("test (x,y,z) values:%f,%f,%f",_tfWorldToBase.getOrigin().x(),_tfWorldToBase.getOrigin().y(),_tfWorldToBase.getOrigin().z());
+
+                //Creating a publisher that sends this information (the policy controller will subscribe to this)
+                ROS_INFO("COM (x,y, theta_z) value:%f,%f,%f",_tfWorldToBase.getOrigin().x(),_tfWorldToBase.getOrigin().y(),tf::getYaw(_tfWorldToBase.getRotation()));
+
           }
            catch (tf::TransformException &ex) {
              ROS_ERROR("%s",ex.what());
