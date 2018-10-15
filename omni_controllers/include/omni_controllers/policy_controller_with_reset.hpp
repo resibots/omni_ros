@@ -62,6 +62,7 @@
 
 //Local
 #include <omni_controllers/PolicyParams.h>
+#include <omni_controllers/DoubleVector.h>
 #include <omni_controllers/arm_speed_safe_controller.hpp>
 #include <omni_controllers/cartesian_constraint.hpp>
 #include <omni_controllers/policies/NNpolicy.hpp>
@@ -176,6 +177,8 @@ namespace arm_speed_safe_controller {
             _sub_params = nh.subscribe<omni_controllers::PolicyParams>("policyParams", 1, &PolicyControllerWithReset::setParams, this);
             _serv_reset = nh.advertiseService("manualReset", &PolicyControllerWithReset::manualReset, this);
             // _serv_reset = nh.advertiseService<std_srvs::Empty.srv>("manualReset", &PolicyControllerWithReset::manualReset, this);
+
+            _sub_COM_base = nh.subscribe<omni_controllers::DoubleVector>("YouBotBaseCOM", 1, &PolicyControllerWithReset::getCOM, this);
 
             _realtime_pub_margin = std::make_shared<realtime_tools::RealtimePublisher<std_msgs::Float64>>(nh, "margin", 4);
 
@@ -466,6 +469,7 @@ namespace arm_speed_safe_controller {
         ros::Subscriber _sub_params;
         ros::ServiceServer _serv_reset;
         ros::Publisher _pub_twist;
+        ros::Subscriber _sub_COM_base;
 
         geometry_msgs::Twist _twist_msg;
         // tf::TransformListener _listener;
@@ -508,6 +512,15 @@ namespace arm_speed_safe_controller {
             max_iterations = std::ceil(msg->t / msg->dT) + 1;
 
             _prev_time = ros::Time::now() - ros::Duration(2 * dT);
+        }
+
+        void getCOM(const omni_controllers::DoubleVector::ConstPtr& COMmsg)
+        {
+          std::cout << "entered callback for COM" << std::endl;
+          std::cout << "printing COM subscribed to: \n" << std::endl;
+          // for (int i = 0; i < COMmsg->val.size(); i++)
+          //     std::cout << COMmsg->val[i] << ",";
+          // std::cout << "\n" ;
         }
 
         bool manualReset(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
