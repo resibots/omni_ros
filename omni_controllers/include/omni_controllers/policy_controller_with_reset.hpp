@@ -518,9 +518,9 @@ namespace arm_speed_safe_controller {
         {
           std::cout << "entered callback for COM" << std::endl;
           std::cout << "printing COM subscribed to: \n" << std::endl;
-          // for (int i = 0; i < COMmsg->val.size(); i++)
-          //     std::cout << COMmsg->val[i] << ",";
-          // std::cout << "\n" ;
+          for (int i = 0; i < COMmsg->val.size(); i++)
+              std::cout << COMmsg->val[i] << "," << std::endl;
+          std::cout << "\n" << std::endl;
         }
 
         bool manualReset(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
