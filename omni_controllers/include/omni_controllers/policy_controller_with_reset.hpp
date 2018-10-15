@@ -173,12 +173,12 @@ namespace arm_speed_safe_controller {
             _policy = std::make_shared<blackdrops::policy::NNPolicy>(
                 boundary, state_dim, hidden_neurons, action_dim, limits, max_u);
 
-            // _sub_command = nh.subscribe<std_msgs::Float64MultiArray>("commands", 1, &PolicyController::commandCB, this);
             _sub_params = nh.subscribe<omni_controllers::PolicyParams>("policyParams", 1, &PolicyControllerWithReset::setParams, this);
             _serv_reset = nh.advertiseService("manualReset", &PolicyControllerWithReset::manualReset, this);
-            // _serv_reset = nh.advertiseService<std_srvs::Empty.srv>("manualReset", &PolicyControllerWithReset::manualReset, this);
 
-            _sub_COM_base = nh.subscribe<omni_controllers::DoubleVector>("YouBotBaseCOM", 1, &PolicyControllerWithReset::getCOM, this);
+            ROS_INFO("Subscribing from ros init");
+            _sub_COM_base1 = nh.subscribe<omni_controllers::DoubleVector>("YouBotBaseCOM", 1, &PolicyControllerWithReset::getCOM1, this);
+            ROS_INFO("Subscribing from ros init is ok");
 
             _realtime_pub_margin = std::make_shared<realtime_tools::RealtimePublisher<std_msgs::Float64>>(nh, "margin", 4);
 
@@ -190,8 +190,6 @@ namespace arm_speed_safe_controller {
             _realtime_pub_commands->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
 
             _defaultConfig = {0.0, 0.0, 0.0, 0.0, 0.0};
-            // std::cout << "initialisation successful" << std::endl;
-            // ROS_INFO("Intialization is OK");
 
             _pub_twist = nh.advertise<geometry_msgs::Twist>("/cmd_vel", 1); // For publishing twist messages to base
 
@@ -210,15 +208,8 @@ namespace arm_speed_safe_controller {
             if (Bdp_eps_flag) // blackdrops parameters to be implemented
             {
                 ros::Time curr_time = ros::Time::now();
-                // ROS_INFO("Update:Starting blackdrops");
-                // if (_episode_iterations < max_iterations) //during the episode
                 if ((_episode_iterations < max_iterations) && (curr_time.toSec() - _prev_time.toSec() >= dT)) //during the episode, when blackdrops commands can be sent
                 {
-                    // ROS_INFO("Update:Running blackdrops commands");
-                    // Eigen::VectorXd temp (joints.size() * 2);
-                    // temp = states_to_eigen(); //takes the angles and velocities as states
-                    // temp[joints.size() * 2] = 0.1*(_episode_iterations+1); //add a time step as a state
-
                     _commands = _policy->next(states_to_eigen());
 
                     // ROS_INFO("Update: Commands received after policy update : OK");
@@ -226,19 +217,7 @@ namespace arm_speed_safe_controller {
                         _commandList.push_back(_commands(j));
                         _jointVelList.push_back(joints[j]->getPosition());
 
-                     // change velocity for the 3 joints as halved values -- damage 2 -- priors related
-                        // if(j==2)
-                        // _commands(j) = _commands(j)/2.0;
-                        //
-                        // if(j==3)
-                        // _commands(j) = _commands(j)/2.0;
-                        //
-                        // if(j==4)
-                        // _commands(j) = _commands(j)/2.0;
-
                         joints[j]->setCommand(_commands(j));
-
-                        //std::cout << joints[j]->getPosition() << " ";
                     }
                     for (unsigned int j = 0; j < n_joints; j++) {
                         _jointVelList.push_back(joints[j]->getVelocity());
@@ -263,16 +242,11 @@ namespace arm_speed_safe_controller {
                         _realtime_pub_margin->unlockAndPublish();
                     }
 
-                    // try{
-                    //       _listener.waitForTransform("/world", "/omnigrasper", ros::Time(0), ros::Duration(10.0));
-                    //       _listener.lookupTransform("/world", "/omnigrasper", ros::Time(0), _tfWorldToBase);
-                    //             ROS_INFO("testing from the controller (x,y,z) values:%f,%f,%f",_tfWorldToBase.getOrigin().x(),_tfWorldToBase.getOrigin().y(),_tfWorldToBase.getOrigin().z());
-                    //       }
-                    //        catch (tf::TransformException &ex) {
-                    //          ROS_ERROR("%s",ex.what());
-                    //          // ros::Duration(1.0).sleep();
-                    //          // continue;
-                    // }
+                    ros::NodeHandle n;
+                    ROS_INFO("Subscribing to the TF node from update loop");
+                    _sub_COM_base2 = n.subscribe<omni_controllers::DoubleVector>("YouBotBaseCOM", 1, &PolicyControllerWithReset::getCOM2, this);
+                    ROS_INFO("Subscribing is OK");
+
                 }
 
                 else if ((_episode_iterations < max_iterations) && (curr_time.toSec() - _prev_time.toSec()) < dT) //wait period during an ongoing episode
@@ -315,7 +289,7 @@ namespace arm_speed_safe_controller {
             } //End of blackdrops mode
 
             else if (manual_reset_flag) { //Return to default configuration
-                // std::cout << "reset starting" << std::endl;
+
                 std::vector<double> q;
                 Eigen::VectorXd velocities(5); //this should be changed to action_dim
 
@@ -348,25 +322,6 @@ namespace arm_speed_safe_controller {
                         if (std::abs(q_err.at(i)) > threshold) {
                             velocities(i) = q_err.at(i) * gain;
 
-                            //Priors related
-                            // if (i==3)
-                            // velocities(i)=0.; // Prior related -- blocking the 4th joint
-
-                            // velocities(i)= (q_err.at(i) * gain);
-                            // velocities(i)= (q_err.at(i) * gain)/2.0;//Creating a fake damage with reduced velocity commands
-
-                            //change velocity for 3 joints as halved values -- damage 2 -- priors related
-                            // if(i==2)
-                            // velocities(i) = velocities(i)/2.0;
-                            //
-                            // if(i==3)
-                            // velocities(i) = velocities(i)/2.0;
-                            //
-                            // if(i==4)
-                            // velocities(i) = velocities(i)/2.0;
-                            //
-                            //end of priors related
-
                             if (velocities(i) > 1.0)
                                 velocities(i) = 1.0;
                             if (velocities(i) < -1.0)
@@ -378,8 +333,7 @@ namespace arm_speed_safe_controller {
 
                     // Send velocity commands
                     for (unsigned int j = 0; j < n_joints; j++)
-                        // joints[j]->setCommand(velocities(j)/2.0);  //Creating a fake damage with reduced velocity commands
-                        joints[j]->setCommand(velocities(j));
+                    joints[j]->setCommand(velocities(j));
                 }
                 else { //Default configuration already reached
                     reset_flag = false;
@@ -469,11 +423,11 @@ namespace arm_speed_safe_controller {
         ros::Subscriber _sub_params;
         ros::ServiceServer _serv_reset;
         ros::Publisher _pub_twist;
-        ros::Subscriber _sub_COM_base;
+        ros::Subscriber _sub_COM_base1;
+        ros::Subscriber _sub_COM_base2;
+        ros::NodeHandle _n;
 
         geometry_msgs::Twist _twist_msg;
-        // tf::TransformListener _listener;
-        // tf::StampedTransform _tfWorldToBase; //includes frame-id, child-id etc
 
         double T, dT; //_rows to help in the publish matrix
         int max_iterations, _episode_iterations;
@@ -514,9 +468,18 @@ namespace arm_speed_safe_controller {
             _prev_time = ros::Time::now() - ros::Duration(2 * dT);
         }
 
-        void getCOM(const omni_controllers::DoubleVector::ConstPtr& COMmsg)
+        void getCOM1(const omni_controllers::DoubleVector::ConstPtr& COMmsg)
         {
-          std::cout << "entered callback for COM" << std::endl;
+          std::cout << "entered callback for COM (from ros init)" << std::endl;
+          std::cout << "printing COM subscribed to: \n" << std::endl;
+          for (int i = 0; i < COMmsg->val.size(); i++)
+              std::cout << COMmsg->val[i] << "," << std::endl;
+          std::cout << "\n" << std::endl;
+        }
+
+        void getCOM2(const omni_controllers::DoubleVector::ConstPtr& COMmsg)
+        {
+          std::cout << "entered callback for COM (from update)" << std::endl;
           std::cout << "printing COM subscribed to: \n" << std::endl;
           for (int i = 0; i < COMmsg->val.size(); i++)
               std::cout << COMmsg->val[i] << "," << std::endl;
