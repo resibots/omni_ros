@@ -9,6 +9,7 @@
 #include <hardware_interface/joint_command_interface.h>
 #include <controller_interface/controller.h>
 #include <std_msgs/Float64MultiArray.h>
+#include <std_msgs/Float32.h>
 #include <realtime_tools/realtime_buffer.h>
 #include <realtime_tools/realtime_publisher.h>
 
@@ -22,6 +23,7 @@
 #include <omni_controllers/arm_speed_safe_controller.hpp>
 #include <omni_controllers/cartesian_constraint.hpp>
 #include <omni_controllers/PolicyParams.h>
+#include <omni_controllers/DoubleVector.h>
 #include <omni_controllers/policies/NNpolicy.hpp>
 #include <omni_controllers/policies/binary_matrix.hpp>
 
@@ -96,9 +98,12 @@ int main(int argc, char* argv[])
 
     // ros::Publisher my_msg_pub = nh.advertise<omni_controllers::PolicyParams>("/dynamixel_controllers/omni_policy_controller/policyParams", 100, true);
     // ros::Subscriber robot_pos_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_policy_controller/States", 1, getStates);
+
     ros::Publisher my_msg_pub = nh.advertise<omni_controllers::PolicyParams>("/dynamixel_controllers/omni_arm_controller/policyParams", 100, true);
     ros::Subscriber robot_pos_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_arm_controller/States", 1, getStates);
     ros::Subscriber robot_vel_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_arm_controller/Actions", 1, getActions);
+
+    ros::Publisher COM_val_pub = nh.advertise<omni_controllers::DoubleVector>("/dynamixel_controllers/omni_arm_controller/YouBotBaseCOM", 100, true);
 
     Eigen::VectorXd params(175);
     Eigen::read_binary<Eigen::VectorXd>("/home/deba/Code/limbo/Results/results/policy_params_3.bin", params);
@@ -115,26 +120,37 @@ int main(int argc, char* argv[])
     msg.t = 4.0;
     msg.dT = 0.1;
 
-    my_msg_pub.publish(msg);
-    while (!global::received_actions || !global::received_states)
-        ros::spinOnce();
+    //my_msg_pub.publish(msg);
+    //while (!global::received_actions || !global::received_states)
+        //ros::spinOnce();
 
     //std_msgs::Float64 COM_val;
+    omni_controllers::DoubleVector COM; //if the variable is declared only once then the vector keeps growing. clear it at start of every lookuptransform
+
+    while(ros::ok())
+    {
 
     try{
           // _listener.waitForTransform("/world", "/omnigrasper", ros::Time(0), ros::Duration(10.0));
           _listener.lookupTransform("/world", "/omnigrasper", ros::Time(0), _tfWorldToBase);
                 //ROS_INFO("test (x,y,z) values:%f,%f,%f",_tfWorldToBase.getOrigin().x(),_tfWorldToBase.getOrigin().y(),_tfWorldToBase.getOrigin().z());
 
+                COM.val.clear();
+
                 //Creating a publisher that sends this information (the policy controller will subscribe to this)
                 ROS_INFO("COM (x,y, theta_z) value:%f,%f,%f",_tfWorldToBase.getOrigin().x(),_tfWorldToBase.getOrigin().y(),tf::getYaw(_tfWorldToBase.getRotation()));
+                COM.val.push_back(_tfWorldToBase.getOrigin().x());
+                COM.val.push_back(_tfWorldToBase.getOrigin().y());
+                COM.val.push_back(tf::getYaw(_tfWorldToBase.getRotation()));
 
+                COM_val_pub.publish(COM);
           }
            catch (tf::TransformException &ex) {
              ROS_ERROR("%s",ex.what());
              // ros::Duration(1.0).sleep();
              // continue;
     }
+  }
 }
 
 //No. of params=(input+1).hidden neurons + (hidden+1)*output
