@@ -229,9 +229,20 @@ namespace arm_speed_safe_controller {
                     //Add base positions
                     for (unsigned int k = 0; k < 3; k++) {
                         _jointList.push_back(_baseCOM[k]);
-                        ROS_INFO("Update: Adding COM to publisher message");
+                        //ROS_INFO("Update: Adding COM to publisher message");
                         //Send the arm velocities here
                     }
+
+                    // Add base velocities
+                    // for (unsigned int k = n_joints; k < n_joints+3; k++) {
+                    //     //_commandList.push_back(_commands(k));
+                    //
+                    // }
+
+                    //Adding dummy values for now
+                    _commandList.push_back(0.0);
+                    _commandList.push_back(0.0);
+                    _commandList.push_back(0.0);
 
                     // Remove arm velocity
                     // for (unsigned int j = 0; j < n_joints; j++) {
@@ -248,6 +259,8 @@ namespace arm_speed_safe_controller {
                     _twist_msg.angular.z = 0.0;
                     _twist_msg.angular.y = 0.0;
                     _twist_msg.angular.x = 0.0;
+
+                    //use only x,y and angular z values
 
                     _pub_twist.publish(_twist_msg);
 
@@ -406,8 +419,9 @@ namespace arm_speed_safe_controller {
                     _realtime_pub_commands->msg_.layout.dim[0].label = "Iterations";
                     _realtime_pub_commands->msg_.layout.dim[1].label = "Actions";
                     _realtime_pub_commands->msg_.layout.dim[0].size = max_iterations; //H
-                    _realtime_pub_commands->msg_.layout.dim[1].size = n_joints; //W (remember to add values for the twist velocities)
-                    _realtime_pub_commands->msg_.layout.dim[0].stride = n_joints;
+                    // _realtime_pub_commands->msg_.layout.dim[1].size = n_joints; //W (remember to add values for the twist velocities)
+                    _realtime_pub_commands->msg_.layout.dim[1].size = n_joints+3; //W (remember to add 3 values for the twist velocities)
+                    _realtime_pub_commands->msg_.layout.dim[0].stride = n_joints+3;
                     _realtime_pub_commands->msg_.layout.dim[1].stride = 1;
                     _realtime_pub_commands->msg_.layout.data_offset = 0;
 
@@ -428,16 +442,7 @@ namespace arm_speed_safe_controller {
                     _realtime_pub_margin->unlockAndPublish();
                 }
 
-                // for (int i = 0; i < _baseCOMall.size(); i++) {
-                //     for (int j = 0; j < _baseCOMall[i].size(); j++) {
-                //         std::cout << _baseCOMall[i][j];
-                //     }
-                // }
-                //
-                // _baseCOM.clear();
-                // _baseCOMall.clear();
-
-                publish_flag = false;
+            publish_flag = false;
             } //end of publishing
             _constraint.enforce(period);
         } //end of update method
