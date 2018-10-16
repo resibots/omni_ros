@@ -115,8 +115,8 @@ int main(int argc, char* argv[])
         msg.params.push_back(params(i));
     }
 
-    msg.t = 4.0;
-    msg.dT = 0.1;
+    msg.t = 2.0;
+    msg.dT = 1; //for testing the size of states topic
 
     my_msg_pub.publish(msg);
     while (!global::received_actions || !global::received_states)

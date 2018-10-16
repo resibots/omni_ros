@@ -226,12 +226,19 @@ namespace arm_speed_safe_controller {
                         joints[j]->setCommand(_commands(j));
                     }
 
+                    //Add base positions
+                    for (unsigned int k = 0; k < 3; k++) {
+                        _jointList.push_back(_baseCOM[k]);
+                        ROS_INFO("Update: Adding COM to publisher message");
+                        //Send the arm velocities here
+                    }
+
                     // Remove arm velocity
                     // for (unsigned int j = 0; j < n_joints; j++) {
                     //     _jointList.push_back(joints[j]->getVelocity());
                     // }
 
-                    _baseCOMall.push_back(_baseCOM);
+                    //_baseCOMall.push_back(_baseCOM);
                     std::cout << "Added current COM value" << std::endl;
 
                     // Send low velocities to test
@@ -268,6 +275,12 @@ namespace arm_speed_safe_controller {
                         //send zero velocities
                         joints[j]->setCommand(0);
                         // _constraint.enforce(period);
+                    }
+
+                    //Add base positions
+                    for (unsigned int k = 0; k < 3; k++) {
+                        _jointList.push_back(_baseCOM[k]);
+                        //Send the arm velocities here
                     }
 
                     // Remove arm velocity
@@ -368,9 +381,13 @@ namespace arm_speed_safe_controller {
                     _realtime_pub_joints->msg_.layout.dim[1].label = "JointStates";
                     _realtime_pub_joints->msg_.layout.dim[0].size = max_iterations; //H
                     //_realtime_pub_joints->msg_.layout.dim[1].size = n_joints * 2; //W
-                    _realtime_pub_joints->msg_.layout.dim[1].size = n_joints; // W for joints only
+                    // _realtime_pub_joints->msg_.layout.dim[1].size = n_joints; // W for joints only
+
+                    _realtime_pub_joints->msg_.layout.dim[1].size = n_joints+3; // W for joints+3val of COM only
                     //_realtime_pub_joints->msg_.layout.dim[0].stride = n_joints * 2;
-                    _realtime_pub_joints->msg_.layout.dim[0].stride = n_joints; //For joints only
+
+                    // _realtime_pub_joints->msg_.layout.dim[0].stride = n_joints; //For joints only
+                    _realtime_pub_joints->msg_.layout.dim[0].stride = n_joints+3; //For joints+3val of COM
                     _realtime_pub_joints->msg_.layout.dim[1].stride = 1;
                     _realtime_pub_joints->msg_.layout.data_offset = 0;
 
@@ -389,7 +406,7 @@ namespace arm_speed_safe_controller {
                     _realtime_pub_commands->msg_.layout.dim[0].label = "Iterations";
                     _realtime_pub_commands->msg_.layout.dim[1].label = "Actions";
                     _realtime_pub_commands->msg_.layout.dim[0].size = max_iterations; //H
-                    _realtime_pub_commands->msg_.layout.dim[1].size = n_joints; //W
+                    _realtime_pub_commands->msg_.layout.dim[1].size = n_joints; //W (remember to add values for the twist velocities)
                     _realtime_pub_commands->msg_.layout.dim[0].stride = n_joints;
                     _realtime_pub_commands->msg_.layout.dim[1].stride = 1;
                     _realtime_pub_commands->msg_.layout.data_offset = 0;
@@ -452,7 +469,8 @@ namespace arm_speed_safe_controller {
         std::vector<double> _jointList;
         std::vector<double> _commandList;
 
-        std::vector<double> _baseCOM;
+        //std::vector<double> _baseCOM;
+        std::array<double, 3> _baseCOM;
         std::vector<std::vector<double>> _baseCOMall;
 
         //Default joint angle values for reset purposes
@@ -491,13 +509,15 @@ namespace arm_speed_safe_controller {
         void getCOM1(const omni_controllers::DoubleVector::ConstPtr& COMmsg)
         {
             //_baseCOM.clear();
-            Eigen::VectorXd _mocap_baseCOM(COMmsg->val.size());
+            //Eigen::VectorXd _mocap_baseCOM(COMmsg->val.size());
             std::cout << "entered callback for COM (from ros init)" << std::endl;
             std::cout << "printing COM subscribed to: \n"
                       << std::endl;
             for (int i = 0; i < COMmsg->val.size(); i++) {
-                _baseCOM.push_back(COMmsg->val[i]);
-                std::cout << COMmsg->val[i] << "," << std::endl;
+                //_baseCOM.push_back(COMmsg->val[i]);
+                _baseCOM[i] = COMmsg->val[i];
+                // std::cout << COMmsg->val[i] << "," << std::endl;
+                std::cout << _baseCOM[i] << "," << std::endl;
             }
         }
 
