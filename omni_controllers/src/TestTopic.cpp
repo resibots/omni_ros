@@ -120,8 +120,8 @@ int main(int argc, char* argv[])
     // ros::spin();
     omni_controllers::DoubleVector COM; //if the variable is declared only once then the vector keeps growing. clear it at start of every lookuptransform
 
-    // while(ros::ok())
-    // {
+    while(ros::ok())
+    {
     //
     try{
           // _listener.waitForTransform("/world", "/omnigrasper", ros::Time(0), ros::Duration(10.0));
@@ -141,7 +141,8 @@ int main(int argc, char* argv[])
              // ros::Duration(1.0).sleep();
              // continue;
     }
-  // }
+    ros::spin();
+  }
 }
 
 //No. of params=(input+1).hidden neurons + (hidden+1)*output

@@ -95,7 +95,6 @@ namespace arm_speed_safe_controller {
     // Step 2: If step 1 works, then test if the motion capture data can be read back
     // Step 3: Change the jointvelList to include the base portions
 
-
     template <class SafetyConstraint = NoSafetyConstraints>
     class PolicyControllerWithReset : public controller_interface::Controller<hardware_interface::VelocityJointInterface> {
     public:
@@ -176,6 +175,8 @@ namespace arm_speed_safe_controller {
             _sub_params = nh.subscribe<omni_controllers::PolicyParams>("policyParams", 1, &PolicyControllerWithReset::setParams, this);
             _serv_reset = nh.advertiseService("manualReset", &PolicyControllerWithReset::manualReset, this);
 
+            // _test_pub_COM = nh.advertise<std::vector<std::vector<double>>>
+
             ROS_INFO("Subscribing from ros init");
             _sub_COM_base1 = nh.subscribe<omni_controllers::DoubleVector>("YouBotBaseCOM", 1, &PolicyControllerWithReset::getCOM1, this);
             ROS_INFO("Subscribing from ros init is ok");
@@ -223,6 +224,9 @@ namespace arm_speed_safe_controller {
                         _jointVelList.push_back(joints[j]->getVelocity());
                     }
 
+                    _baseCOMall.push_back(_baseCOM);
+                    std::cout << "Added current COM value" << std::endl;
+
                     // geometry_msgs::Twist twist_msg;
                     // Send low velocities to test
                     _twist_msg.linear.y = 0.0;
@@ -241,12 +245,6 @@ namespace arm_speed_safe_controller {
                         _realtime_pub_margin->msg_.data = _constraint.consult(period);
                         _realtime_pub_margin->unlockAndPublish();
                     }
-
-                    ros::NodeHandle n;
-                    ROS_INFO("Subscribing to the TF node from update loop");
-                    _sub_COM_base2 = n.subscribe<omni_controllers::DoubleVector>("YouBotBaseCOM", 1, &PolicyControllerWithReset::getCOM2, this);
-                    ROS_INFO("Subscribing is OK");
-
                 }
 
                 else if ((_episode_iterations < max_iterations) && (curr_time.toSec() - _prev_time.toSec()) < dT) //wait period during an ongoing episode
@@ -333,7 +331,7 @@ namespace arm_speed_safe_controller {
 
                     // Send velocity commands
                     for (unsigned int j = 0; j < n_joints; j++)
-                    joints[j]->setCommand(velocities(j));
+                        joints[j]->setCommand(velocities(j));
                 }
                 else { //Default configuration already reached
                     reset_flag = false;
@@ -403,8 +401,14 @@ namespace arm_speed_safe_controller {
                     _realtime_pub_margin->unlockAndPublish();
                 }
 
-                // _listener.lookupTransform("/world", "/omnigrasper", ros::Time(0), _tfWorldToBase);
-                // ROS_INFO("test x values:%f",_tfWorldToBase.getOrigin().x());
+                // for (int i = 0; i < _baseCOMall.size(); i++) {
+                //     for (int j = 0; j < _baseCOMall[i].size(); j++) {
+                //         std::cout << _baseCOMall[i][j];
+                //     }
+                // }
+                //
+                // _baseCOM.clear();
+                // _baseCOMall.clear();
 
                 publish_flag = false;
             } //end of publishing
@@ -428,6 +432,7 @@ namespace arm_speed_safe_controller {
         ros::NodeHandle _n;
 
         geometry_msgs::Twist _twist_msg;
+        ros::Publisher _test_pub_COM;
 
         double T, dT; //_rows to help in the publish matrix
         int max_iterations, _episode_iterations;
@@ -437,11 +442,16 @@ namespace arm_speed_safe_controller {
         std::vector<double> _jointVelList;
         std::vector<double> _commandList;
 
+        std::vector<double> _baseCOM;
+        std::vector<std::vector<double>> _baseCOMall;
+
         //Default joint angle values for reset purposes
         std::vector<double> _defaultConfig;
 
         Eigen::VectorXd _commands;
         ros::Time _prev_time;
+
+        //Eigen::VectorXd _mocap_baseCOM;
 
         std::shared_ptr<blackdrops::policy::NNPolicy> _policy;
         // std::shared_ptr<realtime_tools::RealtimePublisher<omni_controllers::PublishMatrix>> _realtime_pub;
@@ -470,21 +480,25 @@ namespace arm_speed_safe_controller {
 
         void getCOM1(const omni_controllers::DoubleVector::ConstPtr& COMmsg)
         {
-          std::cout << "entered callback for COM (from ros init)" << std::endl;
-          std::cout << "printing COM subscribed to: \n" << std::endl;
-          for (int i = 0; i < COMmsg->val.size(); i++)
-              std::cout << COMmsg->val[i] << "," << std::endl;
-          std::cout << "\n" << std::endl;
+            //_baseCOM.clear();
+            Eigen::VectorXd _mocap_baseCOM(COMmsg->val.size());
+            std::cout << "entered callback for COM (from ros init)" << std::endl;
+            std::cout << "printing COM subscribed to: \n"
+                      << std::endl;
+            for (int i = 0; i < COMmsg->val.size(); i++) {
+                _baseCOM.push_back(COMmsg->val[i]);
+                std::cout << COMmsg->val[i] << "," << std::endl;
+            }
         }
 
-        void getCOM2(const omni_controllers::DoubleVector::ConstPtr& COMmsg)
-        {
-          std::cout << "entered callback for COM (from update)" << std::endl;
-          std::cout << "printing COM subscribed to: \n" << std::endl;
-          for (int i = 0; i < COMmsg->val.size(); i++)
-              std::cout << COMmsg->val[i] << "," << std::endl;
-          std::cout << "\n" << std::endl;
-        }
+        // void getCOM2(const omni_controllers::DoubleVector::ConstPtr& COMmsg)
+        // {
+        //   std::cout << "entered callback for COM (from update)" << std::endl;
+        //   std::cout << "printing COM subscribed to: \n" << std::endl;
+        //   for (int i = 0; i < COMmsg->val.size(); i++)
+        //       std::cout << COMmsg->val[i] << "," << std::endl;
+        //   std::cout << "\n" << std::endl;
+        // }
 
         bool manualReset(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
         {
