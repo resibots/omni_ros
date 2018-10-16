@@ -31,11 +31,11 @@ dynamixel_controllers:
       - arm_3_4
       - arm_4_5
     policy_params:
-      state_dim: 6
-      action_dim: 5
+      state_dim: 9
+      action_dim: 8
       hidden_neurons: 10
-      limits: [3.14159265359, 0.78539816339, 1.5707963268, 3.14159265359, 1.5707963268, 4.0]
-      max_u: [1.0, 1.0, 1.0, 1.0, 1.0]
+      limits: [3.14159265359, 0.78539816339, 1.5707963268, 3.14159265359, 1.5707963268, 2.5, 2.5, 1.57, 4.0]
+      max_u: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
 
 dynamixel_control:
   default_command_interface: velocity

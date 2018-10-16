@@ -95,9 +95,9 @@ int main(int argc, char* argv[])
     tf::TransformListener _listener;
     tf::StampedTransform _tfWorldToBase; //includes frame-id, child-id etc
 
-    ros::Publisher my_msg_pub = nh.advertise<omni_controllers::PolicyParams>("/dynamixel_controllers/omni_arm_controller/policyParams", 100, true);
-    ros::Subscriber robot_pos_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_arm_controller/States", 1, getStates);
-    ros::Subscriber robot_vel_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_arm_controller/Actions", 1, getActions);
+    // ros::Publisher my_msg_pub = nh.advertise<omni_controllers::PolicyParams>("/dynamixel_controllers/omni_arm_controller/policyParams", 100, true);
+    // ros::Subscriber robot_pos_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_arm_controller/States", 1, getStates);
+    // ros::Subscriber robot_vel_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_arm_controller/Actions", 1, getActions);
 
     ros::Publisher COM_val_pub = nh.advertise<omni_controllers::DoubleVector>("/dynamixel_controllers/omni_arm_controller/YouBotBaseCOM", 100, true);
 
@@ -106,21 +106,21 @@ int main(int argc, char* argv[])
     // Eigen::read_binary<Eigen::VectorXd>("/home/deba/Code/limbo/Results/results/policy_params_3.bin", params); //Use correct set of params for test, this one was with velocity
 
 
-    Eigen::VectorXd params(125); //see calculation at bottom of page
-    Eigen::read_binary<Eigen::VectorXd>("/home/deba/Code/limbo/dummy_results/policy_params_1.bin", params); //Generated with 5 output states, 6 input states
-
-    omni_controllers::PolicyParams msg;
-    msg.params.clear();
-    for (unsigned int i = 0; i < params.size(); i++) {
-        msg.params.push_back(params(i));
-    }
-
-    msg.t = 2.0;
-    msg.dT = 1; //for testing the size of states topic
-
-    my_msg_pub.publish(msg);
-    while (!global::received_actions || !global::received_states)
-         ros::spinOnce();
+    // Eigen::VectorXd params(125); //see calculation at bottom of page
+    // Eigen::read_binary<Eigen::VectorXd>("/home/deba/Code/limbo/dummy_results/policy_params_1.bin", params); //Generated with 5 output states, 6 input states
+    //
+    // omni_controllers::PolicyParams msg;
+    // msg.params.clear();
+    // for (unsigned int i = 0; i < params.size(); i++) {
+    //     msg.params.push_back(params(i));
+    // }
+    //
+    // msg.t = 2.0;
+    // msg.dT = 1; //for testing the size of states topic
+    //
+    // my_msg_pub.publish(msg);
+    // while (!global::received_actions || !global::received_states)
+    //      ros::spinOnce();
 
     // ros::spin();
     omni_controllers::DoubleVector COM; //if the variable is declared only once then the vector keeps growing. clear it at start of every lookuptransform
@@ -129,7 +129,7 @@ int main(int argc, char* argv[])
     {
     //
     try{
-          // _listener.waitForTransform("/world", "/omnigrasper", ros::Time(0), ros::Duration(10.0));
+           _listener.waitForTransform("/world", "/omnigrasper", ros::Time(0), ros::Duration(2.0));
           _listener.lookupTransform("/world", "/omnigrasper", ros::Time(0), _tfWorldToBase);
                 COM.val.clear();
 

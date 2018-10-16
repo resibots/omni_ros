@@ -182,9 +182,9 @@ namespace arm_speed_safe_controller {
 
             // _test_pub_COM = nh.advertise<std::vector<std::vector<double>>>
 
-            ROS_INFO("Subscribing from ros init");
+            // ROS_INFO("Subscribing from ros init");
             _sub_COM_base1 = nh.subscribe<omni_controllers::DoubleVector>("YouBotBaseCOM", 1, &PolicyControllerWithReset::getCOM1, this);
-            ROS_INFO("Subscribing from ros init is ok");
+            // ROS_INFO("Subscribing from ros init is ok");
 
             _realtime_pub_margin = std::make_shared<realtime_tools::RealtimePublisher<std_msgs::Float64>>(nh, "margin", 4);
 
@@ -229,20 +229,31 @@ namespace arm_speed_safe_controller {
                     //Add base positions
                     for (unsigned int k = 0; k < 3; k++) {
                         _jointList.push_back(_baseCOM[k]);
+
                         //ROS_INFO("Update: Adding COM to publisher message");
                         //Send the arm velocities here
                     }
 
                     // Add base velocities
-                    // for (unsigned int k = n_joints; k < n_joints+3; k++) {
-                    //     //_commandList.push_back(_commands(k));
-                    //
-                    // }
+                    for (unsigned int k = n_joints; k < n_joints+3; k++) {
+                        _commandList.push_back(_commands(k));
+
+                    }
+
+                    _twist_msg.linear.x = _commands(5);
+                    _twist_msg.linear.y = _commands(6);
+                    _twist_msg.linear.z = 0.0;
+
+                    _twist_msg.angular.x = 0.0;
+                    _twist_msg.angular.y = 0.0;
+                    _twist_msg.angular.z = _commands(7);
+
+                    _pub_twist.publish(_twist_msg);
 
                     //Adding dummy values for now
-                    _commandList.push_back(0.0);
-                    _commandList.push_back(0.0);
-                    _commandList.push_back(0.0);
+                    // _commandList.push_back(0.0);
+                    // _commandList.push_back(0.0);
+                    // _commandList.push_back(0.0);
 
                     // Remove arm velocity
                     // for (unsigned int j = 0; j < n_joints; j++) {
@@ -250,19 +261,19 @@ namespace arm_speed_safe_controller {
                     // }
 
                     //_baseCOMall.push_back(_baseCOM);
-                    std::cout << "Added current COM value" << std::endl;
+                    // std::cout << "Added current COM value" << std::endl;
 
                     // Send low velocities to test
-                    _twist_msg.linear.y = 0.0;
-                    _twist_msg.linear.x = 0.05;
-                    _twist_msg.linear.z = 0.0;
-                    _twist_msg.angular.z = 0.0;
-                    _twist_msg.angular.y = 0.0;
-                    _twist_msg.angular.x = 0.0;
-
-                    //use only x,y and angular z values
-
-                    _pub_twist.publish(_twist_msg);
+                    // _twist_msg.linear.y = 0.0;
+                    // _twist_msg.linear.x = 0.05;
+                    // _twist_msg.linear.z = 0.0;
+                    // _twist_msg.angular.z = 0.0;
+                    // _twist_msg.angular.y = 0.0;
+                    // _twist_msg.angular.x = 0.0;
+                    //
+                    // //use only x,y and angular z values
+                    //
+                    // _pub_twist.publish(_twist_msg);
 
                     _prev_time = ros::Time::now();
                     _episode_iterations++;
@@ -319,7 +330,19 @@ namespace arm_speed_safe_controller {
                 }
             } //End of blackdrops mode
 
-            else if (manual_reset_flag) { //Return to default configuration
+            else if (manual_reset_flag) { //Return to default configuration (only for the arm for now)
+
+                //Make base stationery first
+
+                // Send zero velocities on \cmd_vel
+                _twist_msg.linear.y = 0.0;
+                _twist_msg.linear.x = 0.0;
+                _twist_msg.linear.z = 0.0;
+                _twist_msg.angular.z = 0.0;
+                _twist_msg.angular.y = 0.0;
+                _twist_msg.angular.x = 0.0;
+
+                _pub_twist.publish(_twist_msg);
 
                 std::vector<double> q;
                 Eigen::VectorXd velocities(5); //this should be changed to action_dim
@@ -370,6 +393,7 @@ namespace arm_speed_safe_controller {
                     reset_flag = false;
                     manual_reset_flag = false;
                 }
+
             } //End of reset mode
 
             else {
@@ -378,6 +402,17 @@ namespace arm_speed_safe_controller {
                     joints[j]->setCommand(0);
                 }
                 // _constraint.enforce(period);
+
+                // Send zero velocities on \cmd_vel
+                _twist_msg.linear.y = 0.0;
+                _twist_msg.linear.x = 0.0;
+                _twist_msg.linear.z = 0.0;
+                _twist_msg.angular.z = 0.0;
+                _twist_msg.angular.y = 0.0;
+                _twist_msg.angular.x = 0.0;
+
+                _pub_twist.publish(_twist_msg);
+
 
             } //End of if-block related to sending correct velocities depending on: blackdrops/reset/zero modes
 
@@ -414,6 +449,7 @@ namespace arm_speed_safe_controller {
                     }
 
                     _jointList.clear();
+                    std::fill(_baseCOM.begin(), _baseCOM.end(), 0);
                 }
                 if (_realtime_pub_commands->trylock()) {
                     _realtime_pub_commands->msg_.layout.dim[0].label = "Iterations";
@@ -464,7 +500,6 @@ namespace arm_speed_safe_controller {
         ros::NodeHandle _n;
 
         geometry_msgs::Twist _twist_msg;
-        ros::Publisher _test_pub_COM;
 
         double T, dT; //_rows to help in the publish matrix
         int max_iterations, _episode_iterations;
@@ -474,9 +509,7 @@ namespace arm_speed_safe_controller {
         std::vector<double> _jointList;
         std::vector<double> _commandList;
 
-        //std::vector<double> _baseCOM;
         std::array<double, 3> _baseCOM;
-        std::vector<std::vector<double>> _baseCOMall;
 
         //Default joint angle values for reset purposes
         std::vector<double> _defaultConfig;
@@ -484,7 +517,6 @@ namespace arm_speed_safe_controller {
         Eigen::VectorXd _commands;
         ros::Time _prev_time;
 
-        //Eigen::VectorXd _mocap_baseCOM;
 
         std::shared_ptr<blackdrops::policy::NNPolicy> _policy;
         // std::shared_ptr<realtime_tools::RealtimePublisher<omni_controllers::PublishMatrix>> _realtime_pub;
@@ -513,27 +545,15 @@ namespace arm_speed_safe_controller {
 
         void getCOM1(const omni_controllers::DoubleVector::ConstPtr& COMmsg)
         {
-            //_baseCOM.clear();
-            //Eigen::VectorXd _mocap_baseCOM(COMmsg->val.size());
+            std::fill(_baseCOM.begin(), _baseCOM.end(), 0);
+
             std::cout << "entered callback for COM (from ros init)" << std::endl;
-            std::cout << "printing COM subscribed to: \n"
-                      << std::endl;
+            std::cout << "printing COM subscribed to: \n"<< std::endl;
             for (int i = 0; i < COMmsg->val.size(); i++) {
-                //_baseCOM.push_back(COMmsg->val[i]);
                 _baseCOM[i] = COMmsg->val[i];
-                // std::cout << COMmsg->val[i] << "," << std::endl;
                 std::cout << _baseCOM[i] << "," << std::endl;
             }
         }
-
-        // void getCOM2(const omni_controllers::DoubleVector::ConstPtr& COMmsg)
-        // {
-        //   std::cout << "entered callback for COM (from update)" << std::endl;
-        //   std::cout << "printing COM subscribed to: \n" << std::endl;
-        //   for (int i = 0; i < COMmsg->val.size(); i++)
-        //       std::cout << COMmsg->val[i] << "," << std::endl;
-        //   std::cout << "\n" << std::endl;
-        // }
 
         bool manualReset(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
         {
@@ -546,13 +566,13 @@ namespace arm_speed_safe_controller {
             // Eigen::VectorXd res(joints.size() * 2 + 1); //Removing velocity, only keeping arm positions and time
             Eigen::VectorXd res(joints.size() + 1);
 
-            for (size_t i = 0; i < joints.size(); ++i) {
-                res[i] = joints[i]->getPosition();
-                //res[5 + i] = joints[i]->getVelocity();
-            }
-            // for (size_t i = joints.size(); i < joints.size()*2; ++i)
-            //res[joints.size() * 2] = _episode_iterations * dT; //to add a state for time (in steps of dT)
-            res[joints.size()] = _episode_iterations * dT;
+            for (size_t i = 0; i < joints.size(); ++i)
+              res[i] = joints[i]->getPosition();
+
+            for (size_t i = 0; i < 3; ++i)
+              res[joints.size()+i] = _baseCOM[i];
+
+            res[joints.size()+3] = _episode_iterations * dT;
             return res;
         }
     }; // policy_controller
