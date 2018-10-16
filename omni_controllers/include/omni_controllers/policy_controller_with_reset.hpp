@@ -95,6 +95,11 @@ namespace arm_speed_safe_controller {
     // Step 2: If step 1 works, then test if the motion capture data can be read back
     // Step 3: Change the jointvelList to include the base portions
 
+    // Update on 15 oct
+    // STEP 1 : Sending commands on cmd_vel works OK. Need to create deceleration module to bring wheels to stop ---- TO DO
+    // STEP 2 : Reading state of base from tf transform works OK. Created a topic for that, to be launched from TestTopic and can subscribe from within the controller
+    // STEP 3 : Remove the velocity recording part and try using only positions for the states, for learning. Remember to change the state action space accordingly, as well as size of params for policy
+
     template <class SafetyConstraint = NoSafetyConstraints>
     class PolicyControllerWithReset : public controller_interface::Controller<hardware_interface::VelocityJointInterface> {
     public:
@@ -216,18 +221,19 @@ namespace arm_speed_safe_controller {
                     // ROS_INFO("Update: Commands received after policy update : OK");
                     for (unsigned int j = 0; j < n_joints; j++) {
                         _commandList.push_back(_commands(j));
-                        _jointVelList.push_back(joints[j]->getPosition());
+                        _jointList.push_back(joints[j]->getPosition());
 
                         joints[j]->setCommand(_commands(j));
                     }
-                    for (unsigned int j = 0; j < n_joints; j++) {
-                        _jointVelList.push_back(joints[j]->getVelocity());
-                    }
+
+                    // Remove arm velocity
+                    // for (unsigned int j = 0; j < n_joints; j++) {
+                    //     _jointList.push_back(joints[j]->getVelocity());
+                    // }
 
                     _baseCOMall.push_back(_baseCOM);
                     std::cout << "Added current COM value" << std::endl;
 
-                    // geometry_msgs::Twist twist_msg;
                     // Send low velocities to test
                     _twist_msg.linear.y = 0.0;
                     _twist_msg.linear.x = 0.05;
@@ -257,16 +263,17 @@ namespace arm_speed_safe_controller {
                 {
                     for (unsigned int j = 0; j < n_joints; j++) {
                         //record the last set of joint states
-                        _jointVelList.push_back(joints[j]->getPosition());
+                        _jointList.push_back(joints[j]->getPosition());
 
                         //send zero velocities
                         joints[j]->setCommand(0);
                         // _constraint.enforce(period);
                     }
 
-                    for (unsigned int j = 0; j < n_joints; j++) {
-                        _jointVelList.push_back(joints[j]->getVelocity());
-                    }
+                    // Remove arm velocity
+                    // for (unsigned int j = 0; j < n_joints; j++) {
+                    //     _jointList.push_back(joints[j]->getVelocity());
+                    // }
 
                     // Send zero velocities on \cmd_vel
                     _twist_msg.linear.y = 0.0;
@@ -357,14 +364,17 @@ namespace arm_speed_safe_controller {
                     //multiarray(i,j,k) = data[data_offset + dim_stride[1]*i + dim_stride[2]*j + k]
                     // fill out message:
                     _realtime_pub_joints->msg_.layout.dim[0].label = "Iterations";
-                    _realtime_pub_joints->msg_.layout.dim[1].label = "JointAndVelStates";
+                    //_realtime_pub_joints->msg_.layout.dim[1].label = "JointAndVelStates";
+                    _realtime_pub_joints->msg_.layout.dim[1].label = "JointStates";
                     _realtime_pub_joints->msg_.layout.dim[0].size = max_iterations; //H
-                    _realtime_pub_joints->msg_.layout.dim[1].size = n_joints * 2; //W
-                    _realtime_pub_joints->msg_.layout.dim[0].stride = n_joints * 2;
+                    //_realtime_pub_joints->msg_.layout.dim[1].size = n_joints * 2; //W
+                    _realtime_pub_joints->msg_.layout.dim[1].size = n_joints; // W for joints only
+                    //_realtime_pub_joints->msg_.layout.dim[0].stride = n_joints * 2;
+                    _realtime_pub_joints->msg_.layout.dim[0].stride = n_joints; //For joints only
                     _realtime_pub_joints->msg_.layout.dim[1].stride = 1;
                     _realtime_pub_joints->msg_.layout.data_offset = 0;
 
-                    _realtime_pub_joints->msg_.data = _jointVelList;
+                    _realtime_pub_joints->msg_.data = _jointList;
 
                     _realtime_pub_joints->unlockAndPublish();
 
@@ -373,7 +383,7 @@ namespace arm_speed_safe_controller {
                         _realtime_pub_joints->unlock();
                     }
 
-                    _jointVelList.clear();
+                    _jointList.clear();
                 }
                 if (_realtime_pub_commands->trylock()) {
                     _realtime_pub_commands->msg_.layout.dim[0].label = "Iterations";
@@ -439,7 +449,7 @@ namespace arm_speed_safe_controller {
         bool publish_flag, Bdp_eps_flag, reset_flag, manual_reset_flag;
 
         // Temporary vectors that store all values during the whole episode
-        std::vector<double> _jointVelList;
+        std::vector<double> _jointList;
         std::vector<double> _commandList;
 
         std::vector<double> _baseCOM;
@@ -508,14 +518,16 @@ namespace arm_speed_safe_controller {
 
         inline Eigen::VectorXd states_to_eigen()
         {
-            Eigen::VectorXd res(joints.size() * 2 + 1);
+            // Eigen::VectorXd res(joints.size() * 2 + 1); //Removing velocity, only keeping arm positions and time
+            Eigen::VectorXd res(joints.size() + 1);
 
             for (size_t i = 0; i < joints.size(); ++i) {
                 res[i] = joints[i]->getPosition();
-                res[5 + i] = joints[i]->getVelocity();
+                //res[5 + i] = joints[i]->getVelocity();
             }
             // for (size_t i = joints.size(); i < joints.size()*2; ++i)
-            res[joints.size() * 2] = _episode_iterations * dT; //to add a state for time (in steps of dT)
+            //res[joints.size() * 2] = _episode_iterations * dT; //to add a state for time (in steps of dT)
+            res[joints.size()] = _episode_iterations * dT;
             return res;
         }
     }; // policy_controller

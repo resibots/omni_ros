@@ -101,8 +101,13 @@ int main(int argc, char* argv[])
 
     ros::Publisher COM_val_pub = nh.advertise<omni_controllers::DoubleVector>("/dynamixel_controllers/omni_arm_controller/YouBotBaseCOM", 100, true);
 
-    Eigen::VectorXd params(175);
-    Eigen::read_binary<Eigen::VectorXd>("/home/deba/Code/limbo/Results/results/policy_params_3.bin", params);
+    //Eigen::VectorXd params(175);
+    // Eigen::VectorXd params(175); //Change this to have reduced param list as now states include only the joint positions and not velocities anymore
+    // Eigen::read_binary<Eigen::VectorXd>("/home/deba/Code/limbo/Results/results/policy_params_3.bin", params); //Use correct set of params for test, this one was with velocity
+
+
+    Eigen::VectorXd params(125); //see calculation at bottom of page
+    Eigen::read_binary<Eigen::VectorXd>("/home/deba/Code/limbo/dummy_results/policy_params_1.bin", params); //Generated with 5 output states, 6 input states
 
     omni_controllers::PolicyParams msg;
     msg.params.clear();
@@ -150,3 +155,6 @@ int main(int argc, char* argv[])
 //for 5 joints, total = (5+1)*10 + (11)*5 = 115
 // input states = 11, output states = 5, hidden = 10
 // 12*10 + 11*5 = 120+55 = 175
+
+// input states = 6, output states = 5, hidden = 10
+// 7*10 + 11*5 = 70+55 = 125
