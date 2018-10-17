@@ -228,13 +228,13 @@ namespace arm_speed_safe_controller {
 
                     //Add base positions
                     for (unsigned int k = 0; k < 3; k++) {
-                        _jointList.push_back(_baseCOM[k]);
+                        // _jointList.push_back(_baseCOM[k]);
+                        _jointList.push_back(0.0);
                     }
 
                     // Add base velocities
                     for (unsigned int k = n_joints; k < n_joints+3; k++) {
                         _commandList.push_back(_commands(k));
-
                     }
 
                     _twist_msg.linear.x = _commands(5); //TO-DO make it generic
@@ -283,7 +283,8 @@ namespace arm_speed_safe_controller {
 
                     //Add base positions
                     for (unsigned int k = 0; k < 3; k++) {
-                        _jointList.push_back(_baseCOM[k]);
+                        // _jointList.push_back(_baseCOM[k]);
+                        _jointList.push_back(0.0);
                         //Send the arm velocities here
                     }
 
@@ -305,7 +306,7 @@ namespace arm_speed_safe_controller {
                 }
             } //End of blackdrops mode
 
-            else if (manual_reset_flag) { //Return to default configuration (only for the arm for now)
+            else if (false && manual_reset_flag) { //Return to default configuration (only for the arm for now)
 
                 //Make base stationery first
 
@@ -524,11 +525,9 @@ namespace arm_speed_safe_controller {
         {
             std::fill(_baseCOM.begin(), _baseCOM.end(), 0);
 
-            std::cout << "entered callback for COM (from ros init)" << std::endl;
-            std::cout << "printing COM subscribed to: \n"<< std::endl;
             for (int i = 0; i < COMmsg->val.size(); i++) {
-                _baseCOM[i] = COMmsg->val[i]+_episode_iterations;
-                std::cout << _baseCOM[i] << "," << std::endl;
+                _baseCOM[i] = COMmsg->val[i];
+                ROS_INFO_STREAM ("dummy check " << _baseCOM[i]);
             }
         }
 
@@ -541,13 +540,13 @@ namespace arm_speed_safe_controller {
         inline Eigen::VectorXd states_to_eigen()
         {
             // Eigen::VectorXd res(joints.size() * 2 + 1); //Removing velocity, only keeping arm positions and time
-            Eigen::VectorXd res(joints.size() + 1);
+            Eigen::VectorXd res(joints.size() + 4);
 
             for (size_t i = 0; i < joints.size(); ++i) //Arm
               res[i] = joints[i]->getPosition();
 
             for (size_t i = 0; i < 3; ++i) //Base
-              res[joints.size()+i] = _baseCOM[i];
+              res[joints.size()+i] = 0;//_baseCOM[i];
 
             res[joints.size()+3] = _episode_iterations * dT; //Time
             return res;
