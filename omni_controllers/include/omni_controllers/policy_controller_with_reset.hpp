@@ -229,9 +229,6 @@ namespace arm_speed_safe_controller {
                     //Add base positions
                     for (unsigned int k = 0; k < 3; k++) {
                         _jointList.push_back(_baseCOM[k]);
-
-                        //ROS_INFO("Update: Adding COM to publisher message");
-                        //Send the arm velocities here
                     }
 
                     // Add base velocities
@@ -240,7 +237,7 @@ namespace arm_speed_safe_controller {
 
                     }
 
-                    _twist_msg.linear.x = _commands(5);
+                    _twist_msg.linear.x = _commands(5); //TO-DO make it generic
                     _twist_msg.linear.y = _commands(6);
                     _twist_msg.linear.z = 0.0;
 
@@ -249,31 +246,6 @@ namespace arm_speed_safe_controller {
                     _twist_msg.angular.z = _commands(7);
 
                     _pub_twist.publish(_twist_msg);
-
-                    //Adding dummy values for now
-                    // _commandList.push_back(0.0);
-                    // _commandList.push_back(0.0);
-                    // _commandList.push_back(0.0);
-
-                    // Remove arm velocity
-                    // for (unsigned int j = 0; j < n_joints; j++) {
-                    //     _jointList.push_back(joints[j]->getVelocity());
-                    // }
-
-                    //_baseCOMall.push_back(_baseCOM);
-                    // std::cout << "Added current COM value" << std::endl;
-
-                    // Send low velocities to test
-                    // _twist_msg.linear.y = 0.0;
-                    // _twist_msg.linear.x = 0.05;
-                    // _twist_msg.linear.z = 0.0;
-                    // _twist_msg.angular.z = 0.0;
-                    // _twist_msg.angular.y = 0.0;
-                    // _twist_msg.angular.x = 0.0;
-                    //
-                    // //use only x,y and angular z values
-                    //
-                    // _pub_twist.publish(_twist_msg);
 
                     _prev_time = ros::Time::now();
                     _episode_iterations++;
@@ -289,6 +261,15 @@ namespace arm_speed_safe_controller {
                     for (unsigned int j = 0; j < n_joints; j++) {
                         joints[j]->setCommand(_commands(j)); //Sending the earlier set of commands
                     }
+
+                    //TO base
+                    _twist_msg.linear.x = _commands(5); //TO-DO make it generic
+                    _twist_msg.linear.y = _commands(6);
+                    _twist_msg.linear.z = 0.0;
+
+                    _twist_msg.angular.x = 0.0;
+                    _twist_msg.angular.y = 0.0;
+                    _twist_msg.angular.z = _commands(7);
                 }
                 else //episode is over
                 {
@@ -298,7 +279,6 @@ namespace arm_speed_safe_controller {
 
                         //send zero velocities
                         joints[j]->setCommand(0);
-                        // _constraint.enforce(period);
                     }
 
                     //Add base positions
@@ -306,11 +286,6 @@ namespace arm_speed_safe_controller {
                         _jointList.push_back(_baseCOM[k]);
                         //Send the arm velocities here
                     }
-
-                    // Remove arm velocity
-                    // for (unsigned int j = 0; j < n_joints; j++) {
-                    //     _jointList.push_back(joints[j]->getVelocity());
-                    // }
 
                     // Send zero velocities on \cmd_vel
                     _twist_msg.linear.y = 0.0;
@@ -334,7 +309,7 @@ namespace arm_speed_safe_controller {
 
                 //Make base stationery first
 
-                // Send zero velocities on \cmd_vel
+                // Send zero velocities on \cmd_vel (so base stays where it is)
                 _twist_msg.linear.y = 0.0;
                 _twist_msg.linear.x = 0.0;
                 _twist_msg.linear.z = 0.0;
@@ -345,7 +320,9 @@ namespace arm_speed_safe_controller {
                 _pub_twist.publish(_twist_msg);
 
                 std::vector<double> q;
-                Eigen::VectorXd velocities(5); //this should be changed to action_dim
+                Eigen::VectorXd velocities(5); //this should be changed to action_dim but kept at 5 as we only want to send vel to arm now
+
+                //This next part is only for the arm manual reset
 
                 double time_step = 0.05;
                 double threshold = 1e-3;
@@ -431,7 +408,7 @@ namespace arm_speed_safe_controller {
                     //_realtime_pub_joints->msg_.layout.dim[1].size = n_joints * 2; //W
                     // _realtime_pub_joints->msg_.layout.dim[1].size = n_joints; // W for joints only
 
-                    _realtime_pub_joints->msg_.layout.dim[1].size = n_joints+3; // W for joints+3val of COM only
+                    _realtime_pub_joints->msg_.layout.dim[1].size = n_joints+3; // W for joints+3val of COM (time as state is added later in blackdrops hpp)
                     //_realtime_pub_joints->msg_.layout.dim[0].stride = n_joints * 2;
 
                     // _realtime_pub_joints->msg_.layout.dim[0].stride = n_joints; //For joints only
@@ -449,14 +426,14 @@ namespace arm_speed_safe_controller {
                     }
 
                     _jointList.clear();
-                    std::fill(_baseCOM.begin(), _baseCOM.end(), 0);
+                    // std::fill(_baseCOM.begin(), _baseCOM.end(), 0);
                 }
                 if (_realtime_pub_commands->trylock()) {
                     _realtime_pub_commands->msg_.layout.dim[0].label = "Iterations";
                     _realtime_pub_commands->msg_.layout.dim[1].label = "Actions";
                     _realtime_pub_commands->msg_.layout.dim[0].size = max_iterations; //H
                     // _realtime_pub_commands->msg_.layout.dim[1].size = n_joints; //W (remember to add values for the twist velocities)
-                    _realtime_pub_commands->msg_.layout.dim[1].size = n_joints+3; //W (remember to add 3 values for the twist velocities)
+                    _realtime_pub_commands->msg_.layout.dim[1].size = n_joints+3; //W (with 3 values for the twist velocities)
                     _realtime_pub_commands->msg_.layout.dim[0].stride = n_joints+3;
                     _realtime_pub_commands->msg_.layout.dim[1].stride = 1;
                     _realtime_pub_commands->msg_.layout.data_offset = 0;
@@ -550,7 +527,7 @@ namespace arm_speed_safe_controller {
             std::cout << "entered callback for COM (from ros init)" << std::endl;
             std::cout << "printing COM subscribed to: \n"<< std::endl;
             for (int i = 0; i < COMmsg->val.size(); i++) {
-                _baseCOM[i] = COMmsg->val[i];
+                _baseCOM[i] = COMmsg->val[i]+_episode_iterations;
                 std::cout << _baseCOM[i] << "," << std::endl;
             }
         }
@@ -566,13 +543,13 @@ namespace arm_speed_safe_controller {
             // Eigen::VectorXd res(joints.size() * 2 + 1); //Removing velocity, only keeping arm positions and time
             Eigen::VectorXd res(joints.size() + 1);
 
-            for (size_t i = 0; i < joints.size(); ++i)
+            for (size_t i = 0; i < joints.size(); ++i) //Arm
               res[i] = joints[i]->getPosition();
 
-            for (size_t i = 0; i < 3; ++i)
+            for (size_t i = 0; i < 3; ++i) //Base
               res[joints.size()+i] = _baseCOM[i];
 
-            res[joints.size()+3] = _episode_iterations * dT;
+            res[joints.size()+3] = _episode_iterations * dT; //Time
             return res;
         }
     }; // policy_controller

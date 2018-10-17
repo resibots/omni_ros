@@ -34,57 +34,57 @@ namespace global {
     bool received_states = false, received_actions = false;
     std::vector<std::vector<double>> states, actions;
 } // namespace global
-
-void getStates(const std_msgs::Float64MultiArray::ConstPtr& msgStates)
-{
-    ROS_INFO("Subscribing started to record state values");
-    std::ofstream states;
-    states.open("states.dat");
-
-    if (!states) { // file couldn't be opened
-        std::cerr << "Error: States file could not be opened" << std::endl;
-        exit(1);
-    }
-
-    for (unsigned int i = 0; i < msgStates->layout.dim[0].size; i++) {
-        std::vector<double> temp;
-        for (unsigned int j = 0; j < msgStates->layout.dim[1].size; j++) {
-            temp.push_back(msgStates->data[msgStates->layout.dim[0].stride * i + j]);
-            states << (msgStates->data[msgStates->layout.dim[0].stride * i + j]) << " ";
-        }
-
-        global::states.push_back(temp);
-        states << std::endl;
-    }
-    states.close();
-    global::received_states = true;
-}
-
-void getActions(const std_msgs::Float64MultiArray::ConstPtr& msgActions)
-{
-    ROS_INFO("Subscribing started to record action values");
-    std::ofstream actions;
-    actions.open("actions.dat");
-
-    if (!actions) { // file couldn't be opened
-        std::cerr << "Error: States file could not be opened" << std::endl;
-        exit(1);
-    }
-
-    for (unsigned int i = 0; i < msgActions->layout.dim[0].size; i++) {
-        std::vector<double> temp;
-        for (unsigned int j = 0; j < msgActions->layout.dim[1].size; j++){
-          temp.push_back(msgActions->data[msgActions->layout.dim[0].stride * i + j]);
-          actions << (msgActions->data[msgActions->layout.dim[0].stride * i + j]) << " ";
-        }
-
-        global::actions.push_back(temp);
-        actions << std::endl;
-    }
-
-    actions.close();
-    global::received_actions = true;
-}
+// 
+// void getStates(const std_msgs::Float64MultiArray::ConstPtr& msgStates)
+// {
+//     ROS_INFO("Subscribing started to record state values");
+//     std::ofstream states;
+//     states.open("states.dat");
+//
+//     if (!states) { // file couldn't be opened
+//         std::cerr << "Error: States file could not be opened" << std::endl;
+//         exit(1);
+//     }
+//
+//     for (unsigned int i = 0; i < msgStates->layout.dim[0].size; i++) {
+//         std::vector<double> temp;
+//         for (unsigned int j = 0; j < msgStates->layout.dim[1].size; j++) {
+//             temp.push_back(msgStates->data[msgStates->layout.dim[0].stride * i + j]);
+//             states << (msgStates->data[msgStates->layout.dim[0].stride * i + j]) << " ";
+//         }
+//
+//         global::states.push_back(temp);
+//         states << std::endl;
+//     }
+//     states.close();
+//     global::received_states = true;
+// }
+//
+// void getActions(const std_msgs::Float64MultiArray::ConstPtr& msgActions)
+// {
+//     ROS_INFO("Subscribing started to record action values");
+//     std::ofstream actions;
+//     actions.open("actions.dat");
+//
+//     if (!actions) { // file couldn't be opened
+//         std::cerr << "Error: States file could not be opened" << std::endl;
+//         exit(1);
+//     }
+//
+//     for (unsigned int i = 0; i < msgActions->layout.dim[0].size; i++) {
+//         std::vector<double> temp;
+//         for (unsigned int j = 0; j < msgActions->layout.dim[1].size; j++){
+//           temp.push_back(msgActions->data[msgActions->layout.dim[0].stride * i + j]);
+//           actions << (msgActions->data[msgActions->layout.dim[0].stride * i + j]) << " ";
+//         }
+//
+//         global::actions.push_back(temp);
+//         actions << std::endl;
+//     }
+//
+//     actions.close();
+//     global::received_actions = true;
+// }
 
 int main(int argc, char* argv[])
 {
@@ -105,10 +105,13 @@ int main(int argc, char* argv[])
     // Eigen::VectorXd params(175); //Change this to have reduced param list as now states include only the joint positions and not velocities anymore
     // Eigen::read_binary<Eigen::VectorXd>("/home/deba/Code/limbo/Results/results/policy_params_3.bin", params); //Use correct set of params for test, this one was with velocity
 
-
     // Eigen::VectorXd params(125); //see calculation at bottom of page
     // Eigen::read_binary<Eigen::VectorXd>("/home/deba/Code/limbo/dummy_results/policy_params_1.bin", params); //Generated with 5 output states, 6 input states
+
+    // Eigen::VectorXd params(135); //see calculation at bottom of page
+    // Eigen::read_binary<Eigen::VectorXd>("/home/deba/Code/limbo/dummy_results_omni/policy_params_1.bin", params); //Generated with 5 output states, 9 input states
     //
+    // //
     // omni_controllers::PolicyParams msg;
     // msg.params.clear();
     // for (unsigned int i = 0; i < params.size(); i++) {
@@ -158,3 +161,6 @@ int main(int argc, char* argv[])
 
 // input states = 6, output states = 5, hidden = 10
 // 7*10 + 11*5 = 70+55 = 125
+
+// input states = 9 (5 joints, 3 com base and 1 time), output states = 5 (only 5 joints), hidden = 10
+// 10*10 + 11*5 = 80+55 = 135
