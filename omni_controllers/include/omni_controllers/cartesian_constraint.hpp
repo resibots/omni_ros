@@ -21,7 +21,7 @@ namespace arm_speed_safe_controller {
     };
 
     /** Base class for cartesian height constraint for the Omnigrasper arm.
-     * 
+     *
      * The methods here are used by the two specifications below in the file.
      * You should start by reading them.
      */
@@ -223,7 +223,28 @@ namespace arm_speed_safe_controller {
             Eigen::Matrix4d full_trans = last_joint_trans * T_5_hook;
             Eigen::Vector3d end_pos = full_trans.col(3).head(3);
 
-            return (last_joint_pos(2) < end_pos(2)) ? last_joint_pos : end_pos;
+            //Position of the middle joints
+            Eigen::Matrix4d middle_joint_trans = T_plate_0 * T_0_1 * T_1_2
+                * T_2_3;
+            Eigen::Vector3d middle_joint_pos = middle_joint_trans.col(3).head(3);
+
+            Eigen::Vector3d lowest_joint_pos;
+
+            if (last_joint_pos(2) < end_pos(2)) {
+                lowest_joint_pos = last_joint_pos;
+            }
+            else {
+                lowest_joint_pos = end_pos;
+            }
+
+            if (lowest_joint_pos(2) < middle_joint_pos(2)) {
+                lowest_joint_pos = lowest_joint_pos;
+            }
+            else {
+                lowest_joint_pos = middle_joint_pos;
+            }
+
+            return lowest_joint_pos;
         }
 
         std::vector<Zone> _zones;
@@ -242,7 +263,7 @@ namespace arm_speed_safe_controller {
     public:
         /** The main method of this class. Stops all actuators if any one is
          *  beyond set joint limits.
-         * 
+         *
          * @return true if and only if the joints are outside the limits
          */
         bool enforce(const ros::Duration& period)
@@ -261,10 +282,10 @@ namespace arm_speed_safe_controller {
         /** Tell how far we are from the joint limit. 0 means that we reached
          * it and 1 that we are far. Values in between would mean that we are
          * approaching.
-         * 
+         *
          * For this specific implementation, the information is binary. You
          * would only get 0 or 1.
-         * 
+         *
          * @return proximity to the safety limit
          */
         double consult(const ros::Duration& period)
@@ -279,7 +300,7 @@ namespace arm_speed_safe_controller {
         /** Check among all zones whether any is triggered
          * This means that we check whether any of the watched joints is below
          * one of the limits we defined, a.k.a. zones.
-         * 
+         *
          * @return true if at least one of the height constraints is not respected
          */
         bool _zone_triggered(const ros::Duration& period)
@@ -357,7 +378,7 @@ namespace arm_speed_safe_controller {
         /** Tell how far we are from the joint limit. 0 means that we reached
          * it and 1 that we are far. Values in between would mean that we are
          * approaching.
-         * 
+         *
          * @return proximity to the safety limit
          */
         double consult(const ros::Duration& period)
@@ -369,7 +390,7 @@ namespace arm_speed_safe_controller {
         /** Check among all zones whether any is triggered
          * This means that we check whether any of the watched joints is below
          * one of the limits we defined, a.k.a. zones.
-         * 
+         *
          * @return value between 0 and 1, corresponding to the ratio to be
          *  applied to the velocities.
          */
@@ -399,7 +420,7 @@ namespace arm_speed_safe_controller {
         }
 
         /** Now we see for a given zone if it's triggered
-         * 
+         *
          * @return 1 if we are outside of boundaries and between 0 and 1
          *  otherwise, proportional to the distance between soft_min_height
          *  and hard_min_height. Also, between these two thresholds, if the arm

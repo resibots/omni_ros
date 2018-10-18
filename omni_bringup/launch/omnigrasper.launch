@@ -94,9 +94,7 @@ you accept its terms. -->
 
     <!-- Publish robot's state in the tf tree -->
     <node name="robot_state_publisher_arm" pkg="robot_state_publisher"
-          type="robot_state_publisher" >
-      <remap from="joint_states" to="/arm/joint_states"/>
-    </node>
+          type="robot_state_publisher" />
   </group>
 
   <!-- start motion capture -->
