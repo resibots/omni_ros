@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
     // Eigen::VectorXd params(125); //see calculation at bottom of page
     // Eigen::read_binary<Eigen::VectorXd>("/home/deba/Code/limbo/dummy_results/policy_params_1.bin", params); //Generated with 5 output states, 6 input states
 
-    // Eigen::VectorXd params(155); //see calculation at bottom of page
+    // Eigen::VectorXd params(135); //see calculation at bottom of page
     // Eigen::read_binary<Eigen::VectorXd>("/home/deba/Code/limbo/dummy_results_omni/policy_params_1.bin", params); //Generated with 5 output states, 9 input states
     //
     // //
@@ -163,4 +163,4 @@ int main(int argc, char* argv[])
 // 7*10 + 11*5 = 70+55 = 125
 
 // input states = 9 (5 joints, 3 com base and 1 time), output states = 5 (only 5 joints), hidden = 10
-// 10*10 + 11*5 = 100+55 = 155
+// 10*10 + 11*5 = 80+55 = 135
