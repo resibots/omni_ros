@@ -227,14 +227,14 @@ namespace arm_speed_safe_controller {
                     //Add base positions
                     for (unsigned int k = 0; k < 3; k++) {
                         _jointList.push_back(_baseCOM[k]);
-                        ROS_INFO_STREAM("test:COM (x_value) being added"<< _baseCOM[k]);
+                        // ROS_INFO_STREAM("test:COM (x_value) being added"<< _baseCOM[k]);
                     }
                     // std::fill(_baseCOM.begin(), _baseCOM.end(), 0);
 
                     // Add base velocities
                     for (unsigned int k = n_joints; k < n_joints + 3; k++) {
                         _commandList.push_back(_commands(k));
-                        ROS_INFO_STREAM("test:COM velocity being added"<< _commands(k));
+                        // ROS_INFO_STREAM("test:COM velocity being added"<< _commands(k));
                     }
 
                     // Extract the last 3 elements of the commands vector to create twist message :: TO-DO make it generic
@@ -277,10 +277,10 @@ namespace arm_speed_safe_controller {
                     }
 
                     //Add base positions
-                    ROS_INFO_STREAM("baseCOM");
+                    // ROS_INFO_STREAM("baseCOM");
                     for (unsigned int k = 0; k < 3; k++) {
                         _jointList.push_back(_baseCOM[k]);
-                        ROS_INFO_STREAM(_baseCOM[k]);
+                        // ROS_INFO_STREAM(_baseCOM[k]);
                     }
                     // std::fill(_baseCOM.begin(), _baseCOM.end(), 0);
 
@@ -528,8 +528,8 @@ namespace arm_speed_safe_controller {
 
             for (int i = 0; i < COMmsg->val.size(); i++) {
                 _baseCOM[i] = COMmsg->val[i] ;
-                ROS_INFO_STREAM("dummy check from private member" << _baseCOM[i]);
-                ROS_INFO_STREAM("dummy check from COMmsg" << COMmsg->val[i]);
+                // ROS_INFO_STREAM("dummy check from private member" << _baseCOM[i]);
+                // ROS_INFO_STREAM("dummy check from COMmsg" << COMmsg->val[i]);
             }
         }
 
