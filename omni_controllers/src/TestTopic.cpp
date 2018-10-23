@@ -128,29 +128,63 @@ int main(int argc, char* argv[])
     // ros::spin();
     omni_controllers::DoubleVector COM; //if the variable is declared only once then the vector keeps growing. clear it at start of every lookuptransform
 
-    while(ros::ok())
+    ros::Rate r(100);
+    while (ros::ok())
+    // while(nh.ok())
     {
-    //
-    try{
-           _listener.waitForTransform("/world", "/omnigrasper", ros::Time(0), ros::Duration(2.0));
-          _listener.lookupTransform("/world", "/omnigrasper", ros::Time(0), _tfWorldToBase);
-                COM.val.clear();
+        //
 
-                //Creating a publisher that sends this information (the policy controller will subscribe to this)
-                //ROS_INFO("COM (x,y, theta_z) value:%f,%f,%f",_tfWorldToBase.getOrigin().x(),_tfWorldToBase.getOrigin().y(),tf::getYaw(_tfWorldToBase.getRotation()));
-                COM.val.push_back(_tfWorldToBase.getOrigin().x());
-                COM.val.push_back(_tfWorldToBase.getOrigin().y());
-                COM.val.push_back(tf::getYaw(_tfWorldToBase.getRotation()));
+        // if (_listener.waitForTransform("/world", "/omnigrasper", ros::Duration(0.1), ros::Duration(0.5))) {
+        //     // do try/catch lookupTransform() here
 
-                COM_val_pub.publish(COM);
-          }
-           catch (tf::TransformException &ex) {
-             ROS_ERROR("%s",ex.what());
-             // ros::Duration(1.0).sleep();
-             // continue;
+        // try {
+            _listener.waitForTransform("/omnigrasper", "/world", ros::Time(0), ros::Duration(0.5));
+            _listener.lookupTransform("/omnigrasper", "/world", ros::Time(0), _tfWorldToBase);
+            COM.val.clear();
+
+            //Creating a publisher that sends this information (the policy controller will subscribe to this)
+            //ROS_INFO("COM (x,y, theta_z) value:%f,%f,%f",_tfWorldToBase.getOrigin().x(),_tfWorldToBase.getOrigin().y(),tf::getYaw(_tfWorldToBase.getRotation()));
+            COM.val.push_back(_tfWorldToBase.getOrigin().x());
+            COM.val.push_back(_tfWorldToBase.getOrigin().y());
+            COM.val.push_back(tf::getYaw(_tfWorldToBase.getRotation()));
+
+            COM_val_pub.publish(COM);
+        //     ros::spin();
+        // }
+        // catch (tf::TransformException& ex)
+        // catch (tf::ExtrapolationException& e){
+        //     ROS_ERROR("%s", e.what());
+        //     ros::Duration(1.0).sleep();
+        //     continue;
+        // }
+        // ros::spin();
+        ros::spinOnce();
+        r.sleep();
+
+        // time = ros::Time::now(); // or better msg->header.stamp, if available; never ros::Time(0)
+        // int success = 0;
+        // while (success!=0) {
+        //     try {
+        //         _listener.waitForTransform("/omnigrasper", "/world", ros::Time::now(), ros::Duration(3.0));
+        //         _listener.lookupTransform("/omnigrasper", "/world", ros::Time::now(), _tfWorldToBase);
+        //         success = 1;
+        //
+        //             //Creating a publisher that sends this information (the policy controller will subscribe to this)
+        //             //ROS_INFO("COM (x,y, theta_z) value:%f,%f,%f",_tfWorldToBase.getOrigin().x(),_tfWorldToBase.getOrigin().y(),tf::getYaw(_tfWorldToBase.getRotation()));
+        //             COM.val.push_back(_tfWorldToBase.getOrigin().x());
+        //             COM.val.push_back(_tfWorldToBase.getOrigin().y());
+        //             COM.val.push_back(tf::getYaw(_tfWorldToBase.getRotation()));
+        //
+        //             COM_val_pub.publish(COM);
+        //     }
+        //     catch (tf::ExtrapolationException e) {
+        //     }
+        //     //sleep(0.1);
+        // }
+
+        // }
+
     }
-    ros::spin();
-  }
 }
 
 //No. of params=(input+1).hidden neurons + (hidden+1)*output
