@@ -390,19 +390,20 @@ namespace arm_speed_safe_controller {
 
                 // Send zero velocities on \cmd_vel
 
-                if (_realtime_pub_twist->trylock()) {
-                    // _realtime_pub_twist->msg_.data = _twist_msg;
-
-                    _realtime_pub_twist->msg_.linear.x = 0.0;
-                    _realtime_pub_twist->msg_.linear.y = 0.0;
-                    _realtime_pub_twist->msg_.linear.z = 0.0;
-
-                    _realtime_pub_twist->msg_.angular.x = 0.0;
-                    _realtime_pub_twist->msg_.angular.y = 0.0;
-                    _realtime_pub_twist->msg_.angular.z = 0.0;
-
-                    _realtime_pub_twist->unlockAndPublish();
-                }
+                // Disable this to enable the joypad use to reset youbot manually
+                // if (_realtime_pub_twist->trylock()) {
+                //     // _realtime_pub_twist->msg_.data = _twist_msg;
+                //
+                //     _realtime_pub_twist->msg_.linear.x = 0.0;
+                //     _realtime_pub_twist->msg_.linear.y = 0.0;
+                //     _realtime_pub_twist->msg_.linear.z = 0.0;
+                //
+                //     _realtime_pub_twist->msg_.angular.x = 0.0;
+                //     _realtime_pub_twist->msg_.angular.y = 0.0;
+                //     _realtime_pub_twist->msg_.angular.z = 0.0;
+                //
+                //     _realtime_pub_twist->unlockAndPublish();
+                // }
 
             } //End of if-block related to sending correct velocities depending on: blackdrops/reset/zero modes
 

@@ -128,7 +128,7 @@ int main(int argc, char* argv[])
     // ros::spin();
     omni_controllers::DoubleVector COM; //if the variable is declared only once then the vector keeps growing. clear it at start of every lookuptransform
 
-    ros::Rate r(100);
+    ros::Rate r(10);
     while (ros::ok())
     // while(nh.ok())
     {
