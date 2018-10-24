@@ -519,6 +519,7 @@ namespace arm_speed_safe_controller {
 
             //Hence rows can be set now (correspond to number of runs in an episode)
             max_iterations = std::ceil(msg->t / msg->dT) + 1;
+            // ROS_INFO_STREAM ("Number of max iterations = " << msg->t << " / " << msg->dT << " = " << max_iterations);
 
             _prev_time = ros::Time::now() - ros::Duration(2 * dT);
         }

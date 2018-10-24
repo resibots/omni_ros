@@ -35,56 +35,56 @@ namespace global {
     std::vector<std::vector<double>> states, actions;
 } // namespace global
 //
-// void getStates(const std_msgs::Float64MultiArray::ConstPtr& msgStates)
-// {
-//     ROS_INFO("Subscribing started to record state values");
-//     std::ofstream states;
-//     states.open("states.dat");
-//
-//     if (!states) { // file couldn't be opened
-//         std::cerr << "Error: States file could not be opened" << std::endl;
-//         exit(1);
-//     }
-//
-//     for (unsigned int i = 0; i < msgStates->layout.dim[0].size; i++) {
-//         std::vector<double> temp;
-//         for (unsigned int j = 0; j < msgStates->layout.dim[1].size; j++) {
-//             temp.push_back(msgStates->data[msgStates->layout.dim[0].stride * i + j]);
-//             states << (msgStates->data[msgStates->layout.dim[0].stride * i + j]) << " ";
-//         }
-//
-//         global::states.push_back(temp);
-//         states << std::endl;
-//     }
-//     states.close();
-//     global::received_states = true;
-// }
-//
-// void getActions(const std_msgs::Float64MultiArray::ConstPtr& msgActions)
-// {
-//     ROS_INFO("Subscribing started to record action values");
-//     std::ofstream actions;
-//     actions.open("actions.dat");
-//
-//     if (!actions) { // file couldn't be opened
-//         std::cerr << "Error: States file could not be opened" << std::endl;
-//         exit(1);
-//     }
-//
-//     for (unsigned int i = 0; i < msgActions->layout.dim[0].size; i++) {
-//         std::vector<double> temp;
-//         for (unsigned int j = 0; j < msgActions->layout.dim[1].size; j++){
-//           temp.push_back(msgActions->data[msgActions->layout.dim[0].stride * i + j]);
-//           actions << (msgActions->data[msgActions->layout.dim[0].stride * i + j]) << " ";
-//         }
-//
-//         global::actions.push_back(temp);
-//         actions << std::endl;
-//     }
-//
-//     actions.close();
-//     global::received_actions = true;
-// }
+void getStates(const std_msgs::Float64MultiArray::ConstPtr& msgStates)
+{
+    ROS_INFO("Subscribing started to record state values");
+    std::ofstream states;
+    states.open("states_24oct.dat");
+
+    if (!states) { // file couldn't be opened
+        std::cerr << "Error: States file could not be opened" << std::endl;
+        exit(1);
+    }
+
+    for (unsigned int i = 0; i < msgStates->layout.dim[0].size; i++) {
+        std::vector<double> temp;
+        for (unsigned int j = 0; j < msgStates->layout.dim[1].size; j++) {
+            temp.push_back(msgStates->data[msgStates->layout.dim[0].stride * i + j]);
+            states << (msgStates->data[msgStates->layout.dim[0].stride * i + j]) << " ";
+        }
+
+        global::states.push_back(temp);
+        states << std::endl;
+    }
+    states.close();
+    global::received_states = true;
+}
+
+void getActions(const std_msgs::Float64MultiArray::ConstPtr& msgActions)
+{
+    ROS_INFO("Subscribing started to record action values");
+    std::ofstream actions;
+    actions.open("actions_24oct.dat");
+
+    if (!actions) { // file couldn't be opened
+        std::cerr << "Error: States file could not be opened" << std::endl;
+        exit(1);
+    }
+
+    for (unsigned int i = 0; i < msgActions->layout.dim[0].size; i++) {
+        std::vector<double> temp;
+        for (unsigned int j = 0; j < msgActions->layout.dim[1].size; j++){
+          temp.push_back(msgActions->data[msgActions->layout.dim[0].stride * i + j]);
+          actions << (msgActions->data[msgActions->layout.dim[0].stride * i + j]) << " ";
+        }
+
+        global::actions.push_back(temp);
+        actions << std::endl;
+    }
+
+    actions.close();
+    global::received_actions = true;
+}
 
 int main(int argc, char* argv[])
 {
@@ -95,9 +95,9 @@ int main(int argc, char* argv[])
     tf::TransformListener _listener;
     tf::StampedTransform _tfWorldToBase; //includes frame-id, child-id etc
 
-    // ros::Publisher my_msg_pub = nh.advertise<omni_controllers::PolicyParams>("/dynamixel_controllers/omni_arm_controller/policyParams", 100, true);
-    // ros::Subscriber robot_pos_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_arm_controller/States", 1, getStates);
-    // ros::Subscriber robot_vel_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_arm_controller/Actions", 1, getActions);
+    ros::Publisher my_msg_pub = nh.advertise<omni_controllers::PolicyParams>("/dynamixel_controllers/omni_arm_controller/policyParams", 100, true);
+    ros::Subscriber robot_pos_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_arm_controller/States", 1, getStates);
+    ros::Subscriber robot_vel_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_arm_controller/Actions", 1, getActions);
 
     ros::Publisher COM_val_pub = nh.advertise<omni_controllers::DoubleVector>("/dynamixel_controllers/omni_arm_controller/YouBotBaseCOM", 100, true);
 
@@ -126,6 +126,9 @@ int main(int argc, char* argv[])
     //      ros::spinOnce();
 
     // ros::spin();
+
+    // Record the states and actions to verify what the blackdrops algorithm is using
+
     omni_controllers::DoubleVector COM; //if the variable is declared only once then the vector keeps growing. clear it at start of every lookuptransform
 
     ros::Rate r(10);
@@ -159,32 +162,8 @@ int main(int argc, char* argv[])
         // }
         // ros::spin();
         ros::spinOnce();
-        r.sleep();
-
-        // time = ros::Time::now(); // or better msg->header.stamp, if available; never ros::Time(0)
-        // int success = 0;
-        // while (success!=0) {
-        //     try {
-        //         _listener.waitForTransform("/omnigrasper", "/world", ros::Time::now(), ros::Duration(3.0));
-        //         _listener.lookupTransform("/omnigrasper", "/world", ros::Time::now(), _tfWorldToBase);
-        //         success = 1;
-        //
-        //             //Creating a publisher that sends this information (the policy controller will subscribe to this)
-        //             //ROS_INFO("COM (x,y, theta_z) value:%f,%f,%f",_tfWorldToBase.getOrigin().x(),_tfWorldToBase.getOrigin().y(),tf::getYaw(_tfWorldToBase.getRotation()));
-        //             COM.val.push_back(_tfWorldToBase.getOrigin().x());
-        //             COM.val.push_back(_tfWorldToBase.getOrigin().y());
-        //             COM.val.push_back(tf::getYaw(_tfWorldToBase.getRotation()));
-        //
-        //             COM_val_pub.publish(COM);
-        //     }
-        //     catch (tf::ExtrapolationException e) {
-        //     }
-        //     //sleep(0.1);
-        // }
-
-        // }
-
-    }
+        //r.sleep();
+  }
 }
 
 //No. of params=(input+1).hidden neurons + (hidden+1)*output
