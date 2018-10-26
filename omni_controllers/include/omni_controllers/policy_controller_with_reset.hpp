@@ -424,8 +424,8 @@ namespace arm_speed_safe_controller {
         std::vector<double> _jointList;
         std::vector<double> _commandList;
 
-        //std::array<double, 3> _baseCOM; // TO DO Make generic
-        std::vector<double> _baseCOM;
+        std::array<double, 3> _baseCOM; // TO DO Make generic
+        // std::vector<double> _baseCOM;
 
         //Default joint angle values for reset purposes
         std::vector<double> _defaultConfig;

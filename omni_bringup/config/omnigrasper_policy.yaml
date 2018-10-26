@@ -33,7 +33,7 @@ dynamixel_controllers:
       action_dim: 8
       hidden_neurons: 10
       limits: [3.14159265359, 0.78539816339, 1.5707963268, 3.14159265359, 1.5707963268, 2.5, 2.5, 3.14]
-      max_u: [0.0, 0.0, 0.0, 0.0, 0.0, 0.08, 0.08, 0.0]
+      max_u: [0.0, 0.0, 0.0, 0.0, 0.0, 0.05, 0.05, 0.05]
       # Note to keep the same values in blackdrops omni.cpp code
 
 dynamixel_control:
