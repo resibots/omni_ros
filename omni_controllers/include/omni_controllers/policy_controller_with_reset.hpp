@@ -292,7 +292,7 @@ namespace arm_speed_safe_controller {
                         _realtime_pub_twist->msg_.linear.y = 0.0;
                         _realtime_pub_twist->msg_.linear.z = 0.0;
 
-                        _realtime_pub_twist->msg_.angular.x = 0.0;
+                        _realtime_pub_twist->msg_.angular.x = 0.0;//
                         _realtime_pub_twist->msg_.angular.y = 0.0;
                         _realtime_pub_twist->msg_.angular.z = 0.0;
 
@@ -529,7 +529,7 @@ namespace arm_speed_safe_controller {
             // std::fill(_baseCOM.begin(), _baseCOM.end(), 0);
 
             for (int i = 0; i < COMmsg->val.size(); i++) {
-                _baseCOM[i] = COMmsg->val[i] ;
+                _baseCOM[i] = COMmsg->val[i];
                 // ROS_INFO_STREAM("dummy check from private member" << _baseCOM[i]);
                 // ROS_INFO_STREAM("dummy check from COMmsg" << COMmsg->val[i]);
             }
@@ -544,15 +544,15 @@ namespace arm_speed_safe_controller {
         inline Eigen::VectorXd states_to_eigen()
         {
             // Eigen::VectorXd res(joints.size() * 2 + 1); //Removing velocity, only keeping arm positions and time
-            Eigen::VectorXd res(joints.size() + 4); // TO DO
+            Eigen::VectorXd res(joints.size() + 3); // TO DO
 
             for (size_t i = 0; i < joints.size(); ++i) //Arm
                 res[i] = joints[i]->getPosition();
 
             for (size_t i = 0; i < 3; ++i) //Base
-                res[joints.size() + i] = 0; //_baseCOM[i];
+                res[joints.size() + i] = _baseCOM[i];
 
-            res[joints.size() + 3] = _episode_iterations * dT; //Time
+            // res[joints.size() + 3] = _episode_iterations * dT; //Time
             return res;
         }
     }; // policy_controller

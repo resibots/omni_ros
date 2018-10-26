@@ -64,7 +64,7 @@ void getActions(const std_msgs::Float64MultiArray::ConstPtr& msgActions)
 {
     ROS_INFO("Subscribing started to record action values");
     std::ofstream actions;
-    actions.open("actions_24oct.dat");
+    actions.open("actions_25oct.dat");
 
     if (!actions) { // file couldn't be opened
         std::cerr << "Error: States file could not be opened" << std::endl;
@@ -131,38 +131,25 @@ int main(int argc, char* argv[])
 
     omni_controllers::DoubleVector COM; //if the variable is declared only once then the vector keeps growing. clear it at start of every lookuptransform
 
-    ros::Rate r(10);
+    ros::Rate r(100);
     while (ros::ok())
-    // while(nh.ok())
     {
-        //
-
-        // if (_listener.waitForTransform("/world", "/omnigrasper", ros::Duration(0.1), ros::Duration(0.5))) {
-        //     // do try/catch lookupTransform() here
-
-        // try {
             _listener.waitForTransform("/omnigrasper", "/world", ros::Time(0), ros::Duration(0.5));
             _listener.lookupTransform("/omnigrasper", "/world", ros::Time(0), _tfWorldToBase);
             COM.val.clear();
 
             //Creating a publisher that sends this information (the policy controller will subscribe to this)
             //ROS_INFO("COM (x,y, theta_z) value:%f,%f,%f",_tfWorldToBase.getOrigin().x(),_tfWorldToBase.getOrigin().y(),tf::getYaw(_tfWorldToBase.getRotation()));
+
+            // Only base (x, y) value
             COM.val.push_back(_tfWorldToBase.getOrigin().x());
             COM.val.push_back(_tfWorldToBase.getOrigin().y());
             COM.val.push_back(tf::getYaw(_tfWorldToBase.getRotation()));
 
             COM_val_pub.publish(COM);
-        //     ros::spin();
-        // }
-        // catch (tf::TransformException& ex)
-        // catch (tf::ExtrapolationException& e){
-        //     ROS_ERROR("%s", e.what());
-        //     ros::Duration(1.0).sleep();
-        //     continue;
-        // }
-        // ros::spin();
+
         ros::spinOnce();
-        //r.sleep();
+        r.sleep();
   }
 }
 
@@ -175,5 +162,5 @@ int main(int argc, char* argv[])
 // input states = 6, output states = 5, hidden = 10
 // 7*10 + 11*5 = 70+55 = 125
 
-// input states = 9 (5 joints, 3 com base and 1 time), output states = 5 (only 5 joints), hidden = 10
+// input states = 8 (5 joints, 3 com base and 1 time), output states = 5 (only 5 joints), hidden = 10
 // 10*10 + 11*5 = 80+55 = 135
