@@ -29,11 +29,11 @@ dynamixel_controllers:
       - arm_3_4
       - arm_4_5
     policy_params:
-      state_dim: 5
-      action_dim: 5
+      state_dim: 7
+      action_dim: 7
       hidden_neurons: 10
-      limits: [3.14159265359, 0.78539816339, 1.5707963268, 3.14159265359, 1.5707963268]
-      max_u: [0.5, 0.5, 0.5, 0.5, 0.5]
+      limits: [3.14159265359, 0.78539816339, 1.5707963268, 3.14159265359, 1.5707963268, 2.5, 2.5]
+      max_u: [ 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
       # Note to keep the same values in blackdrops omni.cpp code
 
 dynamixel_control:

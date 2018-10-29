@@ -144,7 +144,7 @@ int main(int argc, char* argv[])
             // Only base (x, y) value
             COM.val.push_back(_tfWorldToBase.getOrigin().x());
             COM.val.push_back(_tfWorldToBase.getOrigin().y());
-            COM.val.push_back(tf::getYaw(_tfWorldToBase.getRotation()));
+            // COM.val.push_back(tf::getYaw(_tfWorldToBase.getRotation()));
 
             COM_val_pub.publish(COM);
 

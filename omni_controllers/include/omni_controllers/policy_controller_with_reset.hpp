@@ -161,7 +161,7 @@ namespace arm_speed_safe_controller {
             _defaultConfig = {0.0, 0.0, 0.0, 0.0, 0.0}; //For the arm joints
             // _num_states_COM = 3; //Also take from blackdrops TO DO
 
-            _num_states_COM = 0;
+            _num_states_COM = 2;
 
             return true;
         }
@@ -200,18 +200,19 @@ namespace arm_speed_safe_controller {
                     }
 
                     // Extract the last 3 elements of the commands vector to create twist message :: TO-DO make it generic
-                    // if (_realtime_pub_twist->trylock()) {
-                    //
-                    //     _realtime_pub_twist->msg_.linear.x = _commands(5);
-                    //     _realtime_pub_twist->msg_.linear.y = _commands(6);
-                    //     _realtime_pub_twist->msg_.linear.z = 0.0;
-                    //
-                    //     _realtime_pub_twist->msg_.angular.x = 0.0;
-                    //     _realtime_pub_twist->msg_.angular.y = 0.0;
-                    //     _realtime_pub_twist->msg_.angular.z = _commands(7);
-                    //
-                    //     _realtime_pub_twist->unlockAndPublish();
-                    // }
+                    if (_realtime_pub_twist->trylock()) {
+
+                        _realtime_pub_twist->msg_.linear.x = _commands(5);
+                        _realtime_pub_twist->msg_.linear.y = _commands(6);
+                        _realtime_pub_twist->msg_.linear.z = 0.0;
+
+                        _realtime_pub_twist->msg_.angular.x = 0.0;
+                        _realtime_pub_twist->msg_.angular.y = 0.0;
+                        // _realtime_pub_twist->msg_.angular.z = _commands(7);
+                        _realtime_pub_twist->msg_.angular.z = 0.0;
+
+                        _realtime_pub_twist->unlockAndPublish();
+                    }
 
                     _prev_time = ros::Time::now();
                     _episode_iterations++;
