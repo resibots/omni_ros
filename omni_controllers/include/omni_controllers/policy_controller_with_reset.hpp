@@ -63,6 +63,9 @@
 //Local
 #include <omni_controllers/PolicyParams.h>
 #include <omni_controllers/DoubleVector.h>
+
+#include <omni_controllers/statesPub.h>
+#include <omni_controllers/commandsPub.h>
 #include <omni_controllers/MpcAction.h>
 #include <omni_controllers/arm_speed_safe_controller.hpp>
 #include <omni_controllers/cartesian_constraint.hpp>
@@ -180,12 +183,16 @@ namespace arm_speed_safe_controller {
             // _sub_COM_base = nh.subscribe<omni_controllers::DoubleVector>("YouBotBaseCOM", 1, &PolicyControllerWithReset::getCOM, this); //To read current COM (x, y) of base
             // _realtime_pub_twist = std::make_shared<realtime_tools::RealtimePublisher<geometry_msgs::Twist>>(nh, "/cmd_vel", 1); // For publishing twist messages to base
             _realtime_pub_margin = std::make_shared<realtime_tools::RealtimePublisher<std_msgs::Float64>>(nh, "margin", 4);
-            _realtime_pub_joints.reset(new realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>(nh, "States", 1));
-            _realtime_pub_joints->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
-            _realtime_pub_joints->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
-            _realtime_pub_commands.reset(new realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>(nh, "Actions", 1));
-            _realtime_pub_commands->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
-            _realtime_pub_commands->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
+            // _realtime_pub_joints.reset(new realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>(nh, "States", 1));
+
+            _realtime_pub_joints.reset(new realtime_tools::RealtimePublisher<omni_controllers::statesPub>(nh, "States", 1));
+            _realtime_pub_commands.reset(new realtime_tools::RealtimePublisher<omni_controllers::commandsPub>(nh, "Actions", 1));
+
+            // _realtime_pub_joints->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
+            // _realtime_pub_joints->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
+            // _realtime_pub_commands.reset(new realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>(nh, "Actions", 1));
+            // _realtime_pub_commands->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
+            // _realtime_pub_commands->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
 
             _defaultConfig = {0.0, 0.0, 0.0, 0.0, 0.0}; //For the arm 5 joints
             // _num_states_COM = 2;  // Only (x, y) of the base COM
@@ -387,22 +394,51 @@ namespace arm_speed_safe_controller {
                     //check details at http://docs.ros.org/api/std_msgs/html/msg/MultiArrayLayout.html
                     //multiarray(i,j,k) = data[data_offset + dim_stride[1]*i + dim_stride[2]*j + k]
                     // fill out message:
-                    _realtime_pub_joints->msg_.layout.dim[0].label = "Iterations";
-                    _realtime_pub_joints->msg_.layout.dim[1].label = "JointStates";
-                    _realtime_pub_joints->msg_.layout.dim[0].size = max_iterations; //H
-                    // _realtime_pub_joints->msg_.layout.dim[1].size = n_joints + _num_states_COM; // W for joints + 2 val of COM (time as state is added later in blackdrops hpp)
-                    _realtime_pub_joints->msg_.layout.dim[1].size = n_joints; // W for joints + 2 val of COM (time as state is added later in blackdrops hpp)
+                    // _realtime_pub_joints->msg_.layout.dim[0].label = "Iterations";
+                    // _realtime_pub_joints->msg_.layout.dim[1].label = "JointStates";
+                    // _realtime_pub_joints->msg_.layout.dim[0].size = max_iterations; //H
+                    // // _realtime_pub_joints->msg_.layout.dim[1].size = n_joints + _num_states_COM; // W for joints + 2 val of COM (time as state is added later in blackdrops hpp)
+                    // _realtime_pub_joints->msg_.layout.dim[1].size = n_joints; // W for joints + 2 val of COM (time as state is added later in blackdrops hpp)
+                    //
+                    // // _realtime_pub_joints->msg_.layout.dim[0].stride = n_joints + _num_states_COM; // For joints + 2 val of COM
+                    // _realtime_pub_joints->msg_.layout.dim[0].stride = n_joints;
+                    // _realtime_pub_joints->msg_.layout.dim[1].stride = 1;
+                    // _realtime_pub_joints->msg_.layout.data_offset = 0;
 
-                    // _realtime_pub_joints->msg_.layout.dim[0].stride = n_joints + _num_states_COM; // For joints + 2 val of COM
-                    _realtime_pub_joints->msg_.layout.dim[0].stride = n_joints;
-                    _realtime_pub_joints->msg_.layout.dim[1].stride = 1;
-                    _realtime_pub_joints->msg_.layout.data_offset = 0;
+                    // _realtime_pub_joints->msg_.data = _jointList;
+                    // _realtime_pub_joints->unlockAndPublish();
+                    //
+                    // if (_realtime_pub_joints->trylock()) {
+                    //     _realtime_pub_joints->msg_.data.clear();
+                    //     _realtime_pub_joints->unlock();
+                    // }
 
-                    _realtime_pub_joints->msg_.data = _jointList;
+                    // _realtime_pub_joints->msg_.data = _jointList;
+
+                    // for(int i=0; i< _jointList.size(); i++){
+                    //   _realtime_pub_joints->msg_.val[i]=_jointList(i);
+                    //   // _realtime_pub_joints->msg_.val.push_back(_jointList(i));
+                    // }
+
+                    double tmpval;
+                    for(int i=0; i< _jointList.size(); i++){
+                       // _realtime_pub_commands->msg_.val[i]= _commandList(i);
+
+                        tmpval = _jointList[i];
+                       _realtime_pub_joints->msg_.val.push_back(tmpval);
+
+                      // _realtime_pub_commands->msg_.val.push_back(_commandList(i));
+                    }
+
                     _realtime_pub_joints->unlockAndPublish();
 
                     if (_realtime_pub_joints->trylock()) {
-                        _realtime_pub_joints->msg_.data.clear();
+                      //
+                      // for(int i=0; i< _jointList.size(); i++){
+                      //   _realtime_pub_joints->msg_.val[i]= 0;
+                      // }
+
+                        _realtime_pub_joints->msg_.val.clear();
                         _realtime_pub_joints->unlock();
                     }
 
@@ -410,28 +446,50 @@ namespace arm_speed_safe_controller {
                 }
 
                 if (_realtime_pub_commands->trylock()) {
-                    _realtime_pub_commands->msg_.layout.dim[0].label = "Iterations";
-                    _realtime_pub_commands->msg_.layout.dim[1].label = "Actions";
-                    _realtime_pub_commands->msg_.layout.dim[0].size = max_iterations; //H
-                    // _realtime_pub_commands->msg_.layout.dim[1].size = n_joints + _num_states_COM; //W (with 2 values for the base velocities)
-                    // _realtime_pub_commands->msg_.layout.dim[0].stride = n_joints + _num_states_COM;
+                    // _realtime_pub_commands->msg_.layout.dim[0].label = "Iterations";
+                    // _realtime_pub_commands->msg_.layout.dim[1].label = "Actions";
+                    // _realtime_pub_commands->msg_.layout.dim[0].size = max_iterations; //H
+                    // // _realtime_pub_commands->msg_.layout.dim[1].size = n_joints + _num_states_COM; //W (with 2 values for the base velocities)
+                    // // _realtime_pub_commands->msg_.layout.dim[0].stride = n_joints + _num_states_COM;
+                    //
+                    // _realtime_pub_commands->msg_.layout.dim[1].size = n_joints; //W (with 2 values for the base velocities)
+                    // _realtime_pub_commands->msg_.layout.dim[0].stride = n_joints;
+                    //
+                    // _realtime_pub_commands->msg_.layout.dim[1].stride = 1;
+                    // _realtime_pub_commands->msg_.layout.data_offset = 0;
+                    //
+                    // _realtime_pub_commands->msg_.data = _commandList;
+                    //
+                    // _realtime_pub_commands->unlockAndPublish();
+                    //
+                    // if (_realtime_pub_commands->trylock()) {
+                    //     _realtime_pub_commands->msg_.data.clear();
+                    //     _realtime_pub_commands->unlock();
+                    // }
 
-                    _realtime_pub_commands->msg_.layout.dim[1].size = n_joints; //W (with 2 values for the base velocities)
-                    _realtime_pub_commands->msg_.layout.dim[0].stride = n_joints;
+                    double tmpval;
+                    for(int i=0; i< _commandList.size(); i++){
+                       // _realtime_pub_commands->msg_.val[i]= _commandList(i);
 
-                    _realtime_pub_commands->msg_.layout.dim[1].stride = 1;
-                    _realtime_pub_commands->msg_.layout.data_offset = 0;
+                        tmpval = _commandList[i];
+                       _realtime_pub_commands->msg_.val.push_back(tmpval);
 
-                    _realtime_pub_commands->msg_.data = _commandList;
+                      // _realtime_pub_commands->msg_.val.push_back(_commandList(i));
+                    }
 
                     _realtime_pub_commands->unlockAndPublish();
 
                     if (_realtime_pub_commands->trylock()) {
-                        _realtime_pub_commands->msg_.data.clear();
-                        _realtime_pub_commands->unlock();
+
+                      // for(int i=0; i< _commandList.size(); i++){
+                      // _realtime_pub_commands->msg_.val[i]=0;
+                      // }
+
+                       _realtime_pub_commands->msg_.val.clear();
+                      _realtime_pub_commands->unlock();
                     }
 
-                    _commandList.clear();
+                  _commandList.clear();
                 }
 
                 if (_realtime_pub_margin->trylock()) {
@@ -455,19 +513,19 @@ namespace arm_speed_safe_controller {
         // ros::Subscriber _sub_params;
         ros::Subscriber _sub_mpc;
         ros::ServiceServer _serv_reset;
-        ros::Publisher _pub_twist;
-        ros::Subscriber _sub_COM_base;
+        // ros::Publisher _pub_twist;
+        // ros::Subscriber _sub_COM_base;
 
-        double T, dT; //_rows to help in the publish matrix
+        // double T, dT; //_rows to help in the publish matrix
         int max_iterations, _episode_iterations;
         bool publish_flag, Bdp_eps_flag, reset_flag, manual_reset_flag, _mpc_flag;
-        int _num_states_COM;
+        // int _num_states_COM;
 
         // Temporary vectors that store all values during the whole episode
         std::vector<double> _jointList;
         std::vector<double> _commandList;
 
-        std::array<double, 2> _baseCOM; // TO DO Make generic
+        // std::array<double, 2> _baseCOM; // TO DO Make generic
         // std::vector<double> _baseCOM;
 
         //Default joint angle values for reset purposes
@@ -475,13 +533,17 @@ namespace arm_speed_safe_controller {
 
         Eigen::VectorXd _commands;
         Eigen::VectorXd _mpc_commands;
-        ros::Time _prev_time;
+        // ros::Time _prev_time;
 
-        std::shared_ptr<blackdrops::policy::NNPolicy> _policy;
-        std::shared_ptr<realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>> _realtime_pub_joints;
-        std::shared_ptr<realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>> _realtime_pub_commands;
+        // std::shared_ptr<blackdrops::policy::NNPolicy> _policy;
+        // std::shared_ptr<realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>> _realtime_pub_joints;
+        // std::shared_ptr<realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>> _realtime_pub_commands;
+
+        std::shared_ptr<realtime_tools::RealtimePublisher<omni_controllers::statesPub>> _realtime_pub_joints;
+        std::shared_ptr<realtime_tools::RealtimePublisher<omni_controllers::commandsPub>> _realtime_pub_commands;
+
         std::shared_ptr<realtime_tools::RealtimePublisher<std_msgs::Float64>> _realtime_pub_margin;
-        std::shared_ptr<realtime_tools::RealtimePublisher<geometry_msgs::Twist>> _realtime_pub_twist;
+        // std::shared_ptr<realtime_tools::RealtimePublisher<geometry_msgs::Twist>> _realtime_pub_twist;
 
         // void setParams(const omni_controllers::PolicyParams::ConstPtr& msg)
         // {
@@ -524,7 +586,8 @@ namespace arm_speed_safe_controller {
 
         inline Eigen::VectorXd states_to_eigen()
         {
-            Eigen::VectorXd res(joints.size() + _num_states_COM); // TO DO
+            // Eigen::VectorXd res(joints.size() + _num_states_COM); // TO DO
+            Eigen::VectorXd res(joints.size());
 
             for (size_t i = 0; i < joints.size(); ++i) //Arm
                 res[i] = joints[i]->getPosition();
