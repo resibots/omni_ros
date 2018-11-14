@@ -27,6 +27,7 @@ add_message_files(
   FILES
   PolicyParams.msg
   DoubleVector.msg
+  MpcAction.msg
   )
 
 # generate_messages(DEPENDENCIES std_msgs omni_controllers/PublishData)
