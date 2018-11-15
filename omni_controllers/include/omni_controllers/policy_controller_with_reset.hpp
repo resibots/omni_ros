@@ -148,7 +148,11 @@ namespace arm_speed_safe_controller {
             _sub_mpc = nh.subscribe<omni_controllers::MpcAction>("MpcActions", 1, &PolicyControllerWithReset::SetMpcActions, this);
             _serv_reset = nh.advertiseService("manualReset", &PolicyControllerWithReset::manualReset, this); //To bring back to default configuration in between episodes
             _realtime_pub_margin = std::make_shared<realtime_tools::RealtimePublisher<std_msgs::Float64>>(nh, "margin", 4);
-            _realtime_pub_joints.reset(new realtime_tools::RealtimePublisher<omni_controllers::statesPub>(nh, "States", 1));
+
+          _realtime_pub_joints = std::make_shared<realtime_tools::RealtimePublisher<omni_controllers::statesPub>>(nh, "States", 1);
+
+
+            // _realtime_pub_joints.reset(new realtime_tools::RealtimePublisher<omni_controllers::statesPub>(nh, "States", 1));
             _realtime_pub_commands.reset(new realtime_tools::RealtimePublisher<omni_controllers::commandsPub>(nh, "Actions", 1));
             _defaultConfig = {0.0, 0.0, 0.0, 0.0, 0.0}; //For the arm 5 joints
             return true;
@@ -274,7 +278,7 @@ namespace arm_speed_safe_controller {
 
             // Publishing the data gathered during the episode
             if (publish_flag) {
-              // ROS_INFO("Starting the realtime publishing");
+              ROS_INFO("Starting the realtime publishing of states");
               if (_realtime_pub_joints->trylock()) {
                     _realtime_pub_joints->msg_.val.clear();
                     // ROS_INFO("cleared the message in realtime joint pub");
