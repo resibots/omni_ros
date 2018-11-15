@@ -72,6 +72,8 @@
 #include <omni_controllers/policies/NNpolicy.hpp>
 
 /*
+
+REDUNDANT : FOR BLACKDROPS ONLY -- REWRITE FOR MPC LATER
 Policy controller to run with blackdrops
 In its current form, it does the following:
 
@@ -139,65 +141,16 @@ namespace arm_speed_safe_controller {
             commands_buffer.writeFromNonRT(std::vector<double>(n_joints, 0.0));
 
             _mpc_flag = false;
-
-            // Bdp_eps_flag = false;
             publish_flag = false;
-            // reset_flag = false;
             manual_reset_flag = false;
             _episode_iterations = 0;
 
-            // std::vector<double> limits_dummy;
-            // std::vector<double> max_u_dummy;
-            //
-            // int state_dim, action_dim, hidden_neurons;
-            // double boundary;
-            //
-            // if (!nh.getParam("policy_params/state_dim", state_dim)
-            //     || !nh.getParam("policy_params/action_dim", action_dim)
-            //     || !nh.getParam("policy_params/hidden_neurons", hidden_neurons)
-            //     || !nh.getParam("policy_params/limits", limits_dummy)
-            //     || !nh.getParam("policy_params/max_u", max_u_dummy)) {
-            //     ROS_ERROR_STREAM("Some parameters not received!");
-            //     return false;
-            // }
-            //
-            // Eigen::VectorXd limits(state_dim);
-            // Eigen::VectorXd max_u(action_dim);
-            //
-            // //Convert to Eigen vectors
-            // for (unsigned int i = 0; i < state_dim; i++) {
-            //     limits(i) = limits_dummy[i];
-            // }
-            //
-            // for (unsigned int i = 0; i < action_dim; i++) {
-            //     max_u(i) = max_u_dummy[i];
-            // }
-            //
-            // _policy = std::make_shared<blackdrops::policy::NNPolicy>(
-            //     boundary, state_dim, hidden_neurons, action_dim, limits, max_u);
-
-            // _sub_params = nh.subscribe<omni_controllers::PolicyParams>("policyParams", 1, &PolicyControllerWithReset::setParams, this); //Receives from blackdrops
-
             _sub_mpc = nh.subscribe<omni_controllers::MpcAction>("MpcActions", 1, &PolicyControllerWithReset::SetMpcActions, this);
             _serv_reset = nh.advertiseService("manualReset", &PolicyControllerWithReset::manualReset, this); //To bring back to default configuration in between episodes
-            // _sub_COM_base = nh.subscribe<omni_controllers::DoubleVector>("YouBotBaseCOM", 1, &PolicyControllerWithReset::getCOM, this); //To read current COM (x, y) of base
-            // _realtime_pub_twist = std::make_shared<realtime_tools::RealtimePublisher<geometry_msgs::Twist>>(nh, "/cmd_vel", 1); // For publishing twist messages to base
             _realtime_pub_margin = std::make_shared<realtime_tools::RealtimePublisher<std_msgs::Float64>>(nh, "margin", 4);
-            // _realtime_pub_joints.reset(new realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>(nh, "States", 1));
-
             _realtime_pub_joints.reset(new realtime_tools::RealtimePublisher<omni_controllers::statesPub>(nh, "States", 1));
             _realtime_pub_commands.reset(new realtime_tools::RealtimePublisher<omni_controllers::commandsPub>(nh, "Actions", 1));
-
-            // _realtime_pub_joints->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
-            // _realtime_pub_joints->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
-            // _realtime_pub_commands.reset(new realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>(nh, "Actions", 1));
-            // _realtime_pub_commands->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
-            // _realtime_pub_commands->msg_.layout.dim.push_back(std_msgs::MultiArrayDimension());
-
             _defaultConfig = {0.0, 0.0, 0.0, 0.0, 0.0}; //For the arm 5 joints
-            // _num_states_COM = 2;  // Only (x, y) of the base COM
-            //TO DO : Take from blackdrops
-
             return true;
         }
 
@@ -210,122 +163,51 @@ namespace arm_speed_safe_controller {
         void update(const ros::Time& /*time*/, const ros::Duration& period)
         {
 
-          // if (Bdp_eps_flag) // Blackdrops parameters to be implemented
           if (_mpc_flag) // Blackdrops parameters to be implemented
             {
-                ros::Time curr_time = ros::Time::now();
-                // if ((_episode_iterations < 2) && (curr_time.toSec() - _prev_time.toSec() >= dT)) //During the episode, when mpc commands can be sent
-                if (_episode_iterations < 2) //During the episode, when mpc commands can be sent
+               ROS_INFO("Starting mpc flag related actions");
+               if (_episode_iterations < 2) //During the episode (here it is set to only one step episodes), when mpc commands can be sent
                 {
-                    // _commands = _policy->next(states_to_eigen());
-
-                    _commands = _mpc_commands;
-
-                    // _commands already set in the callback and does not change
+                    ROS_INFO("Executing action for one step..");
+                    // Maybe clear the commands first
+                    // _commands = _mpc_commands;
+                    _commands = Eigen::VectorXd::Map(_mpc_commands.data(), _mpc_commands.size());
+                    ROS_INFO("Finished storing actions in commands vector..values =", _commands.transpose());
 
                     for (unsigned int j = 0; j < n_joints; j++) {
                         _commandList.push_back(_commands(j));
-                        _jointList.push_back(joints[j]->getPosition());
+                        //_jointList.push_back(joints[j]->getPosition()); // We need the joint positions only after having sent the commands, i.e after the episode
 
                         joints[j]->setCommand(_commands(j));
                     }
-
-                    //Add base positions
-                    // for (unsigned int k = 0; k < _num_states_COM; k++) {
-                    //     _jointList.push_back(_baseCOM[k]);
-                    // }
-
-                    // Add base velocities
-                    // for (unsigned int k = n_joints; k < n_joints + _num_states_COM; k++) {
-                    //     _commandList.push_back(_commands(k));
-                    // }
-
-                    // Extract the last 2 elements of the commands vector to create twist message :: TO-DO make it generic
-                    // if (_realtime_pub_twist->trylock()) {
-                    //
-                    //     _realtime_pub_twist->msg_.linear.x = _commands(5);
-                    //     _realtime_pub_twist->msg_.linear.y = _commands(6);
-                    //     _realtime_pub_twist->msg_.linear.z = 0.0;
-                    //
-                    //     _realtime_pub_twist->msg_.angular.x = 0.0;
-                    //     _realtime_pub_twist->msg_.angular.y = 0.0;
-                    //     // _realtime_pub_twist->msg_.angular.z = _commands(7);
-                    //     _realtime_pub_twist->msg_.angular.z = 0.0;
-                    //
-                    //     _realtime_pub_twist->unlockAndPublish();
-                    // }
-
-                    // _prev_time = ros::Time::now();
                     _episode_iterations++;
 
                     if (_realtime_pub_margin->trylock()) {
                         _realtime_pub_margin->msg_.data = _constraint.consult(period);
                         _realtime_pub_margin->unlockAndPublish();
                     }
+                    ROS_INFO("Finished executing action for one step..");
                 }
-                //
-                // else if ((_episode_iterations < max_iterations) && (curr_time.toSec() - _prev_time.toSec()) < dT) //Wait period during an ongoing episode
-                // {
-                //     for (unsigned int j = 0; j < n_joints; j++) {
-                //         joints[j]->setCommand(_commands(j)); //Sending the earlier set of commands
-                //     }
-                // }
 
                 else //Episode is over
                 {
+                    ROS_INFO("One step episode is over, recording joint positions..");
                     for (unsigned int j = 0; j < n_joints; j++) {
                         _jointList.push_back(joints[j]->getPosition()); //Record the last set of joint states
-                        joints[j]->setCommand(0); //Send zero velocities
+                        //joints[j]->setCommand(0); //Send zero velocities
                     }
 
-                    //Add base positions
-                    // for (unsigned int k = 0; k < _num_states_COM; k++) {
-                    //     _jointList.push_back(_baseCOM[k]);
-                    // }
-
-                    // Send zero velocities on \cmd_vel
-                    // if (_realtime_pub_twist->trylock()) {
-                    //     // _realtime_pub_twist->msg_.data = _twist_msg;
-                    //
-                    //     _realtime_pub_twist->msg_.linear.x = 0.0;
-                    //     _realtime_pub_twist->msg_.linear.y = 0.0;
-                    //     _realtime_pub_twist->msg_.linear.z = 0.0;
-                    //
-                    //     _realtime_pub_twist->msg_.angular.x = 0.0;
-                    //     _realtime_pub_twist->msg_.angular.y = 0.0;
-                    //     _realtime_pub_twist->msg_.angular.z = 0.0;
-                    //
-                    //     _realtime_pub_twist->unlockAndPublish();
-                    // }
-
-                    //Reset/set flags and _episode_iterations
                     _mpc_flag = false;
                     publish_flag = true;
-                    // reset_flag = true;
                     _episode_iterations = 0;
                 }
-            } //End of blackdrops mode
 
-            else if (manual_reset_flag) { //Return to default configuration (only for the arm for now)
+                ROS_INFO("End of mpc related actions");
+            } //End of mpc mode
 
-                //Make base stationery first
+            else if (manual_reset_flag) { //Return to default configuration (only for the arm for now) -- called by a service thus not related to mpc/blackdrops
 
-                // Send zero velocities on \cmd_vel
-                //
-                // if (_realtime_pub_twist->trylock()) {
-                //     // _realtime_pub_twist->msg_.data = _twist_msg;
-                //
-                //     _realtime_pub_twist->msg_.linear.x = 0.0;
-                //     _realtime_pub_twist->msg_.linear.y = 0.0;
-                //     _realtime_pub_twist->msg_.linear.z = 0.0;
-                //
-                //     _realtime_pub_twist->msg_.angular.x = 0.0;
-                //     _realtime_pub_twist->msg_.angular.y = 0.0;
-                //     _realtime_pub_twist->msg_.angular.z = 0.0;
-                //
-                //     _realtime_pub_twist->unlockAndPublish();
-                // }
-
+                ROS_INFO("Starting p-control to reset back to default configuration..");
                 std::vector<double> q;
                 Eigen::VectorXd velocities(n_joints); //TO DO : This should be changed to action_dim but kept at 5 as we only want to send vel to arm now
 
@@ -372,72 +254,37 @@ namespace arm_speed_safe_controller {
                         joints[j]->setCommand(velocities(j));
                 }
                 else { //Default configuration already reached
-                    // reset_flag = false;
-                    manual_reset_flag = false;
+                  manual_reset_flag = false;
                 }
 
             } //End of reset mode
 
             else {
                 // Outside of an episode and when already at default configuration, send zero velocities
+                // ROS_INFO("Limbo state (outside of episode or bringing to reset), sending zero velocities...");
                 for (unsigned int j = 0; j < n_joints; j++) {
                     joints[j]->setCommand(0);
                 }
                 // _constraint.enforce(period);
 
-            } //End of if-block related to sending correct velocities depending on: blackdrops/reset/zero modes
+            }
+            //End of if-else if-else block related to sending correct velocities depending on: mpc/reset/zero modes
 
             // Publishing the data gathered during the episode
             if (publish_flag) {
+              ROS_INFO("Starting the realtime publishing");
               if (_realtime_pub_joints->trylock()) {
-
-                    //check details at http://docs.ros.org/api/std_msgs/html/msg/MultiArrayLayout.html
-                    //multiarray(i,j,k) = data[data_offset + dim_stride[1]*i + dim_stride[2]*j + k]
-                    // fill out message:
-                    // _realtime_pub_joints->msg_.layout.dim[0].label = "Iterations";
-                    // _realtime_pub_joints->msg_.layout.dim[1].label = "JointStates";
-                    // _realtime_pub_joints->msg_.layout.dim[0].size = max_iterations; //H
-                    // // _realtime_pub_joints->msg_.layout.dim[1].size = n_joints + _num_states_COM; // W for joints + 2 val of COM (time as state is added later in blackdrops hpp)
-                    // _realtime_pub_joints->msg_.layout.dim[1].size = n_joints; // W for joints + 2 val of COM (time as state is added later in blackdrops hpp)
-                    //
-                    // // _realtime_pub_joints->msg_.layout.dim[0].stride = n_joints + _num_states_COM; // For joints + 2 val of COM
-                    // _realtime_pub_joints->msg_.layout.dim[0].stride = n_joints;
-                    // _realtime_pub_joints->msg_.layout.dim[1].stride = 1;
-                    // _realtime_pub_joints->msg_.layout.data_offset = 0;
-
-                    // _realtime_pub_joints->msg_.data = _jointList;
-                    // _realtime_pub_joints->unlockAndPublish();
-                    //
-                    // if (_realtime_pub_joints->trylock()) {
-                    //     _realtime_pub_joints->msg_.data.clear();
-                    //     _realtime_pub_joints->unlock();
-                    // }
-
-                    // _realtime_pub_joints->msg_.data = _jointList;
-
-                    // for(int i=0; i< _jointList.size(); i++){
-                    //   _realtime_pub_joints->msg_.val[i]=_jointList(i);
-                    //   // _realtime_pub_joints->msg_.val.push_back(_jointList(i));
-                    // }
 
                     double tmpval;
                     for(int i=0; i< _jointList.size(); i++){
-                       // _realtime_pub_commands->msg_.val[i]= _commandList(i);
-
                         tmpval = _jointList[i];
                        _realtime_pub_joints->msg_.val.push_back(tmpval);
 
-                      // _realtime_pub_commands->msg_.val.push_back(_commandList(i));
                     }
 
                     _realtime_pub_joints->unlockAndPublish();
 
                     if (_realtime_pub_joints->trylock()) {
-                      //
-                      // for(int i=0; i< _jointList.size(); i++){
-                      //   _realtime_pub_joints->msg_.val[i]= 0;
-                      // }
-
                         _realtime_pub_joints->msg_.val.clear();
                         _realtime_pub_joints->unlock();
                     }
@@ -446,46 +293,17 @@ namespace arm_speed_safe_controller {
                 }
 
                 if (_realtime_pub_commands->trylock()) {
-                    // _realtime_pub_commands->msg_.layout.dim[0].label = "Iterations";
-                    // _realtime_pub_commands->msg_.layout.dim[1].label = "Actions";
-                    // _realtime_pub_commands->msg_.layout.dim[0].size = max_iterations; //H
-                    // // _realtime_pub_commands->msg_.layout.dim[1].size = n_joints + _num_states_COM; //W (with 2 values for the base velocities)
-                    // // _realtime_pub_commands->msg_.layout.dim[0].stride = n_joints + _num_states_COM;
-                    //
-                    // _realtime_pub_commands->msg_.layout.dim[1].size = n_joints; //W (with 2 values for the base velocities)
-                    // _realtime_pub_commands->msg_.layout.dim[0].stride = n_joints;
-                    //
-                    // _realtime_pub_commands->msg_.layout.dim[1].stride = 1;
-                    // _realtime_pub_commands->msg_.layout.data_offset = 0;
-                    //
-                    // _realtime_pub_commands->msg_.data = _commandList;
-                    //
-                    // _realtime_pub_commands->unlockAndPublish();
-                    //
-                    // if (_realtime_pub_commands->trylock()) {
-                    //     _realtime_pub_commands->msg_.data.clear();
-                    //     _realtime_pub_commands->unlock();
-                    // }
 
                     double tmpval;
                     for(int i=0; i< _commandList.size(); i++){
-                       // _realtime_pub_commands->msg_.val[i]= _commandList(i);
-
                         tmpval = _commandList[i];
                        _realtime_pub_commands->msg_.val.push_back(tmpval);
-
-                      // _realtime_pub_commands->msg_.val.push_back(_commandList(i));
                     }
 
                     _realtime_pub_commands->unlockAndPublish();
 
                     if (_realtime_pub_commands->trylock()) {
-
-                      // for(int i=0; i< _commandList.size(); i++){
-                      // _realtime_pub_commands->msg_.val[i]=0;
-                      // }
-
-                       _realtime_pub_commands->msg_.val.clear();
+                      _realtime_pub_commands->msg_.val.clear();
                       _realtime_pub_commands->unlock();
                     }
 
@@ -510,72 +328,43 @@ namespace arm_speed_safe_controller {
     private:
         SafetyConstraint _constraint;
         ros::Subscriber _sub_command;
-        // ros::Subscriber _sub_params;
         ros::Subscriber _sub_mpc;
         ros::ServiceServer _serv_reset;
-        // ros::Publisher _pub_twist;
-        // ros::Subscriber _sub_COM_base;
 
-        // double T, dT; //_rows to help in the publish matrix
-        int max_iterations, _episode_iterations;
-        bool publish_flag, Bdp_eps_flag, reset_flag, manual_reset_flag, _mpc_flag;
-        // int _num_states_COM;
+        int _episode_iterations;
+        bool publish_flag, manual_reset_flag, _mpc_flag;
 
         // Temporary vectors that store all values during the whole episode
         std::vector<double> _jointList;
         std::vector<double> _commandList;
 
-        // std::array<double, 2> _baseCOM; // TO DO Make generic
-        // std::vector<double> _baseCOM;
-
         //Default joint angle values for reset purposes
         std::vector<double> _defaultConfig;
 
         Eigen::VectorXd _commands;
-        Eigen::VectorXd _mpc_commands;
-        // ros::Time _prev_time;
-
-        // std::shared_ptr<blackdrops::policy::NNPolicy> _policy;
-        // std::shared_ptr<realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>> _realtime_pub_joints;
-        // std::shared_ptr<realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>> _realtime_pub_commands;
+        // Eigen::VectorXd _mpc_commands;
+        std::vector<double> _mpc_commands;
 
         std::shared_ptr<realtime_tools::RealtimePublisher<omni_controllers::statesPub>> _realtime_pub_joints;
         std::shared_ptr<realtime_tools::RealtimePublisher<omni_controllers::commandsPub>> _realtime_pub_commands;
-
         std::shared_ptr<realtime_tools::RealtimePublisher<std_msgs::Float64>> _realtime_pub_margin;
-        // std::shared_ptr<realtime_tools::RealtimePublisher<geometry_msgs::Twist>> _realtime_pub_twist;
-
-        // void setParams(const omni_controllers::PolicyParams::ConstPtr& msg)
-        // {
-        //     Eigen::VectorXd params(msg->params.size()); //copy the parameters in a local public array, save time information
-        //
-        //     for (int i = 0; i < msg->params.size(); i++)
-        //         params(i) = msg->params[i];
-        //
-        //     _policy->set_params(params); //set the policy parameters
-        //     Bdp_eps_flag = true;
-        //
-        //     dT = msg->dT;
-        //
-        //     //Hence rows can be set now (correspond to number of runs in an episode)
-        //     max_iterations = std::ceil(msg->t / msg->dT) + 1;
-        //     _prev_time = ros::Time::now() - ros::Duration(2 * dT);
-        // }
-
-        // void getCOM(const omni_controllers::DoubleVector::ConstPtr& COMmsg)
-        // {
-        //   for (int i = 0; i < COMmsg->val.size(); i++) {
-        //         _baseCOM[i] = COMmsg->val[i];
-        //     }
-        // }
 
         void SetMpcActions(const omni_controllers::MpcAction::ConstPtr& msg)
         {
+          ROS_INFO("Receiving Mpc actions on MpcAction topic");
+          //Maybe have to clear _mpc_commands first
+          _mpc_commands.clear();
           _mpc_flag = true;
+          double tmpval;
           for (int i = 0; i < msg->val.size(); i++) {
-                _mpc_commands(i) = msg->val[i];
+              tmpval = msg->val[i];
+              // ROS_INFO("received value:", tmpval);
+              std::cout <<"received command:"<< tmpval << std::endl;
+              //_mpc_commands[i] = tmpval;
+              _mpc_commands.push_back(tmpval);
             }
-            max_iterations = 1; //change this to the number of steps in an episode when using episodic mode
+          ROS_INFO("Commands received!");
+          // ROS_INFO("Commands received were:", _mpc_commands.transpose());
         }
 
         bool manualReset(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
@@ -584,20 +373,15 @@ namespace arm_speed_safe_controller {
             return true;
         }
 
-        inline Eigen::VectorXd states_to_eigen()
-        {
-            // Eigen::VectorXd res(joints.size() + _num_states_COM); // TO DO
-            Eigen::VectorXd res(joints.size());
-
-            for (size_t i = 0; i < joints.size(); ++i) //Arm
-                res[i] = joints[i]->getPosition();
-
-            // for (size_t i = 0; i < _num_states_COM; ++i) //Base
-            //     res[joints.size() + i] = _baseCOM[i];
-
-            // res[joints.size() + 3] = _episode_iterations * dT; //Time
-            return res;
-        }
+        // inline Eigen::VectorXd states_to_eigen()
+        // {
+        //     Eigen::VectorXd res(joints.size());
+        //
+        //     for (size_t i = 0; i < joints.size(); ++i) //Arm
+        //         res[i] = joints[i]->getPosition();
+        //
+        //     return res;
+        // }
     }; // policy_controller
 } // namespace arm_speed_safe_controller
 
