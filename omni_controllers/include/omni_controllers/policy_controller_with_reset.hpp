@@ -165,17 +165,17 @@ namespace arm_speed_safe_controller {
 
           if (_mpc_flag) // Blackdrops parameters to be implemented
             {
-               ROS_INFO("Starting mpc flag related actions");
+               // ROS_INFO("Inside UPDATE : Starting mpc flag=true related actions");
                if (_episode_iterations < 2) //During the episode (here it is set to only one step episodes), when mpc commands can be sent
                 {
-                    ROS_INFO("Executing action for one step..");
+                    // ROS_INFO("Executing action for one step..");
                     // Maybe clear the commands first
                     // _commands = _mpc_commands;
                     _commands = Eigen::VectorXd::Map(_mpc_commands.data(), _mpc_commands.size());
                     // ROS_INFO("Finished storing actions in commands vector..values =", _commands.transpose());
 
-                    std::cout << "Finished storing actions in commands vector..values =" << _commands.transpose() << std::endl;
-
+                    // std::cout << "Finished storing actions in commands vector..values =" << _commands.transpose() << std::endl;
+                    ROS_INFO("Executing action for one step..");
                     for (unsigned int j = 0; j < n_joints; j++) {
                         _commandList.push_back(_commands(j));
                         //_jointList.push_back(joints[j]->getPosition()); // We need the joint positions only after having sent the commands, i.e after the episode
@@ -188,7 +188,7 @@ namespace arm_speed_safe_controller {
                         _realtime_pub_margin->msg_.data = _constraint.consult(period);
                         _realtime_pub_margin->unlockAndPublish();
                     }
-                    ROS_INFO("Finished executing action for one step..");
+                    // ROS_INFO("Finished executing action for one step..");
                 }
 
                 else //Episode is over
@@ -204,12 +204,12 @@ namespace arm_speed_safe_controller {
                     _episode_iterations = 1;
                 }
 
-                ROS_INFO("End of mpc related actions");
+                // ROS_INFO("End of mpc=true related actions");
             } //End of mpc mode
 
             else if (manual_reset_flag) { //Return to default configuration (only for the arm for now) -- called by a service thus not related to mpc/blackdrops
 
-                ROS_INFO("Starting p-control to reset back to default configuration..");
+                // ROS_INFO("Starting p-control to reset back to default configuration..");
                 std::vector<double> q;
                 Eigen::VectorXd velocities(n_joints); //TO DO : This should be changed to action_dim but kept at 5 as we only want to send vel to arm now
 
@@ -274,9 +274,10 @@ namespace arm_speed_safe_controller {
 
             // Publishing the data gathered during the episode
             if (publish_flag) {
-              ROS_INFO("Starting the realtime publishing");
+              // ROS_INFO("Starting the realtime publishing");
               if (_realtime_pub_joints->trylock()) {
-
+                    _realtime_pub_joints->msg_.val.clear();
+                    // ROS_INFO("cleared the message in realtime joint pub");
                     double tmpval;
                     for(int i=0; i< _jointList.size(); i++){
                         tmpval = _jointList[i];
@@ -288,6 +289,7 @@ namespace arm_speed_safe_controller {
 
                     if (_realtime_pub_joints->trylock()) {
                         _realtime_pub_joints->msg_.val.clear();
+                        // ROS_INFO("cleared the message in realtime joint pub");
                         _realtime_pub_joints->unlock();
                     }
 
@@ -296,6 +298,8 @@ namespace arm_speed_safe_controller {
 
                 if (_realtime_pub_commands->trylock()) {
 
+                    _realtime_pub_commands->msg_.val.clear();
+                    // ROS_INFO("cleared the message in realtime command pub");
                     double tmpval;
                     for(int i=0; i< _commandList.size(); i++){
                         tmpval = _commandList[i];
@@ -306,6 +310,7 @@ namespace arm_speed_safe_controller {
 
                     if (_realtime_pub_commands->trylock()) {
                       _realtime_pub_commands->msg_.val.clear();
+                      // ROS_INFO("cleared the message in realtime command pub");
                       _realtime_pub_commands->unlock();
                     }
 
