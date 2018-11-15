@@ -143,7 +143,7 @@ namespace arm_speed_safe_controller {
             _mpc_flag = false;
             publish_flag = false;
             manual_reset_flag = false;
-            _episode_iterations = 0;
+            _episode_iterations = 1;
 
             _sub_mpc = nh.subscribe<omni_controllers::MpcAction>("MpcActions", 1, &PolicyControllerWithReset::SetMpcActions, this);
             _serv_reset = nh.advertiseService("manualReset", &PolicyControllerWithReset::manualReset, this); //To bring back to default configuration in between episodes
@@ -172,7 +172,9 @@ namespace arm_speed_safe_controller {
                     // Maybe clear the commands first
                     // _commands = _mpc_commands;
                     _commands = Eigen::VectorXd::Map(_mpc_commands.data(), _mpc_commands.size());
-                    ROS_INFO("Finished storing actions in commands vector..values =", _commands.transpose());
+                    // ROS_INFO("Finished storing actions in commands vector..values =", _commands.transpose());
+
+                    std::cout << "Finished storing actions in commands vector..values =" << _commands.transpose() << std::endl;
 
                     for (unsigned int j = 0; j < n_joints; j++) {
                         _commandList.push_back(_commands(j));
@@ -199,7 +201,7 @@ namespace arm_speed_safe_controller {
 
                     _mpc_flag = false;
                     publish_flag = true;
-                    _episode_iterations = 0;
+                    _episode_iterations = 1;
                 }
 
                 ROS_INFO("End of mpc related actions");
@@ -355,11 +357,13 @@ namespace arm_speed_safe_controller {
           //Maybe have to clear _mpc_commands first
           _mpc_commands.clear();
           _mpc_flag = true;
+          publish_flag = false;
+          _episode_iterations = 1;
           double tmpval;
           for (int i = 0; i < msg->val.size(); i++) {
               tmpval = msg->val[i];
               // ROS_INFO("received value:", tmpval);
-              std::cout <<"received command:"<< tmpval << std::endl;
+              // std::cout <<"received command:"<< tmpval << std::endl;
               //_mpc_commands[i] = tmpval;
               _mpc_commands.push_back(tmpval);
             }
