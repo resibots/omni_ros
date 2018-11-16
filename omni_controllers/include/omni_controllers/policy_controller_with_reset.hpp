@@ -169,7 +169,7 @@ namespace arm_speed_safe_controller {
                         joints[j]->setCommand(0); //Send zero velocities
                     }
 
-                    _mpc_flag = false;
+                   _mpc_flag = false;
                     publish_flag = true;
                     //_episode_iterations =;
                 }

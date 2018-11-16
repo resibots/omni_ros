@@ -132,7 +132,6 @@ namespace arm_speed_safe_controller {
 
           if (_mpc_flag) // Blackdrops parameters to be implemented
             {
-               // ROS_INFO("Inside UPDATE : Starting mpc flag=true related actions");
                if (_episode_iterations < 2) //During the episode (here it is set to only one step episodes), when mpc commands can be sent
                {
                     _commands = Eigen::VectorXd::Map(_mpc_commands.data(), _mpc_commands.size());
@@ -168,6 +167,9 @@ namespace arm_speed_safe_controller {
                         joints[j]->setCommand(0); //Send zero velocities
                     }
 
+                    for (unsigned int j = 0; j < n_joints; j++) {
+                      _jointList.push_back(joints[j]->getVelocity());
+}
                     _mpc_flag = false;
                     publish_flag = true;
                     //_episode_iterations =;
