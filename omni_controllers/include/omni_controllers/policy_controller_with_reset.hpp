@@ -128,11 +128,13 @@ namespace arm_speed_safe_controller {
 
         void update(const ros::Time& /*time*/, const ros::Duration& period)
         {
+          ros::Time curr_time = ros::Time::now();
 
           if (_mpc_flag) // Blackdrops parameters to be implemented
             {
                // ROS_INFO("Inside UPDATE : Starting mpc flag=true related actions");
-               if (_episode_iterations < 40) //During the episode (here it is set to only one step episodes), when mpc commands can be sent
+               if (_episode_iterations < 2) //During the episode (here it is set to only one step episodes), when mpc commands can be sent
+               // if ((_episode_iterations < 2) && (curr_time.toSec() - _prev_time.toSec() >= 0.1)) //during the episode, when blackdrops commands can be sent
                 {
                     _commands = Eigen::VectorXd::Map(_mpc_commands.data(), _mpc_commands.size());
                     ROS_INFO("Executing action for one step..");
@@ -142,6 +144,7 @@ namespace arm_speed_safe_controller {
 
                         joints[j]->setCommand(_commands(j));
                     }
+                     _prev_time = ros::Time::now();
                     _episode_iterations++;
 
                     if (_realtime_pub_margin->trylock()) {
@@ -150,6 +153,13 @@ namespace arm_speed_safe_controller {
                     }
                     // ROS_INFO("Finished executing action for one step..");
                 }
+
+                // else if ((_episode_iterations < 2) && (curr_time.toSec() - _prev_time.toSec()) < 0.1) //wait period during an ongoing episode
+                // {
+                //     for (unsigned int j = 0; j < n_joints; j++) {
+                //         joints[j]->setCommand(_commands(j)); //Sending the earlier set of commands
+                //     }
+                // }
 
                 else //Episode is over
                 {
@@ -161,7 +171,7 @@ namespace arm_speed_safe_controller {
 
                     _mpc_flag = false;
                     publish_flag = true;
-                    _episode_iterations = 1;
+                    //_episode_iterations =;
                 }
 
                 // ROS_INFO("End of mpc=true related actions");
@@ -307,6 +317,7 @@ namespace arm_speed_safe_controller {
 
         //Default joint angle values for reset purposes
         std::vector<double> _defaultConfig;
+        ros::Time _prev_time;
 
         Eigen::VectorXd _commands;
         // Eigen::VectorXd _mpc_commands;
@@ -333,6 +344,7 @@ namespace arm_speed_safe_controller {
               _mpc_commands.push_back(tmpval);
             }
           ROS_INFO("Commands received!");
+          _prev_time = ros::Time::now() - ros::Duration(2*0.1);
           // ROS_INFO("Commands received were:", _mpc_commands.transpose());
         }
 
