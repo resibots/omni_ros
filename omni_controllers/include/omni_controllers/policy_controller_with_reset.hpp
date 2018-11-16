@@ -1,41 +1,3 @@
-/*********************************************************************
-* Software License Agreement (BSD License)
-*
-*  Copyright (c) 2008, Willow Garage, Inc.
-*  Copyright (c) 2012, hiDOF, Inc.
-*  Copyright (c) 2013, PAL Robotics, S.L.
-*  Copyright (c) 2014, Fraunhofer IPA
-*  Copyright (c) 2018, INRIA
-*  All rights reserved.
-*
-*  Redistribution and use in source and binary forms, with or without
-*  modification, are permitted provided that the following conditions
-*  are met:
-*
-*   * Redistributions of source code must retain the above copyright
-*     notice, this list of conditions and the following disclaimer.
-*   * Redistributions in binary form must reproduce the above
-*     copyright notice, this list of conditions and the following
-*     disclaimer in the documentation and/or other materials provided
-*     with the distribution.
-*   * Neither the name of the Willow Garage nor the names of its
-*     contributors may be used to endorse or promote products derived
-*     from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-*  POSSIBILITY OF SUCH DAMAGE.
-*********************************************************************/
-
 #ifndef POLICY_CONTROLLER_WITH_RESET_H
 #define POLICY_CONTROLLER_WITH_RESET_H
 
@@ -170,7 +132,7 @@ namespace arm_speed_safe_controller {
           if (_mpc_flag) // Blackdrops parameters to be implemented
             {
                // ROS_INFO("Inside UPDATE : Starting mpc flag=true related actions");
-               if (_episode_iterations < 5) //During the episode (here it is set to only one step episodes), when mpc commands can be sent
+               if (_episode_iterations < 40) //During the episode (here it is set to only one step episodes), when mpc commands can be sent
                 {
                     _commands = Eigen::VectorXd::Map(_mpc_commands.data(), _mpc_commands.size());
                     ROS_INFO("Executing action for one step..");
@@ -294,31 +256,31 @@ namespace arm_speed_safe_controller {
                     _jointList.clear();
                 }
 
-                // if (_realtime_pub_commands->trylock()) {
-                //
-                //     _realtime_pub_commands->msg_.val.clear();
-                //     // ROS_INFO("cleared the message in realtime command pub");
-                //     double tmpval;
-                //     for(int i=0; i< _commandList.size(); i++){
-                //         tmpval = _commandList[i];
-                //        _realtime_pub_commands->msg_.val.push_back(tmpval);
-                //     }
-                //
-                //     _realtime_pub_commands->unlockAndPublish();
-                //
-                //     if (_realtime_pub_commands->trylock()) {
-                //       _realtime_pub_commands->msg_.val.clear();
-                //       // ROS_INFO("cleared the message in realtime command pub");
-                //       _realtime_pub_commands->unlock();
-                //     }
-                //
-                //   _commandList.clear();
-                // }
-                //
-                // if (_realtime_pub_margin->trylock()) {
-                //     _realtime_pub_margin->msg_.data = _constraint.consult(period);
-                //     _realtime_pub_margin->unlockAndPublish();
-                // }
+                if (_realtime_pub_commands->trylock()) {
+
+                    _realtime_pub_commands->msg_.val.clear();
+                    // ROS_INFO("cleared the message in realtime command pub");
+                    double tmpval;
+                    for(int i=0; i< _commandList.size(); i++){
+                        tmpval = _commandList[i];
+                       _realtime_pub_commands->msg_.val.push_back(tmpval);
+                    }
+
+                    _realtime_pub_commands->unlockAndPublish();
+
+                    if (_realtime_pub_commands->trylock()) {
+                      _realtime_pub_commands->msg_.val.clear();
+                      // ROS_INFO("cleared the message in realtime command pub");
+                      _realtime_pub_commands->unlock();
+                    }
+
+                  _commandList.clear();
+                }
+
+                if (_realtime_pub_margin->trylock()) {
+                    _realtime_pub_margin->msg_.data = _constraint.consult(period);
+                    _realtime_pub_margin->unlockAndPublish();
+                }
 
                 publish_flag = false;
             } //end of publishing
@@ -360,11 +322,14 @@ namespace arm_speed_safe_controller {
           //Maybe have to clear _mpc_commands first
           _mpc_commands.clear();
           _mpc_flag = true;
-          // publish_flag = false;
+          publish_flag = false;
           _episode_iterations = 1;
           double tmpval;
           for (int i = 0; i < msg->val.size(); i++) {
               tmpval = msg->val[i];
+              // ROS_INFO("received value:", tmpval);
+              // std::cout <<"received command:"<< tmpval << std::endl;
+              //_mpc_commands[i] = tmpval;
               _mpc_commands.push_back(tmpval);
             }
           ROS_INFO("Commands received!");
@@ -377,7 +342,16 @@ namespace arm_speed_safe_controller {
             return true;
         }
 
-  }; // policy_controller
+        // inline Eigen::VectorXd states_to_eigen()
+        // {
+        //     Eigen::VectorXd res(joints.size());
+        //
+        //     for (size_t i = 0; i < joints.size(); ++i) //Arm
+        //         res[i] = joints[i]->getPosition();
+        //
+        //     return res;
+        // }
+    }; // policy_controller
 } // namespace arm_speed_safe_controller
 
 #endif
