@@ -44,7 +44,15 @@
       type="arm_speed_safe_controller::OmnigrasperSmoothConstraintPolicyControllerWithReset"
       base_class_type="controller_interface::ControllerBase">
     <description>
-      Policy controller using black-drops parameters, with safety constraints and default configuration for reset purposes
+      Mpc controller non episodic
+    </description>
+  </class>
+
+  <class name="omni_controllers/MpcEpisodicController"
+      type="arm_speed_safe_controller::MpcEpisodicController"
+      base_class_type="controller_interface::ControllerBase">
+    <description>
+      Mpc controller episodic
     </description>
   </class>
 

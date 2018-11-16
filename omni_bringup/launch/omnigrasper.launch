@@ -78,8 +78,10 @@ you accept its terms. -->
       file="$(find omni_bringup)/config/omnigrasper_vel.yaml"/>
     <rosparam if="$(eval arg('arm_control_mode') == 'safevel')"
       file="$(find omni_bringup)/config/omnigrasper_safevel.yaml"/>
-    <rosparam if="$(eval arg('arm_control_mode') == 'policy')"
+    <rosparam if="$(eval arg('arm_control_mode') == 'mpc')"
       file="$(find omni_bringup)/config/omnigrasper_policy.yaml"/>
+      <rosparam if="$(eval arg('arm_control_mode') == 'mpcEpisodic')"
+        file="$(find omni_bringup)/config/omnigrasper_mpc_episodic.yaml"/>
     <rosparam if="$(eval arg('arm_control_mode') == 'test-limits')"
       file="$(find omni_bringup)/config/omnigrasper_test_limits.yaml"/>
 

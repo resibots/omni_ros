@@ -40,6 +40,7 @@
 #include <omni_controllers/lazy_controller.hpp>
 #include <omni_controllers/policy_controller.hpp>
 #include <omni_controllers/policy_controller_with_reset.hpp>
+#include <omni_controllers/mpc_controller.hpp>
 #include <pluginlib/class_list_macros.h>
 
 namespace arm_speed_safe_controller {
@@ -49,7 +50,8 @@ namespace arm_speed_safe_controller {
 
     typedef arm_speed_safe_controller::PolicyController<OmnigrasperHeightSmooth> OmnigrasperSmoothConstraintPolicyController;
 
-    typedef arm_speed_safe_controller::PolicyControllerWithReset<OmnigrasperHeightSmooth> OmnigrasperSmoothConstraintPolicyControllerWithReset;
+    typedef arm_speed_safe_controller::PolicyControllerWithReset<OmnigrasperHeightSmooth> OmnigrasperSmoothConstraintPolicyControllerWithReset; //Non episodic mpc
+    typedef arm_speed_safe_controller::MpcController<OmnigrasperHeightSmooth> MpcEpisodicController;
 
 } // namespace arm_speed_safe_controller
 
@@ -66,6 +68,8 @@ PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperSmoothConstraintPol
 PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::OmnigrasperSmoothConstraintPolicyControllerWithReset,
     controller_interface::ControllerBase)
 
+PLUGINLIB_EXPORT_CLASS(arm_speed_safe_controller::MpcEpisodicController,
+        controller_interface::ControllerBase)
 // Fake controller that does nothing and only reports the distance to the closest
 // height limit of the cartesian safety
 
