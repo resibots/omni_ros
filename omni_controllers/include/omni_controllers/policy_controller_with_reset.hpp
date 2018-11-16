@@ -145,15 +145,15 @@ namespace arm_speed_safe_controller {
             manual_reset_flag = false;
             _episode_iterations = 1;
 
-            _sub_mpc = nh.subscribe<omni_controllers::MpcAction>("MpcActions", 1, &PolicyControllerWithReset::SetMpcActions, this);
+            _sub_mpc = nh.subscribe<omni_controllers::MpcAction>("mpcActions", 1, &PolicyControllerWithReset::SetMpcActions, this);
             _serv_reset = nh.advertiseService("manualReset", &PolicyControllerWithReset::manualReset, this); //To bring back to default configuration in between episodes
             _realtime_pub_margin = std::make_shared<realtime_tools::RealtimePublisher<std_msgs::Float64>>(nh, "margin", 4);
-
-          _realtime_pub_joints = std::make_shared<realtime_tools::RealtimePublisher<omni_controllers::statesPub>>(nh, "States", 1);
+            _realtime_pub_joints = std::make_shared<realtime_tools::RealtimePublisher<omni_controllers::statesPub>>(nh, "states", 1);
+          // _realtime_pub_joints = std::make_shared<realtime_tools::RealtimePublisher<omni_controllers::statesPub>>(nh, "/dynamixel_controllers/omni_arm_controller/States", 1);
 
 
             // _realtime_pub_joints.reset(new realtime_tools::RealtimePublisher<omni_controllers::statesPub>(nh, "States", 1));
-            _realtime_pub_commands.reset(new realtime_tools::RealtimePublisher<omni_controllers::commandsPub>(nh, "Actions", 1));
+            _realtime_pub_commands.reset(new realtime_tools::RealtimePublisher<omni_controllers::commandsPub>(nh, "actions", 1));
             _defaultConfig = {0.0, 0.0, 0.0, 0.0, 0.0}; //For the arm 5 joints
             return true;
         }
@@ -170,15 +170,9 @@ namespace arm_speed_safe_controller {
           if (_mpc_flag) // Blackdrops parameters to be implemented
             {
                // ROS_INFO("Inside UPDATE : Starting mpc flag=true related actions");
-               if (_episode_iterations < 2) //During the episode (here it is set to only one step episodes), when mpc commands can be sent
+               if (_episode_iterations < 40) //During the episode (here it is set to only one step episodes), when mpc commands can be sent
                 {
-                    // ROS_INFO("Executing action for one step..");
-                    // Maybe clear the commands first
-                    // _commands = _mpc_commands;
                     _commands = Eigen::VectorXd::Map(_mpc_commands.data(), _mpc_commands.size());
-                    // ROS_INFO("Finished storing actions in commands vector..values =", _commands.transpose());
-
-                    // std::cout << "Finished storing actions in commands vector..values =" << _commands.transpose() << std::endl;
                     ROS_INFO("Executing action for one step..");
                     for (unsigned int j = 0; j < n_joints; j++) {
                         _commandList.push_back(_commands(j));
@@ -200,7 +194,7 @@ namespace arm_speed_safe_controller {
                     ROS_INFO("One step episode is over, recording joint positions..");
                     for (unsigned int j = 0; j < n_joints; j++) {
                         _jointList.push_back(joints[j]->getPosition()); //Record the last set of joint states
-                        //joints[j]->setCommand(0); //Send zero velocities
+                        joints[j]->setCommand(0); //Send zero velocities
                     }
 
                     _mpc_flag = false;
@@ -362,7 +356,7 @@ namespace arm_speed_safe_controller {
 
         void SetMpcActions(const omni_controllers::MpcAction::ConstPtr& msg)
         {
-          ROS_INFO("Receiving Mpc actions on MpcAction topic");
+          // ROS_INFO("Receiving Mpc actions on MpcAction topic");
           //Maybe have to clear _mpc_commands first
           _mpc_commands.clear();
           _mpc_flag = true;

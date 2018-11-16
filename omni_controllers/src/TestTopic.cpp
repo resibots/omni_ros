@@ -100,7 +100,7 @@ int main(int argc, char* argv[])
     // ros::Publisher my_msg_pub = nh.advertise<omni_controllers::PolicyParams>("/dynamixel_controllers/omni_arm_controller/policyParams", 100, true);
     // ros::Subscriber robot_pos_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_arm_controller/States", 1, getStates);
 
-    ros::Subscriber robot_pos_sub = nh.subscribe<omni_controllers::statesPub>("/dynamixel_controllers/omni_arm_controller/States", 1, getStates);
+    ros::Subscriber robot_pos_sub = nh.subscribe<omni_controllers::statesPub>("/dynamixel_controllers/omni_arm_controller/states", 100, getStates);
 
     // ros::Subscriber robot_vel_sub = nh.subscribe<std_msgs::Float64MultiArray>("/dynamixel_controllers/omni_arm_controller/Actions", 1, getActions);
     //
@@ -136,9 +136,11 @@ int main(int argc, char* argv[])
 
   //   omni_controllers::DoubleVector COM; //if the variable is declared only once then the vector keeps growing. clear it at start of every lookuptransform
   //
-  //   ros::Rate r(100);
+    ros::Rate r(100);
     while (ros::ok())
     {
+      ros::spin();
+       r.sleep();
     }
   //           _listener.waitForTransform("/omnigrasper", "/world", ros::Time(0), ros::Duration(0.5));
   //           _listener.lookupTransform("/omnigrasper", "/world", ros::Time(0), _tfWorldToBase);
