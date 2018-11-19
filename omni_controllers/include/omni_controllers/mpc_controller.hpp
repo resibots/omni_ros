@@ -1,5 +1,6 @@
 #ifndef MPC_CONTROLLER_H
 #define MPC_CONTROLLER_H
+// Not a good one ----  use the policy controller with reset which is actually a working mpc controller for one step command sending
 
 #include <string>
 #include <vector>
@@ -164,7 +165,7 @@ namespace arm_speed_safe_controller {
                     ROS_INFO("One step episode is over, recording joint positions..");
                     for (unsigned int j = 0; j < n_joints; j++) {
                         _jointList.push_back(joints[j]->getPosition()); //Record the last set of joint states
-                        joints[j]->setCommand(0); //Send zero velocities
+                        // joints[j]->setCommand(0); //Send zero velocities
                     }
 
                     for (unsigned int j = 0; j < n_joints; j++) {
@@ -236,7 +237,7 @@ namespace arm_speed_safe_controller {
                 // Outside of an episode and when already at default configuration, send zero velocities
                 // ROS_INFO("Limbo state (outside of episode or bringing to reset), sending zero velocities...");
                 for (unsigned int j = 0; j < n_joints; j++) {
-                    joints[j]->setCommand(0);
+                    // joints[j]->setCommand(0);
                 }
                 // _constraint.enforce(period);
 
