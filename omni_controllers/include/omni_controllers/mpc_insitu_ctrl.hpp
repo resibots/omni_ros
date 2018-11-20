@@ -33,29 +33,29 @@
 #include <omni_controllers/cartesian_constraint.hpp>
 #include <omni_controllers/policies/NNpolicy.hpp>
 
+// // BLACKDROPS
+// #include <blackdrops/blackdrops.hpp>
+// #include <blackdrops/gp_model.hpp>
+// #include <blackdrops/model/gp/kernel_lf_opt.hpp>
+// #include <blackdrops/model/multi_gp.hpp>
+// #include <blackdrops/model/multi_gp/multi_gp_parallel_opt.hpp>
+// #include <blackdrops/system/dart_system.hpp>
+// #include <blackdrops/system/omni_robot.hpp>
+//
+// #include <boost/thread/thread.hpp>
+// #include <utils/cmd_args.hpp>
+// #include <utils/utils.hpp>
+//
+// #include "dart/dart.hpp"
+// #include <trac_ik/trac_ik.hpp>
+// #include <kdl/chainiksolverpos_nr_jl.hpp>
+//
+// #include <blackdrops/action_control.hpp>
+// #include <robot_dart/robot_dart_simu.hpp>
+
 /*
 
-REDUNDANT : FOR BLACKDROPS ONLY -- REWRITE FOR MPC LATER
-Policy controller to run with blackdrops
-In its current form, it does the following:
-
-- Using ros_control, sends velocity commands to the arm and reads back the arm positions
-- Through the update loop, sends commands on the \cmd_vel topic to move the Base
-
-Along with the controller, the following must be run:
-
-0. Blackdrops from limbo (./../build/exp/blackdrops/src/robot/omni_robot -m 10000 -r 4 -n 10 -b 1 -e 1 -u) Set CMAES parameters as needed
-1. TestTopic to launch the node that publishes to the YouBotBaseCOM topic (rosrun omni_contrlers TestTopic)
-2. For (1), first the motion capture has to be launched (roslaunch resibots_launch vrpn_optitrack.launch) Note that the IP in the dropdown is set to 152.81.10.239 in the streaming pc
-3. From the omnigrasper pc, launch the drivers for the base (roslaunch youbot_driver_ros_interface  youbot_driver.launch)
-
-At end of every episode, following is done:
-4. Have the teleop launched, so that the base can be moved back to starting position (this is the location given in init_state for st vector of the omni.cpp) at end of every episode (roslaunch teleop_youbot teleop_omnigrasper.launch
-)
-5. Call the service (rosservice call /dynamixel_controllers/omni_arm_controller/manualReset) to reset the arm to default configuration
-
-Reading of policy parameters
-Sending back states (joint positions of arm, and YouBotBaseCOM from the custom topic = total 7 states) and commands (5 for joints + 2 for base = 7 actions)
+same as regular mpc but now trying to
 
 */
 
@@ -133,7 +133,7 @@ namespace arm_speed_safe_controller {
           if (_mpc_flag) // Blackdrops parameters to be implemented
             {
                // ROS_INFO("Inside UPDATE : Starting mpc flag=true related actions");
-               if (_episode_iterations < 5) //During the episode (here it is set to only one step episodes), when mpc commands can be sent
+               if (_episode_iterations < 2) //During the episode (here it is set to only one step episodes), when mpc commands can be sent
                // if ((_episode_iterations < 2) && (curr_time.toSec() - _prev_time.toSec() >= 0.1)) //during the episode, when blackdrops commands can be sent
                 {
                     _commands = Eigen::VectorXd::Map(_mpc_commands.data(), _mpc_commands.size());

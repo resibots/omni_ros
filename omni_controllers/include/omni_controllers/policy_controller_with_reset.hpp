@@ -1,6 +1,8 @@
 #ifndef POLICY_CONTROLLER_WITH_RESET_H
 #define POLICY_CONTROLLER_WITH_RESET_H
 
+// Actual working mpc controller that takes actions and implements them for one step and sends back state values
+
 #include <string>
 #include <vector>
 
@@ -137,7 +139,8 @@ namespace arm_speed_safe_controller {
                // if ((_episode_iterations < 2) && (curr_time.toSec() - _prev_time.toSec() >= 0.1)) //during the episode, when blackdrops commands can be sent
                 {
                     _commands = Eigen::VectorXd::Map(_mpc_commands.data(), _mpc_commands.size());
-                    std::cout<< "Executing commands for this step.." << _commands.transpose() << std::endl;
+                    // std::cout<< "Executing commands for this step.." << _commands.transpose() << std::endl;
+                    std::cout<< "Executing commands for this step.." << std::endl;
                     // ROS_INFO("Executing action for one step..");
                     for (unsigned int j = 0; j < n_joints; j++) {
                         _commandList.push_back(_commands(j));
@@ -154,13 +157,6 @@ namespace arm_speed_safe_controller {
                     }
                     // ROS_INFO("Finished executing action for one step..");
                 }
-
-                // else if ((_episode_iterations < 2) && (curr_time.toSec() - _prev_time.toSec()) < 0.1) //wait period during an ongoing episode
-                // {
-                //     for (unsigned int j = 0; j < n_joints; j++) {
-                //         joints[j]->setCommand(_commands(j)); //Sending the earlier set of commands
-                //     }
-                // }
 
                 else //Episode is over
                 {
@@ -306,6 +302,14 @@ namespace arm_speed_safe_controller {
 
                 publish_flag = false;
             } //end of publishing
+
+            std::cout << "velocities:::" ;
+            //printing the current velocity values
+            for (unsigned int j = 0; j < n_joints; j++) {
+              std::cout << joints[j]->getVelocity() << " , "; //Record the last set of joint states
+                // joints[j]->setCommand(0); //Send zero velocities
+            }
+            std::cout << std::endl;
             _constraint.enforce(period);
         } //end of update method
 
