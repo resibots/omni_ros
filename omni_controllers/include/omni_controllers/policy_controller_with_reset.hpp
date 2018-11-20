@@ -139,15 +139,24 @@ namespace arm_speed_safe_controller {
                // if ((_episode_iterations < 2) && (curr_time.toSec() - _prev_time.toSec() >= 0.1)) //during the episode, when blackdrops commands can be sent
                 {
                     _commands = Eigen::VectorXd::Map(_mpc_commands.data(), _mpc_commands.size());
-                    // std::cout<< "Executing commands for this step.." << _commands.transpose() << std::endl;
-                    std::cout<< "Executing commands for this step.." << std::endl;
+                    // std::cout<< "Executing commands for this step and recording this for command value.." << _commands.transpose() << std::endl;
+                    // std::cout<< "Executing commands for this step.." << std::endl;
                     // ROS_INFO("Executing action for one step..");
+
+                      _commandList.clear();
+                    // ROS_INFO("Recording command values:");
                     for (unsigned int j = 0; j < n_joints; j++) {
+
+                        if (_episode_iterations==1)
                         _commandList.push_back(_commands(j));
+
                         //_jointList.push_back(joints[j]->getPosition()); // We need the joint positions only after having sent the commands, i.e after the episode
 
                         joints[j]->setCommand(_commands(j));
+                        // std::cout << _commands(j) ;
                     }
+                    // std::cout << std::endl;
+
                      _prev_time = ros::Time::now();
                     _episode_iterations++;
 
@@ -160,13 +169,19 @@ namespace arm_speed_safe_controller {
 
                 else //Episode is over
                 {
-                    ROS_INFO("One step episode is over, recording joint positions..");
+                    ROS_INFO("Recording joint and vel positions:");
+                    _jointList.clear();
                     for (unsigned int j = 0; j < n_joints; j++) {
+                        // _commandList.push_back(_commands(j));
                         _jointList.push_back(joints[j]->getPosition()); //Record the last set of joint states
+                        // _commandList.push_back(joints[j]->getVelocity());
                         // joints[j]->setCommand(0); //Send zero velocities
+                        // std::cout << joints[j]->getPosition() ;
                     }
 
-                    std::cout<< "Sends same commands outside of loop after joint recording" << _commands.transpose() << std::endl;
+                    // std::cout << std::endl;
+
+                    std::cout<< "Sends same commands outside of loop after joint recording : " << _commands.transpose() << std::endl;
                     for (unsigned int j = 0; j < n_joints; j++) {
                       joints[j]->setCommand(_commands(j)); //Sends old values
                     }
@@ -252,7 +267,7 @@ namespace arm_speed_safe_controller {
 
             // Publishing the data gathered during the episode
             if (publish_flag) {
-              ROS_INFO("Starting the realtime publishing of states");
+              // ROS_INFO("Starting the realtime publishing of states");
               if (_realtime_pub_joints->trylock()) {
                     _realtime_pub_joints->msg_.val.clear();
                     // ROS_INFO("cleared the message in realtime joint pub");
@@ -273,7 +288,7 @@ namespace arm_speed_safe_controller {
 
                     _jointList.clear();
                 }
-
+                ROS_INFO ("published states");
                 if (_realtime_pub_commands->trylock()) {
 
                     _realtime_pub_commands->msg_.val.clear();
@@ -294,6 +309,8 @@ namespace arm_speed_safe_controller {
 
                   _commandList.clear();
                 }
+
+                ROS_INFO ("published commands");
 
                 if (_realtime_pub_margin->trylock()) {
                     _realtime_pub_margin->msg_.data = _constraint.consult(period);
