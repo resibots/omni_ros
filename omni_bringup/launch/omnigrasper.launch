@@ -80,14 +80,16 @@ you accept its terms. -->
       file="$(find omni_bringup)/config/omnigrasper_safevel.yaml"/>
     <rosparam if="$(eval arg('arm_control_mode') == 'mpc')"
       file="$(find omni_bringup)/config/omnigrasper_policy.yaml"/>
-      <rosparam if="$(eval arg('arm_control_mode') == 'mpcEpisodic')"
-        file="$(find omni_bringup)/config/omnigrasper_mpc_episodic.yaml"/>
+    <rosparam if="$(eval arg('arm_control_mode') == 'mpcEpisodic')"
+      file="$(find omni_bringup)/config/omnigrasper_mpc_episodic.yaml"/>
+    <rosparam if="$(eval arg('arm_control_mode') == 'mpcInSitu')"
+      file="$(find omni_bringup)/config/omnigrasper_mpc_episodic_inSitu.yaml"/>
     <rosparam if="$(eval arg('arm_control_mode') == 'test-limits')"
       file="$(find omni_bringup)/config/omnigrasper_test_limits.yaml"/>
 
     <!-- starting the hardware interface and controllers -->
     <node name="dynamixel_control" pkg="dynamixel_control_hw"
-          type="dynamixel_control_p2" output="screen" clear_params="true"
+          type="dynamixel_control_p1" output="screen" clear_params="true"
           required="true"/>
     <node name="controller" pkg="controller_manager" type="spawner"
           respawn="false" output="screen" clear_params="true"

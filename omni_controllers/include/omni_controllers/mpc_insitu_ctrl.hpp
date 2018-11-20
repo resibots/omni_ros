@@ -1,5 +1,5 @@
-#ifndef POLICY_CONTROLLER_WITH_RESET_H
-#define POLICY_CONTROLLER_WITH_RESET_H
+#ifndef MPC_INSITU_CTRL_H
+#define MPC_INSITU_CTRL_H
 
 #include <string>
 #include <vector>
@@ -62,10 +62,10 @@ Sending back states (joint positions of arm, and YouBotBaseCOM from the custom t
 namespace arm_speed_safe_controller {
 
     template <class SafetyConstraint = NoSafetyConstraints>
-    class PolicyControllerWithReset : public controller_interface::Controller<hardware_interface::VelocityJointInterface> {
+    class MpcInSituController : public controller_interface::Controller<hardware_interface::VelocityJointInterface> {
     public:
-        PolicyControllerWithReset() {}
-        ~PolicyControllerWithReset() { _sub_command.shutdown(); }
+        MpcInSituController() {}
+        ~MpcInSituController() { _sub_command.shutdown(); }
 
         bool init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle& nh)
         {
@@ -107,8 +107,8 @@ namespace arm_speed_safe_controller {
             manual_reset_flag = false;
             _episode_iterations = 1;
 
-            _sub_mpc = nh.subscribe<omni_controllers::MpcAction>("mpcActions", 1, &PolicyControllerWithReset::SetMpcActions, this);
-            _serv_reset = nh.advertiseService("manualReset", &PolicyControllerWithReset::manualReset, this); //To bring back to default configuration in between episodes
+            _sub_mpc = nh.subscribe<omni_controllers::MpcAction>("mpcActions", 1, &MpcInSituController::SetMpcActions, this);
+            _serv_reset = nh.advertiseService("manualReset", &MpcInSituController::manualReset, this); //To bring back to default configuration in between episodes
             _realtime_pub_margin = std::make_shared<realtime_tools::RealtimePublisher<std_msgs::Float64>>(nh, "margin", 4);
             _realtime_pub_joints = std::make_shared<realtime_tools::RealtimePublisher<omni_controllers::statesPub>>(nh, "states", 1);
           // _realtime_pub_joints = std::make_shared<realtime_tools::RealtimePublisher<omni_controllers::statesPub>>(nh, "/dynamixel_controllers/omni_arm_controller/States", 1);
@@ -133,12 +133,11 @@ namespace arm_speed_safe_controller {
           if (_mpc_flag) // Blackdrops parameters to be implemented
             {
                // ROS_INFO("Inside UPDATE : Starting mpc flag=true related actions");
-               if (_episode_iterations < 2) //During the episode (here it is set to only one step episodes), when mpc commands can be sent
+               if (_episode_iterations < 5) //During the episode (here it is set to only one step episodes), when mpc commands can be sent
                // if ((_episode_iterations < 2) && (curr_time.toSec() - _prev_time.toSec() >= 0.1)) //during the episode, when blackdrops commands can be sent
                 {
                     _commands = Eigen::VectorXd::Map(_mpc_commands.data(), _mpc_commands.size());
-                    std::cout<< "Executing commands for this step.." << _commands.transpose() << std::endl;
-                    // ROS_INFO("Executing action for one step..");
+                    ROS_INFO("Executing action for one step..");
                     for (unsigned int j = 0; j < n_joints; j++) {
                         _commandList.push_back(_commands(j));
                         //_jointList.push_back(joints[j]->getPosition()); // We need the joint positions only after having sent the commands, i.e after the episode
@@ -168,11 +167,6 @@ namespace arm_speed_safe_controller {
                     for (unsigned int j = 0; j < n_joints; j++) {
                         _jointList.push_back(joints[j]->getPosition()); //Record the last set of joint states
                         // joints[j]->setCommand(0); //Send zero velocities
-                    }
-
-                    std::cout<< "Sends same commands outside of loop after joint recording" << _commands.transpose() << std::endl;
-                    for (unsigned int j = 0; j < n_joints; j++) {
-                      joints[j]->setCommand(_commands(j)); //Sends old values
                     }
 
                    _mpc_flag = false;
@@ -233,11 +227,6 @@ namespace arm_speed_safe_controller {
                 }
                 else { //Default configuration already reached
                   manual_reset_flag = false;
-                  // std::cout<< "Sends old commands outside of loop after joint recording and manual reset" << _commands.transpose() << std::endl;
-                  // for (unsigned int j = 0; j < n_joints; j++) {
-                  //   joints[j]->setCommand(_commands(j)); //Sends old values
-                  // }
-
                 }
 
             } //End of reset mode
@@ -246,8 +235,7 @@ namespace arm_speed_safe_controller {
                 // Outside of an episode and when already at default configuration, send zero velocities
                 // ROS_INFO("Limbo state (outside of episode or bringing to reset), sending zero velocities...");
                 for (unsigned int j = 0; j < n_joints; j++) {
-                    joints[j]->setCommand(0);
-                    // joints[j]->setCommand(_commands(j));
+                    // joints[j]->setCommand(0);
                 }
                 // _constraint.enforce(period);
 
