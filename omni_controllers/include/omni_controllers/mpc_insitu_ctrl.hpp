@@ -33,31 +33,8 @@
 #include <omni_controllers/cartesian_constraint.hpp>
 #include <omni_controllers/policies/NNpolicy.hpp>
 
-// // BLACKDROPS
-// #include <blackdrops/blackdrops.hpp>
-// #include <blackdrops/gp_model.hpp>
-// #include <blackdrops/model/gp/kernel_lf_opt.hpp>
-// #include <blackdrops/model/multi_gp.hpp>
-// #include <blackdrops/model/multi_gp/multi_gp_parallel_opt.hpp>
-// #include <blackdrops/system/dart_system.hpp>
-// #include <blackdrops/system/omni_robot.hpp>
-//
-// #include <boost/thread/thread.hpp>
-// #include <utils/cmd_args.hpp>
-// #include <utils/utils.hpp>
-//
-// #include "dart/dart.hpp"
-// #include <trac_ik/trac_ik.hpp>
-// #include <kdl/chainiksolverpos_nr_jl.hpp>
-//
-// #include <blackdrops/action_control.hpp>
-// #include <robot_dart/robot_dart_simu.hpp>
-
-/*
-
-same as regular mpc but now trying to
-
-*/
+#include <limbo/limbo.hpp>
+// #include "/home/deba/Code/limbo/src/limbo.hpp"
 
 namespace arm_speed_safe_controller {
 

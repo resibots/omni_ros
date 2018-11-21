@@ -145,17 +145,18 @@ namespace arm_speed_safe_controller {
 
                       _commandList.clear();
                     // ROS_INFO("Recording command values:");
+                    ROS_INFO("sending mpc vel");
                     for (unsigned int j = 0; j < n_joints; j++) {
 
-                        if (_episode_iterations==1)
+                        // if (_episode_iterations==1)
                         _commandList.push_back(_commands(j));
 
                         //_jointList.push_back(joints[j]->getPosition()); // We need the joint positions only after having sent the commands, i.e after the episode
 
                         joints[j]->setCommand(_commands(j));
-                        // std::cout << _commands(j) ;
+                       std::cout << _commands(j) ;
                     }
-                    // std::cout << std::endl;
+                    std::cout << std::endl;
 
                      _prev_time = ros::Time::now();
                     _episode_iterations++;
@@ -171,6 +172,7 @@ namespace arm_speed_safe_controller {
                 {
                     ROS_INFO("Recording joint and vel positions:");
                     _jointList.clear();
+                    // _commandList.clear();
                     for (unsigned int j = 0; j < n_joints; j++) {
                         // _commandList.push_back(_commands(j));
                         _jointList.push_back(joints[j]->getPosition()); //Record the last set of joint states
@@ -184,7 +186,9 @@ namespace arm_speed_safe_controller {
                     std::cout<< "Sends same commands outside of loop after joint recording : " << _commands.transpose() << std::endl;
                     for (unsigned int j = 0; j < n_joints; j++) {
                       joints[j]->setCommand(_commands(j)); //Sends old values
+                      std::cout << _commands(j) ;
                     }
+                    std::cout << std::endl;
 
                    _mpc_flag = false;
                     publish_flag = true;
@@ -256,8 +260,14 @@ namespace arm_speed_safe_controller {
             else {
                 // Outside of an episode and when already at default configuration, send zero velocities
                 // ROS_INFO("Limbo state (outside of episode or bringing to reset), sending zero velocities...");
+
+                ROS_INFO("sending zero vel");
+                _commandList.clear();
                 for (unsigned int j = 0; j < n_joints; j++) {
-                    joints[j]->setCommand(0);
+                      if (_episode_iterations == 2)
+                      _commandList.push_back(_commands(j));
+
+                      joints[j]->setCommand(0);
                     // joints[j]->setCommand(_commands(j));
                 }
                 // _constraint.enforce(period);

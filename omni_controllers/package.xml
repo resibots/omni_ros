@@ -30,7 +30,7 @@
   <depend>velocity_controllers</depend>
   <depend>geometry_msgs</depend>
   <depend>tf</depend>
-
+  
   <export>
     <cpp cflags="-I${prefix}/include"/>
     <controller_interface plugin="${prefix}/omni_controllers_plugins.xml"/>

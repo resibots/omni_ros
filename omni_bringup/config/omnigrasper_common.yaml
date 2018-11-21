@@ -21,8 +21,8 @@
 
 
 dynamixel_control:
-  # loop_frequency: 100
-  loop_frequency: 50
+  # loop_frequency: do not reduce it as then it will not be as reactive to the safety constraints
+  loop_frequency: 100
   cycle_time_error_threshold: 0.05
   serial_interface: /dev/ttyUSB0
   baudrate: 1000000 # in bauds
@@ -59,10 +59,14 @@ dynamixel_controllers:
   omni_arm_controller: # Safety limits for some controllers used with the arm
     min_heights:
       - # height limit to protect the arm and the mobile base from each other
-        x_min: -0.18
-        y_min: -0.30
-        x_max: 0.50
-        y_max: 0.30
+        x_min: -0.28
+        y_min: -0.40
+        x_max: 0.99
+        y_max: 0.15
+          # x_min: -0.18
+          # y_min: -0.30
+          # x_max: 0.50
+          # y_max: 0.30
         # hard_min_height: 0.15
         # soft_min_height: 0.20
         hard_min_height: 0.20
@@ -72,3 +76,9 @@ dynamixel_controllers:
         # soft_min_height: -0.07
         hard_min_height: -0.12
         soft_min_height: -0.04
+        # hard_min_height: 0.20
+        # soft_min_height: 0.25
+
+  # x_min y_min etc decides the dimensions of the box, when inside this box, the servos are taken care to not violate the soft limit values.
+  # at the moment, the box is given a high x value to allow all servos to be inside the box all the time. Later, care must be taken to smallen this box
+  # to fit only the base and give more freedom to the arm . note that the end effector is lower than the current last joint seen in the arm, so the arm stops even before
