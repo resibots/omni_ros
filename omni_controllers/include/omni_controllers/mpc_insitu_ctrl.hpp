@@ -34,6 +34,14 @@
 #include <omni_controllers/policies/NNpolicy.hpp>
 
 #include <limbo/limbo.hpp>
+#include <tbb/parallel_for.h>
+#include <blackdrops/blackdrops.hpp>
+#include <blackdrops/gp_model.hpp>
+#include <blackdrops/model/gp/kernel_lf_opt.hpp>
+#include <blackdrops/model/multi_gp.hpp>
+#include <blackdrops/model/multi_gp/multi_gp_parallel_opt.hpp>
+#include <blackdrops/system/dart_system.hpp>
+#include <blackdrops/system/omni_robot.hpp>
 // #include "/home/deba/Code/limbo/src/limbo.hpp"
 
 namespace arm_speed_safe_controller {

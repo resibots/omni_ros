@@ -58,7 +58,10 @@ catkin_package(
 )
 
 # include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR} ${Limbo_INCLUDE_DIR})
-include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR} "/home/deba/Code/limbo/src" "/home/deba/Code/source/libcmaes/src")
+include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR} "/home/deba/Code/limbo/src" "/home/deba/Code/source/libcmaes/src"
+"/home/deba/Code/limbo/exp/blackdrops/include")
+
+# add_executable()
 
 add_library(${PROJECT_NAME}
   src/arm_speed_safe_controller.cpp
@@ -66,9 +69,19 @@ add_library(${PROJECT_NAME}
 
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_executable(TestTopic src/TestTopic.cpp)
-# target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
-target_link_libraries(TestTopic ${Boost_LIBRARIES} ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES} )
+add_executable(TestTopic src/TestTopic.cpp src/arm_speed_safe_controller.cpp)
+# target_include_directories(TestTopic
+#   PRIVATE
+#     include
+#     ${Boost_INCLUDE_DIR}
+#     ${catkin_INCLUDE_DIRS}
+#     ${EIGEN3_INCLUDE_DIR}
+#     "/home/deba/Code/limbo/src"
+#     "/home/deba/Code/source/libcmaes/src"
+#     "/home/deba/Code/limbo/exp/blackdrops/include"
+#     # "/home/deba/catkin_ws/src/omni_ros/omni_controllers/include"
+# )
+target_link_libraries(TestTopic ${Boost_LIBRARIES} ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
 
 add_dependencies(TestTopic ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 

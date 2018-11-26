@@ -89,7 +89,7 @@ you accept its terms. -->
 
     <!-- starting the hardware interface and controllers -->
     <node name="dynamixel_control" pkg="dynamixel_control_hw"
-          type="dynamixel_control_p2" output="screen" clear_params="true"
+          type="dynamixel_control_p1" output="screen" clear_params="true"
           required="true"/>
     <node name="controller" pkg="controller_manager" type="spawner"
           respawn="false" output="screen" clear_params="true"
