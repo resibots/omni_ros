@@ -108,6 +108,7 @@ namespace arm_speed_safe_controller {
             publish_flag = false;
             manual_reset_flag = false;
             _episode_iterations = 1;
+            vel_after_reset = true; //originally set to true so that zero vel can be sent before mpc topics start
 
             _sub_mpc = nh.subscribe<omni_controllers::MpcAction>("mpcActions", 1, &PolicyControllerWithReset::SetMpcActions, this);
             _serv_reset = nh.advertiseService("manualReset", &PolicyControllerWithReset::manualReset, this); //To bring back to default configuration in between episodes
@@ -190,7 +191,7 @@ namespace arm_speed_safe_controller {
                     }
                     std::cout << std::endl;
 
-                   _mpc_flag = false;
+                    _mpc_flag = false;
                     publish_flag = true;
                     //_episode_iterations =;
                 }
@@ -248,11 +249,9 @@ namespace arm_speed_safe_controller {
                 }
                 else { //Default configuration already reached
                   manual_reset_flag = false;
-                  // std::cout<< "Sends old commands outside of loop after joint recording and manual reset" << _commands.transpose() << std::endl;
-                  // for (unsigned int j = 0; j < n_joints; j++) {
-                  //   joints[j]->setCommand(_commands(j)); //Sends old values
-                  // }
-
+                  vel_after_reset = true; //then the next vel would be zero, this is before mpc has begun and after manual reset is done
+                  //commands vector is cleared so that when the else block is executed after manual reset, the robot gets zero velocity
+                  // _commands << 0.0, 0.0, 0.0, 0.0, 0.0;
                 }
 
             } //End of reset mode
@@ -264,11 +263,15 @@ namespace arm_speed_safe_controller {
                 ROS_INFO("sending zero vel");
                 _commandList.clear();
                 for (unsigned int j = 0; j < n_joints; j++) {
-                      if (_episode_iterations == 2)
+
+                    if (_episode_iterations == 2)
                       _commandList.push_back(_commands(j));
 
-                      joints[j]->setCommand(0);
-                    // joints[j]->setCommand(_commands(j));
+                    if (vel_after_reset)
+                    joints[j]->setCommand(0);
+
+                    else
+                    joints[j]->setCommand(_commands(j));
                 }
                 // _constraint.enforce(period);
 
@@ -352,7 +355,7 @@ namespace arm_speed_safe_controller {
         ros::ServiceServer _serv_reset;
 
         int _episode_iterations;
-        bool publish_flag, manual_reset_flag, _mpc_flag;
+        bool publish_flag, manual_reset_flag, _mpc_flag, vel_after_reset;
 
         // Temporary vectors that store all values during the whole episode
         std::vector<double> _jointList;
@@ -374,6 +377,8 @@ namespace arm_speed_safe_controller {
         {
           // ROS_INFO("Receiving Mpc actions on MpcAction topic");
           //Maybe have to clear _mpc_commands first
+
+          vel_after_reset = false; //we want to preserve sending mpc velocities between episodes 
           _mpc_commands.clear();
           _mpc_flag = true;
           publish_flag = false;
