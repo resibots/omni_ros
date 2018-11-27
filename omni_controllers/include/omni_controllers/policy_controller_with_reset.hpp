@@ -260,7 +260,6 @@ namespace arm_speed_safe_controller {
                 // Outside of an episode and when already at default configuration, send zero velocities
                 // ROS_INFO("Limbo state (outside of episode or bringing to reset), sending zero velocities...");
 
-                ROS_INFO("sending zero vel");
                 _commandList.clear();
                 for (unsigned int j = 0; j < n_joints; j++) {
 
@@ -268,10 +267,12 @@ namespace arm_speed_safe_controller {
                       _commandList.push_back(_commands(j));
 
                     if (vel_after_reset)
-                    joints[j]->setCommand(0);
+                    {ROS_INFO("sending zero vel");
+                    joints[j]->setCommand(0);}
 
                     else
-                    joints[j]->setCommand(_commands(j));
+                    {ROS_INFO("sending old vel");
+                    joints[j]->setCommand(_commands(j));}
                 }
                 // _constraint.enforce(period);
 
@@ -378,7 +379,7 @@ namespace arm_speed_safe_controller {
           // ROS_INFO("Receiving Mpc actions on MpcAction topic");
           //Maybe have to clear _mpc_commands first
 
-          vel_after_reset = false; //we want to preserve sending mpc velocities between episodes 
+          vel_after_reset = false; //we want to preserve sending mpc velocities between episodes
           _mpc_commands.clear();
           _mpc_flag = true;
           publish_flag = false;

@@ -59,7 +59,8 @@ catkin_package(
 
 # include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR} ${Limbo_INCLUDE_DIR})
 include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR} "/home/deba/Code/limbo/src" "/home/deba/Code/source/libcmaes/src"
-"/home/deba/Code/limbo/exp/blackdrops/include")
+"/home/deba/Code/limbo/exp/blackdrops/include" )
+# "/home/deba/Code/source/dart" "/home/deba/Code/source/trac_ik_no_ros_include")
 
 # add_executable()
 

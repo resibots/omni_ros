@@ -1,6 +1,6 @@
 #ifndef MPC_CONTROLLER_H
 #define MPC_CONTROLLER_H
-// Not a good one ----  use the policy controller with reset which is actually a working mpc controller for one step command sending
+// Not a good one , this tried to be episodic but fails----  use the policy controller with reset which is actually a working mpc controller for one step command sending
 
 #include <string>
 #include <vector>

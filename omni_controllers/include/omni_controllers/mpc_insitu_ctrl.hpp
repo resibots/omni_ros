@@ -33,16 +33,59 @@
 #include <omni_controllers/cartesian_constraint.hpp>
 #include <omni_controllers/policies/NNpolicy.hpp>
 
-#include <limbo/limbo.hpp>
-#include <tbb/parallel_for.h>
-#include <blackdrops/blackdrops.hpp>
-#include <blackdrops/gp_model.hpp>
-#include <blackdrops/model/gp/kernel_lf_opt.hpp>
-#include <blackdrops/model/multi_gp.hpp>
-#include <blackdrops/model/multi_gp/multi_gp_parallel_opt.hpp>
-#include <blackdrops/system/dart_system.hpp>
-#include <blackdrops/system/omni_robot.hpp>
-// #include "/home/deba/Code/limbo/src/limbo.hpp"
+//Blackdrops related
+// #include <limbo/limbo.hpp>
+// #include <tbb/parallel_for.h>
+// #include <blackdrops/blackdrops.hpp>
+// #include <blackdrops/gp_model.hpp>
+// #include <blackdrops/model/gp/kernel_lf_opt.hpp>
+// #include <blackdrops/model/multi_gp.hpp>
+// #include <blackdrops/model/multi_gp/multi_gp_parallel_opt.hpp>
+// #include <blackdrops/system/dart_system.hpp>
+// #include <blackdrops/system/omni_robot.hpp>
+
+// #include "dart/dart.hpp"
+// #include <trac_ik/trac_ik.hpp>
+// #include <kdl/chainiksolverpos_nr_jl.hpp>
+
+// struct Params {
+//     struct blackdrops : public ::blackdrops::defaults::blackdrops { //TODO: Remove
+//         BO_PARAM(size_t, action_dim, 5);
+//         BO_PARAM(size_t, model_input_dim, 5);
+//         BO_PARAM(size_t, model_pred_dim, 5);
+//         BO_PARAM(double, dt, 0.1);
+//         BO_PARAM(double, T, 4.0);
+//         BO_DYN_PARAM(double, boundary);
+//         BO_DYN_PARAM(bool, verbose);
+//         BO_DYN_PARAM(bool, stochastic);
+//     };
+//
+//     struct dart_system {
+//         BO_PARAM(double, sim_step, 0.001);
+//     };
+//
+//     struct dart_policy_control {
+//         BO_PARAM(dart::dynamics::Joint::ActuatorType, joint_type, dart::dynamics::Joint::VELOCITY);
+//     };
+//
+//     struct gp_model {
+//         BO_PARAM(double, noise, 0.01);
+//     };
+//
+//     struct mean_constant {
+//         BO_PARAM(double, constant, 0.0);
+//     };
+//
+//     struct kernel : public limbo::defaults::kernel {
+//         BO_PARAM(double, noise, gp_model::noise());
+//         BO_PARAM(bool, optimize_noise, true);
+//     };
+//
+//     struct kernel_squared_exp_ard : public limbo::defaults::kernel_squared_exp_ard {
+//     };
+//
+// };
+
 
 namespace arm_speed_safe_controller {
 
@@ -103,6 +146,9 @@ namespace arm_speed_safe_controller {
             _realtime_pub_commands.reset(new realtime_tools::RealtimePublisher<omni_controllers::commandsPub>(nh, "actions", 1));
             _defaultConfig = {0.0, 0.0, 0.0, 0.0, 0.0}; //For the arm 5 joints
             return true;
+
+          //Blackdrops related
+
         }
 
         void starting(const ros::Time& time)
